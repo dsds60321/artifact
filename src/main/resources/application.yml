@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: artifact
+  thymeleaf:
+    cache: false
+    enabled: true
+    encoding: UTF-8
+    mode: HTML
+    prefix: classpath:/templates/
+    suffix: .html
+
+  web:
+    resources:
+      static-locations: classpath:/static/
+      cache:
+        period: 0
