@@ -6,6 +6,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class ApiDocsController {
 
+    @GetMapping("/")
+    public String index() {
+        return "api";
+    }
+
     @GetMapping("/test")
     public String test() {
         return "project-list";

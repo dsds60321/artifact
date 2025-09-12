@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - API 명세서 생성기</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8fafc;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--white);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .login-header {
+            text-align: center;
+            padding: 32px 32px 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .login-header h1 i {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .login-body {
+            padding: 32px;
+        }
+
+        .form-control-auth {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            background-color: var(--white);
+        }
+
+        .form-control-auth:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary.btn-auth {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary.btn-auth:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-google {
+            background: #ffffff;
+            color: #344563;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+        }
+
+        .btn-google:hover:not(:disabled) {
+            background: #f8f9fa;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn-google i {
+            color: #4285f4;
+        }
+
+        .btn-secondary.btn-auth {
+            background: var(--white);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary.btn-auth:hover:not(:disabled) {
+            background: var(--background-gray);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 16px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            padding: 24px 32px 32px 32px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .auth-footer p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .forgot-password-link {
+            text-align: right;
+            margin-top: 12px;
+            margin-bottom: 0;
+        }
+
+        .forgot-password-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            border: 1px solid transparent;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            color: #b91c1c;
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .alert-info {
+            color: #1e40af;
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h1><i class="fas fa-lock"></i> 로그인</h1>
+            <p>계정에 로그인하세요</p>
+        </div>
+
+        <div class="login-body">
+            <!-- Google OAuth2 로그인 버튼 -->
+            <a href="/oauth2/authorization/google" class="btn btn-google btn-auth">
+                <i class="fab fa-google"></i>
+                구글로 로그인
+            </a>
+
+            <div class="divider">
+                <span>또는</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">이메일</label>
+                    <input type="email" class="form-control form-control-auth" id="email" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">비밀번호</label>
+                    <input type="password" class="form-control form-control-auth" id="password" placeholder="비밀번호를 입력하세요" required>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember">
+                    <label for="remember">로그인 상태 유지</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-auth">
+                    <span id="loginButtonText">로그인</span>
+                    <span id="loginSpinner" class="loading" style="display: none;"></span>
+                </button>
+
+                <div class="forgot-password-link">
+                    <a href="#" onclick="showForgotPassword()">비밀번호를 잊으셨나요?</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p>계정이 없으신가요? <a href="/sign/up">회원가입</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- 비밀번호 찾기 모달 -->
+<div id="forgotPasswordModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="card">
+            <div class="card-header">
+                <h2>비밀번호 찾기</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.</p>
+                <form id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label class="form-label">이메일</label>
+                        <input type="email" class="form-control" id="resetEmail" placeholder="example@email.com" required>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" onclick="hideForgotPassword()">취소</button>
+                        <button type="submit" class="btn btn-primary">재설정 링크 보내기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showForgotPassword() {
+        document.getElementById('forgotPasswordModal').style.display = 'flex';
+    }
+
+    function hideForgotPassword() {
+        document.getElementById('forgotPasswordModal').style.display = 'none';
+        document.getElementById('forgotPasswordForm').reset();
+    }
+
+    function setButtonLoading(loading) {
+        const button = document.querySelector('#loginForm button[type="submit"]');
+        const text = document.getElementById('loginButtonText');
+        const spinner = document.getElementById('loginSpinner');
+
+        if (loading) {
+            button.disabled = true;
+            text.style.display = 'none';
+            spinner.style.display = 'inline-block';
+        } else {
+            button.disabled = false;
+            text.style.display = 'inline';
+            spinner.style.display = 'none';
+        }
+    }
+
+    // 일반 로그인 처리
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alert('이메일과 비밀번호를 입력해 주세요.');
+            return;
+        }
+
+        setButtonLoading(true);
+
+        // 실제로는 서버 API 호출
+        setTimeout(() => {
+            // 로그인 성공 시 메인 페이지로 이동
+            window.location.href = '/';
+        }, 1000);
+    });
+
+    // 비밀번호 찾기 처리
+    document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('resetEmail').value;
+
+        if (!email) {
+            alert('이메일을 입력해 주세요.');
+            return;
+        }
+
+        alert('비밀번호 재설정 이메일을 발송했습니다. 이메일을 확인해 주세요.');
+        hideForgotPassword();
+    });
+</script>
+</body>
+</html>
