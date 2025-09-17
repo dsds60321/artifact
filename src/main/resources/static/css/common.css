@@ -398,9 +398,19 @@ textarea.form-control {
     background: rgba(16, 185, 129, 0.1);
 }
 
+.artifact-ppt {
+    border-color: #b91010;
+    background: rgba(185, 16, 101, 0.1);
+}
+
 .artifact-flow {
     border-color: #f59e0b;
     background: rgba(245, 158, 11, 0.1);
+}
+
+.artifact-json {
+    border-color: #8cab16;
+    background: rgba(140, 171, 22, 0.82);
 }
 
 .artifact-type-selector {

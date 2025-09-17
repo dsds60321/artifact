@@ -1,6 +1,16 @@
 spring:
   application:
     name: artifact
+
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java,src/main/resources
+      exclude: WEB-INF/**
+    livereload:
+      enabled: true
+      port: 35729
+
   thymeleaf:
     cache: false
     enabled: true
@@ -8,9 +18,40 @@ spring:
     mode: HTML
     prefix: classpath:/templates/
     suffix: .html
-
   web:
     resources:
       static-locations: classpath:/static/
       cache:
         period: 0
+
+  datasource:
+    url: jdbc:mariadb://localhost:3306/output
+    username: root
+    password: 12345
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
+    show-sql: true
+
+  # OAuth2 설정 - 이 부분의 들여쓰기가 문제였습니다
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1083956155461-lpdoblso2jeh5ch0jkfosgemj844fll1.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+logging:
+  level:
+    org.springframework.security: DEBUG
