@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head th:replace="~{layout/fragments :: common-meta}">
     <title>프로젝트 관리</title>
-    <link rel="stylesheet" th:href="@{/css/common.css}">
 </head>
 <body>
 <div class="header">
@@ -17,7 +14,7 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>프로젝트 목록</h2>
-        <button class="btn btn-primary" onclick="showNewProjectModal()">
+        <button class="btn btn-primary" id="new-project">
             <i class="fas fa-plus"></i> 새 프로젝트
         </button>
     </div>
@@ -33,29 +30,21 @@
                             <div class="project-title" th:text="${project.title}">프로젝트 제목</div>
                             <div class="project-version" th:text="'v' + ${project.version}"></div>
                         </div>
-                        <div class="project-actions">
-                            <button class="btn btn-sm btn-primary" th:onclick="'showAddArtifactModal(' + ${project.idx} + ')'">
+                        <div class="project-actions mb-4">
+                            <button class="btn btn-sm btn-primary" id="new-artifact" th:data-project-idx="${project.idx}">
                                 <i class="fas fa-plus"></i> 산출물 추가
                             </button>
-                            <button class="btn btn-sm btn-danger" th:onclick="'deleteProject(' + ${project.idx} + ')'">
+                            <button class="btn btn-sm btn-danger" id="delete-project" th:data-project-idx="${project.idx}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
 
-<!--                    <div class="artifact-item ${getArtifactClass(artifact.type)}" onclick="editArtifact(${project.id}, ${artifact.id}, '${artifact.type}')">-->
-<!--                        <i class="${getArtifactIcon(artifact.type)}"></i>-->
-<!--                        ${artifact.title}-->
-<!--                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteArtifact(${project.id}, ${artifact.id})" style="margin-left: auto; padding: 2px 6px;">-->
-<!--                            <i class="fas fa-times" style="font-size: 10px;"></i>-->
-<!--                        </button>-->
-<!--                    </div>-->
-
                     <div th:if="${project.artifacts != null and !project.artifacts.isEmpty()}" class="artifact-list">
                         <div th:each="artifact : ${project.artifacts}" th:class="'artifact-item artifact-' + ${#strings.toLowerCase(artifact.subType)}">
                             <i class="fas fa-file-code"></i>
                             <span th:text="${artifact.title}"></span>
-                            <button class="btn btn-danger">
+                            <button class="btn btn-xs btn-danger" id="delete-artifact" >
                                 <i class="fas fa-times" style="font-size: 10px;"></i>
                             </button>
                         </div>
@@ -75,310 +64,13 @@
                 </button>
             </div>
         </div>
-<!--        <div class="card-body" id="projectList">-->
-<!--            <div class="empty-state">-->
-<!--                <i class="fas fa-folder-open"></i>-->
-<!--                <p>아직 생성된 프로젝트가 없습니다.</p>-->
-<!--                <button class="btn btn-primary mt-3" onclick="showNewProjectModal()">-->
-<!--                    <i class="fas fa-plus"></i> 첫 번째 프로젝트 만들기-->
-<!--                </button>-->
-<!--            </div>-->
-<!--        </div>-->
     </div>
 </div>
 
-<!-- 새 프로젝트 모달 -->
-<div id="newProjectModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="card">
-            <div class="card-header">
-                <h2>새 프로젝트 생성</h2>
-            </div>
-            <div class="card-body">
-                <form id="newProjectForm">
-                    <div class="form-group">
-                        <label class="form-label">프로젝트 이름</label>
-                        <input type="text" class="form-control" id="projectTitle" placeholder="예: 주문 관리 시스템" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">버전</label>
-                        <input type="text" class="form-control" id="projectVersion" value="1.0.0" required>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary" onclick="hideNewProjectModal()">취소</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> 생성
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 산출물 추가 모달 -->
-<div id="addArtifactModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="card">
-            <div class="card-header">
-                <h2>산출물 추가</h2>
-            </div>
-            <div class="card-body">
-                <form id="addArtifactForm">
-                    <div class="form-group">
-                        <label class="form-label">산출물 제목</label>
-                        <input type="text" class="form-control" id="artifactTitle" placeholder="예: 주문 API 명세서" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">산출물 종류</label>
-                        <div class="artifact-type-selector">
-                            <div class="artifact-type-option" data-type="docs" onclick="selectArtifactType('docs')">
-                                <i class="fas fa-file-code"></i>
-                                <div class="type-title">API 문서</div>
-                                <div class="type-desc">OpenAPI 기반 API 명세서</div>
-                            </div>
-                            <div class="artifact-type-option" data-type="flow" onclick="selectArtifactType('flow')">
-                                <i class="fas fa-project-diagram"></i>
-                                <div class="type-title">API Flow</div>
-                                <div class="type-desc">API 흐름도 및 플로우차트</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <input type="hidden" id="selectedArtifactType" required>
-                    <input type="hidden" id="selectedProjectId">
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary" onclick="hideAddArtifactModal()">취소</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-arrow-right"></i> 다음
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!--<script th:if="${@environment.acceptsProfiles('dev') || @environment.acceptsProfiles('!prod')}"-->
-<!--        src="http://localhost:35729/livereload.js"></script>-->
-
-<script>
-    let projects = [];
-    let selectedArtifactType = null;
-
-    function showNewProjectModal() {
-        document.getElementById('newProjectModal').style.display = 'flex';
-    }
-
-    function hideNewProjectModal() {
-        document.getElementById('newProjectModal').style.display = 'none';
-        document.getElementById('newProjectForm').reset();
-    }
-
-    function showAddArtifactModal(projectId) {
-        document.getElementById('selectedProjectId').value = projectId;
-        document.getElementById('addArtifactModal').style.display = 'flex';
-        // 타입 선택 초기화
-        document.querySelectorAll('.artifact-type-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        selectedArtifactType = null;
-        document.getElementById('selectedArtifactType').value = '';
-    }
-
-    function hideAddArtifactModal() {
-        document.getElementById('addArtifactModal').style.display = 'none';
-        document.getElementById('addArtifactForm').reset();
-    }
-
-    function selectArtifactType(type) {
-        // 모든 옵션에서 선택 해제
-        document.querySelectorAll('.artifact-type-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-
-        // 선택된 옵션 표시
-        document.querySelector(`[data-type="${type}"]`).classList.add('selected');
-        selectedArtifactType = type;
-        document.getElementById('selectedArtifactType').value = type;
-    }
-
-    function createProject() {
-        const title = document.getElementById('projectTitle').value;
-        const version = document.getElementById('projectVersion').value;
-
-        if (!title || !version) return;
-
-        const project = {
-            id: Date.now(),
-            title,
-            version,
-            artifacts: [],
-            createdAt: new Date()
-        };
-
-        projects.push(project);
-        renderProjects();
-        hideNewProjectModal();
-    }
-
-    function deleteProject(projectId) {
-        if (confirm('프로젝트를 삭제하시겠습니까?')) {
-            projects = projects.filter(p => p.id !== projectId);
-            renderProjects();
-        }
-    }
-
-    function addArtifact() {
-        const projectId = parseInt(document.getElementById('selectedProjectId').value);
-        const title = document.getElementById('artifactTitle').value;
-        const type = document.getElementById('selectedArtifactType').value;
-
-        if (!title || !type) {
-            alert('제목과 종류를 선택해 주세요.');
-            return;
-        }
-
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-            const artifact = {
-                id: Date.now(),
-                title,
-                type,
-                createdAt: new Date()
-            };
-
-            project.artifacts.push(artifact);
-            renderProjects();
-            hideAddArtifactModal();
-
-            // 해당 편집 페이지로 이동
-            if (type === 'docs') {
-                window.location.href = `api-docs-editor.html?projectId=${projectId}&artifactId=${artifact.id}&new=true`;
-            } else if (type === 'flow') {
-                window.location.href = `api-flow-editor.html?projectId=${projectId}&artifactId=${artifact.id}&new=true`;
-            }
-        }
-    }
-
-    function editArtifact(projectId, artifactId, type) {
-        if (type === 'docs') {
-            window.location.href = `api-docs-editor.html?projectId=${projectId}&artifactId=${artifactId}`;
-        } else if (type === 'flow') {
-            window.location.href = `api-flow-editor.html?projectId=${projectId}&artifactId=${artifactId}`;
-        }
-    }
-
-    function deleteArtifact(projectId, artifactId) {
-        if (confirm('이 산출물을 삭제하시겠습니까?')) {
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                project.artifacts = project.artifacts.filter(a => a.id !== artifactId);
-                renderProjects();
-            }
-        }
-    }
-
-    function getArtifactIcon(type) {
-        switch(type) {
-            case 'docs': return 'fas fa-file-code';
-            case 'flow': return 'fas fa-project-diagram';
-            default: return 'fas fa-file';
-        }
-    }
-
-    function getArtifactClass(type) {
-        switch(type) {
-            case 'docs': return 'artifact-docs';
-            case 'flow': return 'artifact-flow';
-            default: return '';
-        }
-    }
-
-    function renderProjects() {
-        const container = document.getElementById('projectList');
-
-        if (projects.length === 0) {
-            container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open"></i>
-                        <p>아직 생성된 프로젝트가 없습니다.</p>
-                        <button class="btn btn-primary mt-3" onclick="showNewProjectModal()">
-                            <i class="fas fa-plus"></i> 첫 번째 프로젝트 만들기
-                        </button>
-                    </div>
-                `;
-            return;
-        }
-
-        container.innerHTML = projects.map(project => `
-                <div class="project-card">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="project-title">${project.title}</div>
-                            <div class="project-version">v${project.version}</div>
-                        </div>
-                        <div class="project-actions">
-                            <button class="btn btn-sm btn-primary" onclick="showAddArtifactModal(${project.id})">
-                                <i class="fas fa-plus"></i> 산출물 추가
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteProject(${project.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    ${project.artifacts.length > 0 ? `
-                        <div class="artifact-list">
-                            ${project.artifacts.map(artifact => `
-                                <div class="artifact-item ${getArtifactClass(artifact.type)}" onclick="editArtifact(${project.id}, ${artifact.id}, '${artifact.type}')">
-                                    <i class="${getArtifactIcon(artifact.type)}"></i>
-                                    ${artifact.title}
-                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteArtifact(${project.id}, ${artifact.id})" style="margin-left: auto; padding: 2px 6px;">
-                                        <i class="fas fa-times" style="font-size: 10px;"></i>
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : '<div class="text-muted text-sm mt-3">생성된 산출물이 없습니다.</div>'}
-                </div>
-            `).join('');
-    }
-
-    document.getElementById('newProjectForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        createProject();
-    });
-
-    document.getElementById('addArtifactForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        addArtifact();
-    });
-
-    // 초기 로드 시 더미 데이터
-    projects = [
-        {
-            id: 1,
-            title: "주문 관리 시스템",
-            version: "1.2.0",
-            artifacts: [
-                { id: 101, title: "주문 API 명세서", type: "docs", createdAt: new Date() },
-                { id: 102, title: "주문 처리 플로우", type: "flow", createdAt: new Date() }
-            ],
-            createdAt: new Date('2025-09-10')
-        },
-        {
-            id: 2,
-            title: "사용자 관리 API",
-            version: "1.0.0",
-            artifacts: [
-                { id: 201, title: "사용자 인증 API", type: "docs", createdAt: new Date() }
-            ],
-            createdAt: new Date('2025-09-11')
-        }
-    ];
-    // renderProjects();
-</script>
+<!-- 기본 모달 -->
+<th:block th:replace="~{layout/fragments :: common-modal}"></th:block>
+<!-- 필수 JS -->
+<th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
+<script th:src="@{/js/pages/home.js}"></script>
 </body>
 </html>

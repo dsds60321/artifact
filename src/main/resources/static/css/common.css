@@ -93,6 +93,7 @@ body {
     padding: 20px;
 }
 
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -109,6 +110,38 @@ body {
     background: none;
     font-family: inherit;
 }
+
+/* 버튼 크기 클래스들 추가 */
+.btn-xs {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 4px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+    gap: 4px;
+}
+
+.btn-md {
+    padding: 6px 12px;
+    font-size: 13px;
+    gap: 5px;
+}
+
+.btn-lg {
+    padding: 10px 20px;
+    font-size: 14px;
+    gap: 6px;
+}
+
+.btn-xl {
+    padding: 12px 24px;
+    font-size: 15px;
+    gap: 8px;
+}
+
 
 .btn:disabled {
     opacity: 0.6;

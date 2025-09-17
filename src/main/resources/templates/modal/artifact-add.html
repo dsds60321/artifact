@@ -1,0 +1,41 @@
+<div class="modal-content">
+    <div class="card">
+        <div class="card-header">
+            <h2>산출물 추가</h2>
+        </div>
+        <div class="card-body">
+            <form id="addArtifactForm">
+                <div class="form-group">
+                    <label class="form-label">산출물 제목</label>
+                    <input type="text" class="form-control" id="artifactTitle" placeholder="예: 주문 API 명세서" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">산출물 종류</label>
+                    <div class="artifact-type-selector">
+                        <div class="artifact-type-option" data-type="docs" onclick="selectArtifactType('docs')">
+                            <i class="fas fa-file-code"></i>
+                            <div class="type-title">API 문서</div>
+                            <div class="type-desc">OpenAPI 기반 API 명세서</div>
+                        </div>
+                        <div class="artifact-type-option" data-type="flow" onclick="selectArtifactType('flow')">
+                            <i class="fas fa-project-diagram"></i>
+                            <div class="type-title">API Flow</div>
+                            <div class="type-desc">API 흐름도 및 플로우차트</div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="selectedArtifactType" required>
+                <input type="hidden" id="selectedProjectId">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddArtifactModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i> 다음
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
