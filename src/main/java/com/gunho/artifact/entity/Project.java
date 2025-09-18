@@ -1,6 +1,7 @@
 package com.gunho.artifact.entity;
 
-import com.gunho.artifact.dto.ArtifactDto;
+import com.gunho.artifact.dto.ProjectDto;
+import com.gunho.artifact.util.Utils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,18 +16,20 @@ import java.util.List;
 
 @Builder
 @Entity
-@Table(name = "artifact")
+@Table(name = "project")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Artifact {
+public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
 
-    @Column(name = "user_idx")
-    private Long userIdx;
+    // User와의 연관관계 설정 (Many-to-One)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_idx", referencedColumnName = "idx")
+    private User user;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -36,6 +39,9 @@ public class Artifact {
 
     @Column(length = 50)
     private String version;
+
+    @Column(length = 1024)
+    private String description;
 
     @Column(name = "updated_by", nullable = false, length = 64)
     private String updatedBy = "";
@@ -51,19 +57,18 @@ public class Artifact {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // User와의 연관관계 설정 (Many-to-One)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_idx", referencedColumnName = "idx", insertable = false, updatable = false)
-    private User user;
-
-    @OneToMany(mappedBy = "artifact", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ArtifactRelation> relations = new ArrayList<>();
 
 
-    public static Artifact toEntity(ArtifactDto.Request req) {
-        return Artifact.builder()
+    public static Project toEntity(ProjectDto.Request req, User user) {
+        return Project.builder()
+                .user(user)
                 .title(req.title())
+                .status(Status.ACTIVE)
                 .version(req.version())
+                .description(Utils.ifNullDefaultValue(req.description(), ""))
+                .createdBy(user.getId())
                 .build();
     }
 

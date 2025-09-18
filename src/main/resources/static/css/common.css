@@ -371,10 +371,54 @@ textarea.form-control {
     padding: 20px;
     margin-bottom: 16px;
     transition: all 0.2s;
+    position: relative;
 }
 
 .project-card:hover {
     box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.project-card.clickable {
+    cursor: pointer;
+}
+
+/* 삭제 버튼을 우상단에 고정 */
+.project-delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+}
+
+.btn-delete {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--danger-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.btn-delete:hover {
+    background: var(--danger-color);
+    color: white;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* 프로젝트 메인 영역은 삭제 버튼 공간만큼 여백 확보 */
+.project-main {
+    padding-right: 40px; /* 삭제 버튼 공간 확보 */
+    flex: 1;
 }
 
 .project-header {
@@ -384,22 +428,171 @@ textarea.form-control {
     margin-bottom: 12px;
 }
 
+.project-info {
+    flex: 1;
+}
+
 .project-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.project-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .project-version {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.project-date {
     font-size: 12px;
     color: var(--text-muted);
 }
 
-.project-actions {
+.project-stats {
     display: flex;
-    gap: 8px;
+    gap: 12px; /* 간격을 줄여서 더 깔끔하게 */
+    align-items: center;
+    flex-wrap: wrap; /* 작은 화면에서 줄바꿈 */
 }
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--background-gray);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.stat-icon.docs {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.stat-icon.flows {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.stat-info {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-top: 2px;
+}
+
+/* 산출물이 없는 경우 스타일 */
+.empty-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: var(--background-gray);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    min-width: 140px; /* 최소 너비 지정 */
+}
+
+.empty-icon {
+    font-size: 20px; /* 크기 조금 줄임 */
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+
+.empty-text {
+    font-size: 11px; /* 폰트 크기 줄임 */
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.project-description {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.project-description p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* 기존 project-actions 스타일 제거 */
+.project-actions {
+    display: none; /* 사용하지 않음 */
+}
+
+/* 반응형 개선 */
+@media (max-width: 768px) {
+    .project-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .project-stats {
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .stat-item {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .project-main {
+        padding-right: 35px; /* 모바일에서는 여백 조금 줄임 */
+    }
+
+    .btn-delete {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+
+    .empty-stats {
+        min-width: auto;
+        padding: 12px;
+    }
+}
+
+
 
 .artifact-list {
     display: flex;

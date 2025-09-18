@@ -54,14 +54,14 @@
                 </div>
                 <div class="nav-section-content" id="docs-list">
                     <div th:each="doc : ${docs}" class="nav-item artifact-item"
-                         th:data-artifact-id="${doc.id}"
-                         th:data-section="'artifact-' + ${doc.id}">
+                         th:data-artifact-id="${doc.artifactSubIdx}"
+                         th:data-section="'artifact-' + ${doc.artifactSubIdx}">
                         <span class="artifact-title" th:text="${doc.title}">API 명세서</span>
                         <div class="artifact-actions">
-                            <button class="btn-icon edit-artifact" th:data-artifact-id="${doc.id}">
+                            <button class="btn-icon edit-artifact" th:data-artifact-id="${doc.artifactSubIdx}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-icon delete-artifact" th:data-artifact-id="${doc.id}">
+                            <button class="btn-icon delete-artifact" th:data-artifact-id="${doc.artifactSubIdx}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -81,14 +81,14 @@
                 </div>
                 <div class="nav-section-content" id="flows-list">
                     <div th:each="flow : ${flows}" class="nav-item artifact-item"
-                         th:data-artifact-id="${flow.id}"
-                         th:data-section="'artifact-' + ${flow.id}">
+                         th:data-artifact-id="${flow.artifactSubIdx}"
+                         th:data-section="'artifact-' + ${flow.artifactSubIdx}">
                         <span class="artifact-title" th:text="${flow.title}">사용자 플로우</span>
                         <div class="artifact-actions">
-                            <button class="btn-icon edit-artifact" th:data-artifact-id="${flow.id}">
+                            <button class="btn-icon edit-artifact" th:data-artifact-id="${flow.artifactSubIdx}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-icon delete-artifact" th:data-artifact-id="${flow.id}">
+                            <button class="btn-icon delete-artifact" th:data-artifact-id="${flow.artifactSubIdx}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -150,8 +150,8 @@
                     <h3>최근 수정된 산출물</h3>
                     <div class="artifact-grid">
                         <div th:each="artifact : ${recentArtifacts}" class="recent-artifact-card">
-                            <div class="artifact-icon" th:style="'color: ' + ${artifact.color}">
-                                <i th:class="${artifact.icon}"></i>
+                            <div th:class="|artifact-icon ${artifact.subType}|">
+                                <i th:class="${artifact.subType}"></i>
                             </div>
                             <div class="artifact-info">
                                 <div class="artifact-name" th:text="${artifact.title}">산출물명</div>
@@ -162,7 +162,7 @@
                             </div>
                             <div class="artifact-actions">
                                 <button class="btn btn-sm btn-outline-primary"
-                                        th:onclick="'editArtifact(' + ${artifact.id} + ')'">
+                                        th:onclick="'editArtifact(' + ${artifact.artifactSubIdx} + ')'">
                                     <i class="fas fa-edit"></i>
                                 </button>
                             </div>
@@ -188,6 +188,6 @@
 
 <!-- 필수 스크립트 -->
 <th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
-<script th:src="@{/js/pages/artifact/detail.js}"></script>
+<script th:src="@{/js/pages/project/detail.js}"></script>
 </body>
 </html>

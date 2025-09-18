@@ -5,8 +5,21 @@ class Detail {
     }
 
     init() {
+        this.bindCss();
         this.bindEvents();
         this.initSidebar();
+    }
+
+    bindCss() {
+        document.querySelectorAll('.artifact-icon').forEach(elem => {
+           if (elem.classList.contains('DOCS')) {
+               elem.style.color = '#10b981';
+               elem.querySelector('i').classList.add('fas', 'fa-file-code');
+           }  else if (elem.classList.contains('FLOW')) {
+               elem.style.color = '#3b82f6';
+               elem.querySelector('i').classList.add('fas', 'fa-project-diagram');
+           }
+        });
     }
 
     bindEvents() {

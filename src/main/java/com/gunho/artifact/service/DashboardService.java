@@ -1,9 +1,9 @@
 package com.gunho.artifact.service;
 
-import com.gunho.artifact.dto.ArtifactDto;
-import com.gunho.artifact.entity.Artifact;
+import com.gunho.artifact.dto.ProjectDto;
+import com.gunho.artifact.entity.Project;
 import com.gunho.artifact.entity.User;
-import com.gunho.artifact.repository.ArtifactRepository;
+import com.gunho.artifact.repository.ProjectRepository;
 import com.gunho.artifact.util.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +19,13 @@ import java.util.List;
 public class DashboardService {
 
 
-    private final ArtifactRepository artifactRepository;
+    private final ProjectRepository projectRepository;
     // 데이터 응답
     public void getUserDatas(Model model, User user) {
-        List<Artifact> artifacts = artifactRepository.findAllByUserIdx(user.getIdx());
-        if (Utils.isNotEmpty(artifacts)) {
-            List<ArtifactDto.DashboardResponse> dashboardResponses = artifacts.stream()
-                    .map(ArtifactDto.DashboardResponse::from)
+        List<Project> projects = projectRepository.findAllByUserIdx(user.getIdx());
+        if (Utils.isNotEmpty(projects)) {
+            List<ProjectDto.DashboardResponse> dashboardResponses = projects.stream()
+                    .map(ProjectDto.DashboardResponse::from)
                     .toList(); // Java 16+ 불변 List 생성
 
             model.addAttribute("PROJECTS", dashboardResponses);

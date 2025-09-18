@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/validator.css}">
     <link rel="stylesheet" th:href="@{/css/nprogress.css}">
     <link rel="stylesheet" th:href="@{/css/toastify.min.css}">
     <title>프로젝트 관리</title>
@@ -16,11 +17,14 @@
 
 <!-- JS -->
 <th:block th:fragment="essential-js">
-    <script th:src="@{/js/core/common.js}"></script>
+    <script th:src="@{/js/core/jquery-3.7.1.min.js}"></script>
+    <script th:src="@{/js/core/validator.min.js}"></script>
     <script th:src="@{/js/core/axios.min.js}"></script>
     <script th:src="@{/js/core/nprogress.js}"></script>
     <script th:src="@{/js/core/sweetalert2.js}"></script>
     <script th:src="@{/js/core/toastify.js}"></script>
+    <script th:src="@{/js/core/common.js}"></script>
+    <script th:src="@{/js/core/httpClient.js}"></script>
 </th:block>
 
 <!-- 공통 헤더 레이아웃 -->

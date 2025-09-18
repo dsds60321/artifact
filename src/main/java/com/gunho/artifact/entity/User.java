@@ -77,7 +77,7 @@ public class User {
 
     // Artifact와의 연관관계 설정 (One-to-Many)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Artifact> artifacts = new ArrayList<>();
+    private List<Project> projects = new ArrayList<>();
 
 
     @Builder

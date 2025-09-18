@@ -28,4 +28,10 @@ public class Utils {
     public static boolean isNotEmpty(Object obj) {
         return !isEmpty(obj);
     }
+
+
+    public static <T> T ifNullDefaultValue(Object obj, T defaultValue) {
+        return Utils.isEmpty(obj) ? defaultValue : (T) obj ;
+    }
+
 }

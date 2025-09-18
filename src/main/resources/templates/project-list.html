@@ -80,13 +80,13 @@
 
                     <div class="form-group">
                         <label class="form-label">산출물 종류</label>
-                        <div class="artifact-type-selector">
-                            <div class="artifact-type-option" data-type="docs" onclick="selectArtifactType('docs')">
+                        <div class="project-type-selector">
+                            <div class="project-type-option" data-type="docs" onclick="selectArtifactType('docs')">
                                 <i class="fas fa-file-code"></i>
                                 <div class="type-title">API 문서</div>
                                 <div class="type-desc">OpenAPI 기반 API 명세서</div>
                             </div>
-                            <div class="artifact-type-option" data-type="flow" onclick="selectArtifactType('flow')">
+                            <div class="project-type-option" data-type="flow" onclick="selectArtifactType('flow')">
                                 <i class="fas fa-project-diagram"></i>
                                 <div class="type-title">API Flow</div>
                                 <div class="type-desc">API 흐름도 및 플로우차트</div>
@@ -126,7 +126,7 @@
         document.getElementById('selectedProjectId').value = projectId;
         document.getElementById('addArtifactModal').style.display = 'flex';
         // 타입 선택 초기화
-        document.querySelectorAll('.artifact-type-option').forEach(option => {
+        document.querySelectorAll('.project-type-option').forEach(option => {
             option.classList.remove('selected');
         });
         selectedArtifactType = null;
@@ -140,7 +140,7 @@
 
     function selectArtifactType(type) {
         // 모든 옵션에서 선택 해제
-        document.querySelectorAll('.artifact-type-option').forEach(option => {
+        document.querySelectorAll('.project-type-option').forEach(option => {
             option.classList.remove('selected');
         });
 
@@ -160,20 +160,13 @@
             id: Date.now(),
             title,
             version,
-            artifacts: [],
+            projects: [],
             createdAt: new Date()
         };
 
         projects.push(project);
         renderProjects();
         hideNewProjectModal();
-    }
-
-    function deleteProject(projectId) {
-        if (confirm('프로젝트를 삭제하시겠습니까?')) {
-            projects = projects.filter(p => p.id !== projectId);
-            renderProjects();
-        }
     }
 
     function addArtifact() {
@@ -188,22 +181,22 @@
 
         const project = projects.find(p => p.id === projectId);
         if (project) {
-            const artifact = {
+            const project = {
                 id: Date.now(),
                 title,
                 type,
                 createdAt: new Date()
             };
 
-            project.artifacts.push(artifact);
+            project.projects.push(project);
             renderProjects();
             hideAddArtifactModal();
 
             // 해당 편집 페이지로 이동
             if (type === 'docs') {
-                window.location.href = `api-docs-editor.html?projectId=${projectId}&artifactId=${artifact.id}&new=true`;
+                window.location.href = `api-docs-editor.html?projectId=${projectId}&artifactId=${project.id}&new=true`;
             } else if (type === 'flow') {
-                window.location.href = `api-flow-editor.html?projectId=${projectId}&artifactId=${artifact.id}&new=true`;
+                window.location.href = `api-flow-editor.html?projectId=${projectId}&artifactId=${project.id}&new=true`;
             }
         }
     }
@@ -220,7 +213,7 @@
         if (confirm('이 산출물을 삭제하시겠습니까?')) {
             const project = projects.find(p => p.id === projectId);
             if (project) {
-                project.artifacts = project.artifacts.filter(a => a.id !== artifactId);
+                project.projects = project.projects.filter(a => a.id !== artifactId);
                 renderProjects();
             }
         }
@@ -236,8 +229,8 @@
 
     function getArtifactClass(type) {
         switch(type) {
-            case 'docs': return 'artifact-docs';
-            case 'flow': return 'artifact-flow';
+            case 'docs': return 'project-docs';
+            case 'flow': return 'project-flow';
             default: return '';
         }
     }
@@ -275,13 +268,13 @@
                         </div>
                     </div>
 
-                    ${project.artifacts.length > 0 ? `
-                        <div class="artifact-list">
-                            ${project.artifacts.map(artifact => `
-                                <div class="artifact-item ${getArtifactClass(artifact.type)}" onclick="editArtifact(${project.id}, ${artifact.id}, '${artifact.type}')">
-                                    <i class="${getArtifactIcon(artifact.type)}"></i>
-                                    ${artifact.title}
-                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteArtifact(${project.id}, ${artifact.id})" style="margin-left: auto; padding: 2px 6px;">
+                    ${project.projects.length > 0 ? `
+                        <div class="project-list">
+                            ${project.projects.map(project => `
+                                <div class="project-item ${getArtifactClass(project.type)}" onclick="editArtifact(${project.id}, ${project.id}, '${project.type}')">
+                                    <i class="${getArtifactIcon(project.type)}"></i>
+                                    ${project.title}
+                                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteArtifact(${project.id}, ${project.id})" style="margin-left: auto; padding: 2px 6px;">
                                         <i class="fas fa-times" style="font-size: 10px;"></i>
                                     </button>
                                 </div>
@@ -308,7 +301,7 @@
             id: 1,
             title: "주문 관리 시스템",
             version: "1.2.0",
-            artifacts: [
+            projects: [
                 { id: 101, title: "주문 API 명세서", type: "docs", createdAt: new Date() },
                 { id: 102, title: "주문 처리 플로우", type: "flow", createdAt: new Date() }
             ],
@@ -318,7 +311,7 @@
             id: 2,
             title: "사용자 관리 API",
             version: "1.0.0",
-            artifacts: [
+            projects: [
                 { id: 201, title: "사용자 인증 API", type: "docs", createdAt: new Date() }
             ],
             createdAt: new Date('2025-09-11')
