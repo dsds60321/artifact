@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("sign/in")
                         .usernameParameter("id")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/artifact", true)
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(artifactOAuth2UserService)
                         )
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/artifact", true)
                         .failureUrl("/login?error=true")
                 )
                 .logout(logout -> logout

@@ -36,5 +36,12 @@ public class ArtifactDto {
         }
     }
 
+    public record DetailResponse(
+            String title,
+            String version,
+            List<ApiDocDto.Response> apiDocs
+
+    ) {}
+
 
 }

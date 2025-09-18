@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head th:replace="~{layout/fragments :: common-meta}">
+    <title>프로젝트 상세</title>
+    <th:block th:replace="~{layout/fragments :: common-css}"></th:block>
+</head>
+<body>
+<!-- 헤더 -->
+<div class="header">
+    <div class="container">
+        <h1><i class="fas fa-project-diagram"></i> <span th:text="${project.title}">프로젝트명</span></h1>
+        <div class="breadcrumb">
+            <a th:href="@{/}">프로젝트 관리</a> > <span th:text="${project.title}">프로젝트명</span>
+        </div>
+    </div>
+</div>
+
+<div class="project-detail-layout">
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="project-info">
+                <h3 th:text="${project.title}">프로젝트명</h3>
+                <span class="version-badge" th:text="'v' + ${project.version}">v1.0.0</span>
+            </div>
+            <div class="project-actions">
+                <button class="btn btn-sm btn-primary" id="add-artifact">
+                    <i class="fas fa-plus"></i> 산출물 추가
+                </button>
+                <button class="btn btn-sm btn-secondary" id="project-settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- 개요 -->
+            <div class="nav-section">
+                <a href="#overview" class="nav-item active" data-section="overview">
+                    <i class="fas fa-home"></i>
+                    <span>개요</span>
+                </a>
+            </div>
+
+            <!-- API 문서 -->
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="docs">
+                    <div class="nav-section-title">
+                        <i class="fas fa-file-code"></i>
+                        <span>API 문서</span>
+                        <span class="artifact-count" th:text="${docsCount}">3</span>
+                    </div>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="nav-section-content" id="docs-list">
+                    <div th:each="doc : ${docs}" class="nav-item artifact-item"
+                         th:data-artifact-id="${doc.id}"
+                         th:data-section="'artifact-' + ${doc.id}">
+                        <span class="artifact-title" th:text="${doc.title}">API 명세서</span>
+                        <div class="artifact-actions">
+                            <button class="btn-icon edit-artifact" th:data-artifact-id="${doc.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon delete-artifact" th:data-artifact-id="${doc.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Flow -->
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="flows">
+                    <div class="nav-section-title">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>API Flow</span>
+                        <span class="artifact-count" th:text="${flowsCount}">2</span>
+                    </div>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="nav-section-content" id="flows-list">
+                    <div th:each="flow : ${flows}" class="nav-item artifact-item"
+                         th:data-artifact-id="${flow.id}"
+                         th:data-section="'artifact-' + ${flow.id}">
+                        <span class="artifact-title" th:text="${flow.title}">사용자 플로우</span>
+                        <div class="artifact-actions">
+                            <button class="btn-icon edit-artifact" th:data-artifact-id="${flow.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon delete-artifact" th:data-artifact-id="${flow.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 기타 산출물 (필요시) -->
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="others">
+                    <div class="nav-section-title">
+                        <i class="fas fa-folder"></i>
+                        <span>기타 문서</span>
+                        <span class="artifact-count" th:text="${othersCount}">1</span>
+                    </div>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="nav-section-content" id="others-list">
+                    <!-- 기타 산출물들 -->
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="content-header">
+            <div class="content-title">
+                <h2 id="current-section-title">프로젝트 개요</h2>
+                <div class="content-actions">
+                    <!-- 현재 선택된 섹션에 따른 액션 버튼들 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <!-- 개요 섹션 -->
+            <div id="overview-content" class="content-section active">
+                <div class="overview-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${totalArtifacts}">6</div>
+                        <div class="stat-label">총 산출물</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${docsCount}">3</div>
+                        <div class="stat-label">API 문서</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${flowsCount}">2</div>
+                        <div class="stat-label">API Flow</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${#temporals.format(project.updatedAt, 'MM-dd')}">12-15</div>
+                        <div class="stat-label">최근 수정</div>
+                    </div>
+                </div>
+
+                <div class="recent-artifacts">
+                    <h3>최근 수정된 산출물</h3>
+                    <div class="artifact-grid">
+                        <div th:each="artifact : ${recentArtifacts}" class="recent-artifact-card">
+                            <div class="artifact-icon" th:style="'color: ' + ${artifact.color}">
+                                <i th:class="${artifact.icon}"></i>
+                            </div>
+                            <div class="artifact-info">
+                                <div class="artifact-name" th:text="${artifact.title}">산출물명</div>
+                                <div class="artifact-type" th:text="${artifact.subType}">타입</div>
+                                <div class="artifact-updated" th:text="'수정: ' + ${#temporals.format(artifact.updatedAt, 'MM-dd HH:mm')}">
+                                    수정: 12-15 14:30
+                                </div>
+                            </div>
+                            <div class="artifact-actions">
+                                <button class="btn btn-sm btn-outline-primary"
+                                        th:onclick="'editArtifact(' + ${artifact.id} + ')'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 산출물이 없는 경우 -->
+                    <div th:if="${#lists.isEmpty(recentArtifacts)}" class="empty-recent">
+                        <i class="fas fa-clock"></i>
+                        <p>최근 수정된 산출물이 없습니다.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 각 산출물별 상세 내용 (동적으로 로드) -->
+            <div id="artifact-content" class="content-section" style="display: none;">
+                <!-- 선택된 산출물의 상세 내용 -->
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 필수 스크립트 -->
+<th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
+<script th:src="@{/js/pages/artifact/detail.js}"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-class Home {
+class Index {
     constructor() {
         this.init();
     }
@@ -41,5 +41,5 @@ let home;
 
 // DOM 로드 완료 후 초기화
 document.addEventListener('DOMContentLoaded', () => {
-    home = new Home();
+    home = new Index();
 });

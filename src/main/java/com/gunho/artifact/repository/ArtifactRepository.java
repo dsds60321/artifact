@@ -13,5 +13,7 @@ public interface ArtifactRepository extends JpaRepository<Artifact, Long> {
 
     List<Artifact> findAllByUserIdx(Long userIdx);
 
+    List<Artifact> findAllByIdx(Long idx);
+
 
 }
