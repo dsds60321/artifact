@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Spec Generator - 개발자를 위한 최고의 API 문서화 도구</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/welcome.css}">
+</head>
+<body>
+<!-- 네비게이션 헤더 -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <i class="fas fa-code"></i>
+            <span>API Spec Generator</span>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="welcome">Welcome</button>
+            <button class="nav-tab" data-tab="docs">Docs</button>
+            <button class="nav-tab" data-tab="flow">Flow</button>
+            <button class="nav-tab" data-tab="ppt">PPT</button>
+        </div>
+
+        <div class="nav-actions">
+            <a href="/sign/in" class="btn btn-secondary btn-sm">Sign In</a>
+            <a href="/sign/up" class="btn btn-primary btn-sm">Sign Up</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- Welcome 탭 -->
+    <div class="tab-content active" id="welcome">
+        <section class="hero">
+            <div class="hero-container">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        개발자를 위한 <span class="highlight">최고의 API 문서화 도구</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        복잡한 API 명세서 작성을 간단하게! 자동화된 문서 생성으로 개발 시간을 단축하고,
+                        팀 협업을 더욱 효율적으로 만들어보세요.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="/sign/up" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket"></i>
+                            무료로 시작하기
+                        </a>
+                        <button class="btn btn-secondary btn-lg" onclick="scrollToFeatures()">
+                            <i class="fas fa-play"></i>
+                            기능 살펴보기
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-card">
+                        <div class="card-header">
+                            <div class="dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="card-title">API Documentation</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="api-preview">
+                                <div class="method get">GET</div>
+                                <span class="endpoint">/api/v1/users/{id}</span>
+                            </div>
+                            <div class="api-description">
+                                사용자 정보를 조회합니다
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2>왜 API Spec Generator를 선택해야 할까요?</h2>
+                    <p>개발팀의 생산성을 극대화하는 강력한 기능들을 만나보세요</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3>자동 문서 생성</h3>
+                        <p>코드 어노테이션만으로 완성도 높은 API 문서를 자동 생성합니다</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>팀 협업</h3>
+                        <p>실시간 공유와 협업으로 팀 전체가 동일한 API 명세를 유지할 수 있습니다</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h3>다양한 Export</h3>
+                        <p>HTML, PDF, PowerPoint 등 다양한 형태로 문서를 내보낼 수 있습니다</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>실시간 테스트</h3>
+                        <p>생성된 문서에서 바로 API를 테스트하고 결과를 확인할 수 있습니다</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>보안 관리</h3>
+                        <p>민감한 API 정보를 안전하게 관리하고 접근 권한을 설정할 수 있습니다</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>사용량 분석</h3>
+                        <p>API 사용 패턴을 분석하여 최적화 포인트를 찾을 수 있습니다</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Docs 탭 -->
+    <div class="tab-content" id="docs">
+        <section class="docs-hero">
+            <div class="container">
+                <h2>API 문서화의 새로운 표준</h2>
+                <p>개발자가 원하는 모든 기능이 담긴 완벽한 API 문서화 솔루션</p>
+            </div>
+        </section>
+
+        <section class="docs-features">
+            <div class="container">
+                <div class="docs-grid">
+                    <div class="docs-item">
+                        <div class="docs-visual">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="docs-content">
+                            <h3>스마트 문서 생성</h3>
+                            <p>Spring Boot 어노테이션을 분석하여 자동으로 API 명세서를 생성합니다.</p>
+                            <ul>
+                                <li>@RestController, @RequestMapping 자동 인식</li>
+                                <li>Request/Response DTO 자동 분석</li>
+                                <li>Validation 어노테이션 반영</li>
+                                <li>예외 처리 정보 포함</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="docs-item reverse">
+                        <div class="docs-content">
+                            <h3>인터랙티브 문서</h3>
+                            <p>단순한 문서가 아닌, 실제로 테스트할 수 있는 살아있는 문서를 제공합니다.</p>
+                            <ul>
+                                <li>Try it out 기능으로 즉시 테스트</li>
+                                <li>실시간 응답 확인</li>
+                                <li>다양한 데이터 타입 지원</li>
+                                <li>파일 업로드 테스트 지원</li>
+                            </ul>
+                        </div>
+                        <div class="docs-visual">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="docs-item">
+                        <div class="docs-visual">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div class="docs-content">
+                            <h3>커스터마이징</h3>
+                            <p>팀이나 회사의 브랜드에 맞게 문서 스타일을 자유롭게 커스터마이징할 수 있습니다.</p>
+                            <ul>
+                                <li>테마 및 색상 변경</li>
+                                <li>로고 및 브랜딩 요소 추가</li>
+                                <li>커스텀 CSS 적용</li>
+                                <li>다국어 지원</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Flow 탭 -->
+    <div class="tab-content" id="flow">
+        <section class="flow-hero">
+            <div class="container">
+                <h2>시각적 API 플로우 다이어그램</h2>
+                <p>복잡한 API 상호작용을 한눈에 이해할 수 있는 플로우차트로 표현</p>
+            </div>
+        </section>
+
+        <section class="flow-features">
+            <div class="container">
+                <div class="flow-grid">
+                    <div class="flow-card">
+                        <i class="fas fa-project-diagram"></i>
+                        <h3>자동 플로우 생성</h3>
+                        <p>API 호출 순서와 의존성을 자동으로 분석하여 플로우차트를 생성합니다.</p>
+                    </div>
+
+                    <div class="flow-card">
+                        <i class="fas fa-edit"></i>
+                        <h3>드래그 앤 드롭 편집</h3>
+                        <p>직관적인 인터페이스로 플로우를 쉽게 수정하고 커스터마이징할 수 있습니다.</p>
+                    </div>
+
+                    <div class="flow-card">
+                        <i class="fas fa-share-alt"></i>
+                        <h3>실시간 공유</h3>
+                        <p>팀원들과 실시간으로 플로우를 공유하고 함께 편집할 수 있습니다.</p>
+                    </div>
+
+                    <div class="flow-card">
+                        <i class="fas fa-code-branch"></i>
+                        <h3>버전 관리</h3>
+                        <p>플로우 변경 이력을 관리하고 이전 버전으로 쉽게 되돌릴 수 있습니다.</p>
+                    </div>
+                </div>
+
+                <div class="flow-demo">
+                    <div class="demo-container">
+                        <h4>플로우 미리보기</h4>
+                        <div class="flow-preview">
+                            <div class="flow-node start">
+                                <i class="fas fa-play"></i>
+                                <span>사용자 로그인</span>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-node api">
+                                <i class="fas fa-server"></i>
+                                <span>POST /auth/login</span>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-node api">
+                                <i class="fas fa-server"></i>
+                                <span>GET /user/profile</span>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-node end">
+                                <i class="fas fa-check"></i>
+                                <span>대시보드 표시</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- PPT 탭 -->
+    <div class="tab-content" id="ppt">
+        <section class="ppt-hero">
+            <div class="container">
+                <h2>전문적인 프레젠테이션 자동 생성</h2>
+                <p>API 문서를 프레젠테이션용 슬라이드로 자동 변환하여 비개발자와의 소통을 원활하게</p>
+            </div>
+        </section>
+
+        <section class="ppt-features">
+            <div class="container">
+                <div class="ppt-showcase">
+                    <div class="ppt-slide-preview">
+                        <div class="slide-container">
+                            <div class="slide active">
+                                <h3>API 개요</h3>
+                                <div class="slide-content">
+                                    <div class="api-summary">
+                                        <div class="stat">
+                                            <span class="number">24</span>
+                                            <span class="label">Endpoints</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="number">8</span>
+                                            <span class="label">Controllers</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="number">15</span>
+                                            <span class="label">Models</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slide-controls">
+                            <button class="slide-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span class="slide-counter">1 / 5</span>
+                            <button class="slide-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ppt-features-list">
+                        <div class="ppt-feature">
+                            <i class="fas fa-magic"></i>
+                            <div>
+                                <h4>원클릭 생성</h4>
+                                <p>API 명세서를 바탕으로 전문적인 프레젠테이션을 자동 생성</p>
+                            </div>
+                        </div>
+
+                        <div class="ppt-feature">
+                            <i class="fas fa-paint-brush"></i>
+                            <div>
+                                <h4>템플릿 커스터마이징</h4>
+                                <p>다양한 테마와 레이아웃으로 브랜드에 맞는 디자인 적용</p>
+                            </div>
+                        </div>
+
+                        <div class="ppt-feature">
+                            <i class="fas fa-chart-bar"></i>
+                            <div>
+                                <h4>시각적 데이터</h4>
+                                <p>API 통계, 플로우차트, 데이터 모델을 시각적으로 표현</p>
+                            </div>
+                        </div>
+
+                        <div class="ppt-feature">
+                            <i class="fas fa-download"></i>
+                            <div>
+                                <h4>다양한 포맷</h4>
+                                <p>PowerPoint, PDF, 웹 프레젠테이션 형태로 내보내기</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="footer-logo">
+                    <i class="fas fa-code"></i>
+                    <span>API Spec Generator</span>
+                </div>
+                <p>개발자를 위한 최고의 API 문서화 도구</p>
+            </div>
+
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>제품</h4>
+                    <ul>
+                        <li><a href="#">기능</a></li>
+                        <li><a href="#">가격</a></li>
+                        <li><a href="#">보안</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>지원</h4>
+                    <ul>
+                        <li><a href="#">문서</a></li>
+                        <li><a href="#">고객 지원</a></li>
+                        <li><a href="#">상태</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>회사</h4>
+                    <ul>
+                        <li><a href="#">소개</a></li>
+                        <li><a href="#">채용</a></li>
+                        <li><a href="#">연락처</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2024 API Spec Generator. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/index.js}"></script>
+</body>
+</html>

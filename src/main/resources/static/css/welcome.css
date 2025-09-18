@@ -1,0 +1,864 @@
+/* 네비게이션 */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.nav-brand i {
+    color: #2563eb;
+    font-size: 24px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 32px;
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    color: #64748b;
+    padding: 8px 0;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.nav-tab:hover {
+    color: #1e293b;
+}
+
+.nav-tab.active {
+    color: #2563eb;
+}
+
+.nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -17px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #2563eb;
+    border-radius: 2px;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* 메인 콘텐츠 */
+.main-content {
+    margin-top: 64px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 히어로 섹션 */
+.hero {
+    padding: 80px 0 120px;
+    background: linear-gradient(135deg, #1e293b 0%, #64748b 50%, #2563eb 100%);
+    color: white;
+    overflow: hidden;
+}
+
+.hero-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.hero-title {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 24px;
+}
+
+.hero-title .highlight {
+    background: linear-gradient(45deg, #2563eb, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 20px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.hero-visual {
+    display: flex;
+    justify-content: center;
+}
+
+.hero-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(30, 41, 59, 0.2);
+    overflow: hidden;
+    width: 100%;
+    max-width: 400px;
+    color: #1e293b;
+}
+
+.hero-card .card-header {
+    background: var(--background-gray);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dots {
+    display: flex;
+    gap: 6px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dot.red { background: #ff5f56; }
+.dot.yellow { background: #ffbd2e; }
+.dot.green { background: #27ca3f; }
+
+.card-title {
+    font-weight: 600;
+    color: #64748b;
+}
+
+.card-content {
+    padding: 24px;
+}
+
+.api-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.method {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.method.get {
+    background: #059669;
+}
+
+.method.post {
+    background: #2563eb;
+}
+
+.method.put {
+    background: #d97706;
+}
+
+.method.delete {
+    background: #dc2626;
+}
+
+.endpoint {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.api-description {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* 피처 섹션 */
+.features {
+    padding: 100px 0;
+    background: white;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.section-header h2 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.section-header p {
+    font-size: 18px;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 40px;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 40px 32px;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #e2e8f0;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(30, 41, 59, 0.1);
+    border-color: #2563eb;
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+}
+
+.feature-card h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.feature-card p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+/* Docs 탭 스타일 */
+.docs-hero {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1e293b 0%, #64748b 50%, #2563eb 100%);
+    color: white;
+    text-align: center;
+}
+
+.docs-hero h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.docs-hero p {
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+.docs-features {
+    padding: 100px 0;
+    background: white;
+}
+
+.docs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+}
+
+.docs-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.docs-item.reverse {
+    direction: rtl;
+}
+
+.docs-item.reverse > * {
+    direction: ltr;
+}
+
+.docs-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 120px;
+    color: #2563eb;
+    opacity: 0.8;
+}
+
+.docs-content h3 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 20px;
+}
+
+.docs-content p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.docs-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+.docs-content li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    color: #1e293b;
+}
+
+.docs-content li::before {
+    content: '✓';
+    color: #2563eb;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Flow 탭 스타일 */
+.flow-hero {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1e293b 0%, #64748b 50%, #2563eb 100%);
+    color: white;
+    text-align: center;
+}
+
+.flow-hero h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.flow-hero p {
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+.flow-features {
+    padding: 100px 0;
+    background: white;
+}
+
+.flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 40px;
+    margin-bottom: 80px;
+}
+
+.flow-card {
+    text-align: center;
+    padding: 40px 24px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s, transform 0.2s;
+    background: white;
+}
+
+.flow-card:hover {
+    border-color: #2563eb;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+}
+
+.flow-card i {
+    font-size: 48px;
+    color: #2563eb;
+    margin-bottom: 24px;
+}
+
+.flow-card h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.flow-card p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+.flow-demo {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+}
+
+.demo-container h4 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.flow-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.flow-node {
+    background: white;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    color: #1e293b;
+    min-width: 180px;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+.flow-node.start {
+    border-color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.flow-node.end {
+    border-color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.flow-node.api {
+    border-color: #2563eb;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+.flow-arrow {
+    font-size: 24px;
+    color: #64748b;
+    font-weight: bold;
+}
+
+/* PPT 탭 스타일 */
+.ppt-hero {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1e293b 0%, #64748b 50%, #2563eb 100%);
+    color: white;
+    text-align: center;
+}
+
+.ppt-hero h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.ppt-hero p {
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+.ppt-features {
+    padding: 100px 0;
+    background: white;
+}
+
+.ppt-showcase {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.ppt-slide-preview {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+}
+
+.slide-container {
+    background: white;
+    border-radius: 8px;
+    padding: 40px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(30, 41, 59, 0.1), 0 2px 4px -1px rgba(30, 41, 59, 0.06);
+}
+
+.slide h3 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.api-summary {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat .number {
+    display: block;
+    font-size: 48px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 8px;
+}
+
+.stat .label {
+    font-size: 16px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.slide-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.slide-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.slide-btn:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.slide-counter {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.ppt-features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.ppt-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.ppt-feature i {
+    font-size: 32px;
+    color: #2563eb;
+    margin-top: 8px;
+}
+
+.ppt-feature h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.ppt-feature p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #64748b;
+}
+
+/* 추가 API 리스트 스타일 (JavaScript에서 사용) */
+.api-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.api-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.api-item .endpoint {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* 푸터 */
+.footer {
+    background: #1e293b;
+    color: white;
+    padding: 60px 0 20px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 60px;
+    margin-bottom: 40px;
+}
+
+.footer-left .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.footer-left .footer-logo i {
+    color: #2563eb;
+    font-size: 28px;
+}
+
+.footer-left p {
+    font-size: 16px;
+    opacity: 0.8;
+    line-height: 1.6;
+}
+
+.footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+.footer-column h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column li {
+    margin-bottom: 12px;
+}
+
+.footer-column a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+.footer-column a:hover {
+    color: #60a5fa;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(100, 116, 139, 0.3);
+    padding-top: 20px;
+    text-align: center;
+}
+
+.footer-bottom p {
+    opacity: 0.6;
+    font-size: 14px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .nav-container {
+        padding: 0 16px;
+    }
+
+    .nav-tabs {
+        display: none;
+    }
+
+    .hero-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .hero-subtitle {
+        font-size: 18px;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .docs-item {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .flow-preview {
+        flex-direction: column;
+    }
+
+    .flow-arrow {
+        transform: rotate(90deg);
+    }
+
+    .ppt-showcase {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .footer-links {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
+
+/* 스크롤 애니메이션 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.feature-card,
+.docs-item,
+.flow-card,
+.ppt-feature {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* 추가 애니메이션 효과 */
+.hero-card {
+    animation: slideInFromRight 1s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.hero-content {
+    animation: slideInFromLeft 1s ease-out;
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

@@ -21,6 +21,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // 홈페이지 기본 리다이렉트
-        registry.addRedirectViewController("/", "/projects");
+        registry.addRedirectViewController("/", "/welcome");
     }
 }
