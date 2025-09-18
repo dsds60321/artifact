@@ -32,6 +32,11 @@ public class SecurityConfig {
                         .requestMatchers("/welcome/**", "/sign/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((req, res, authException) -> {
+                            // 인증이 안되어있으면 welcome redirect
+                            res.sendRedirect("/welcome");
+                        }))
                 .formLogin(form -> form
                         .loginPage("/sign/in")
                         .loginProcessingUrl("sign/in")
@@ -51,7 +56,7 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
+                        .logoutSuccessUrl("/welcome")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
