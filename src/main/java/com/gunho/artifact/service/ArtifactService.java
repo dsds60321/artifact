@@ -1,21 +1,21 @@
 package com.gunho.artifact.service;
 
 import com.gunho.artifact.dto.ApiResponse;
-import com.gunho.artifact.dto.ArtifactDetailDto;
+import com.gunho.artifact.dto.ArtifactDto;
 import com.gunho.artifact.dto.ArtifactRelationDto;
 import com.gunho.artifact.dto.ProjectDto;
-import com.gunho.artifact.entity.ArtifactRelation;
-import com.gunho.artifact.entity.Project;
-import com.gunho.artifact.entity.User;
+import com.gunho.artifact.entity.*;
+import com.gunho.artifact.repository.ApiDocsDocumentRepository;
+import com.gunho.artifact.repository.ApiDocsFlowRepository;
 import com.gunho.artifact.repository.ArtifactRelationRepository;
 import com.gunho.artifact.repository.ProjectRepository;
 import com.gunho.artifact.util.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,7 +24,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ArtifactService {
 
+    private final ProjectRepository projectRepository;
     private final ArtifactRelationRepository artifactRelationRepository;
+    private final ApiDocsFlowRepository apiDocsFlowRepository;
+    private final ApiDocsDocumentRepository apiDocsDocumentRepository;
 
     public void getDetails(Model model, User user, long idx) {
         List<ArtifactRelation> artifactRelations = artifactRelationRepository.findAllByProjectIdx(idx);
@@ -91,4 +94,36 @@ public class ArtifactService {
     }
 
 
+    @Transactional
+    public ApiResponse<?> create(ArtifactDto.Request request, User user) {
+        String subType = request.subType();
+        if (!List.of("docs", "flow").contains(subType.toLowerCase())) {
+            return ApiResponse.failure("지원하지 않은 산출물 타입입니다.");
+        }
+
+        Optional<Project> projectOpt = projectRepository.findById(request.projectIdx());
+        if (projectOpt.isEmpty()) {
+            return ApiResponse.failure("존재하지 않는 프로젝트입니다.");
+        }
+
+        long artifactSubIdx = 0L;
+
+        // docs
+        if (subType.equalsIgnoreCase("docs")) {
+            ApiDocsDocument docs = ApiDocsDocument.toEntity(request, user);
+            ApiDocsDocument saved = apiDocsDocumentRepository.save(docs);
+            artifactSubIdx = saved.getIdx();
+            // flow
+        } else {
+            ApiDocsFlow flow = ApiDocsFlow.toEntity(request, user);
+            ApiDocsFlow saved = apiDocsFlowRepository.save(flow);
+            artifactSubIdx = saved.getIdx();
+        }
+
+
+        ArtifactDto.Request requestWithIdx = ArtifactDto.Request.withIdx(request, artifactSubIdx);
+        ArtifactRelation relation = ArtifactRelation.toEntity(requestWithIdx,  projectOpt.get(), user);
+        ArtifactRelation saved = artifactRelationRepository.save(relation);
+        return ApiResponse.success("산출물 등록에 성공했습니다.");
+    }
 }

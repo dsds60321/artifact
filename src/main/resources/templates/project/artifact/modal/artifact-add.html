@@ -4,21 +4,23 @@
             <h2>산출물 추가</h2>
         </div>
         <div class="card-body">
-            <form id="addArtifactForm">
+            <form id="frm" name="frm">
+                <input type="hidden" name="projectIdx" th:value="${projectIdx}">
+                <input type="hidden" name="subType" value="">
                 <div class="form-group">
                     <label class="form-label">산출물 제목</label>
-                    <input type="text" class="form-control" id="artifactTitle" placeholder="예: 주문 API 명세서" required>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="예: 주문 API 명세서" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">산출물 종류</label>
                     <div class="project-type-selector">
-                        <div class="project-type-option" data-type="docs" onclick="selectArtifactType('docs')">
+                        <div class="project-type-option" data-type="docs">
                             <i class="fas fa-file-code"></i>
                             <div class="type-title">API 문서</div>
                             <div class="type-desc">OpenAPI 기반 API 명세서</div>
                         </div>
-                        <div class="project-type-option" data-type="flow" onclick="selectArtifactType('flow')">
+                        <div class="project-type-option" data-type="flow">
                             <i class="fas fa-project-diagram"></i>
                             <div class="type-title">API Flow</div>
                             <div class="type-desc">API 흐름도 및 플로우차트</div>
@@ -31,8 +33,8 @@
 
                 <div class="d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" onclick="hideAddArtifactModal()">취소</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-arrow-right"></i> 다음
+                    <button type="submit" id="modal-submit" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i> 생성
                     </button>
                 </div>
             </form>

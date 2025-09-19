@@ -1011,3 +1011,235 @@ textarea.form-control {
     margin-bottom: 16px;
     opacity: 0.5;
 }
+
+/* 기존 산출물 타입 선택기 스타일 개선 */
+.project-type-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.project-type-option {
+    padding: 24px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    background: var(--white);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.project-type-option:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    transform: translateY(-2px);
+}
+
+.project-type-option.selected {
+    border-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.project-type-option.selected::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 14px;
+    z-index: -1;
+}
+
+.project-type-option i {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.project-type-option:hover i,
+.project-type-option.selected i {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.project-type-option .type-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.project-type-option .type-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.project-type-option.selected .type-title {
+    color: var(--primary-color);
+}
+
+/* 더 많은 옵션을 위한 3열 그리드 */
+.project-type-selector.grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.project-type-selector.grid-3 .project-type-option {
+    min-height: 120px;
+    padding: 20px 16px;
+}
+
+.project-type-selector.grid-3 .project-type-option i {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.project-type-selector.grid-3 .project-type-option .type-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.project-type-selector.grid-3 .project-type-option .type-desc {
+    font-size: 12px;
+}
+
+/* 산출물 종류별 아이콘 색상 */
+.project-type-option[data-type="docs"] i {
+    color: #10b981;
+}
+
+.project-type-option[data-type="flow"] i {
+    color: #3b82f6;
+}
+
+.project-type-option[data-type="ppt"] i {
+    color: #f59e0b;
+}
+
+.project-type-option[data-type="json"] i {
+    color: #8b5cf6;
+}
+
+.project-type-option[data-type="pdf"] i {
+    color: #ef4444;
+}
+
+.project-type-option[data-type="excel"] i {
+    color: #059669;
+}
+
+/* 선택 상태에서도 아이콘 색상 유지 */
+.project-type-option.selected[data-type="docs"] i {
+    color: #10b981;
+}
+
+.project-type-option.selected[data-type="flow"] i {
+    color: #3b82f6;
+}
+
+.project-type-option.selected[data-type="ppt"] i {
+    color: #f59e0b;
+}
+
+.project-type-option.selected[data-type="json"] i {
+    color: #8b5cf6;
+}
+
+.project-type-option.selected[data-type="pdf"] i {
+    color: #ef4444;
+}
+
+.project-type-option.selected[data-type="excel"] i {
+    color: #059669;
+}
+
+/* 체크마크 아이콘 추가 */
+.project-type-option.selected::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--primary-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+/* 반응형 대응 */
+@media (max-width: 768px) {
+    .project-type-selector {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .project-type-option {
+        min-height: 100px;
+        padding: 16px;
+    }
+
+    .project-type-option i {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .project-type-option .type-title {
+        font-size: 14px;
+    }
+
+    .project-type-option .type-desc {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .project-type-selector {
+        gap: 8px;
+    }
+
+    .project-type-option {
+        min-height: 80px;
+        padding: 12px;
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .project-type-option i {
+        font-size: 20px;
+        margin-bottom: 0;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+
+    .project-type-option .type-content {
+        flex: 1;
+    }
+
+    .project-type-option .type-title {
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    .project-type-option .type-desc {
+        font-size: 11px;
+    }
+}

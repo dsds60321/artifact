@@ -24,7 +24,7 @@
                 <span class="version-badge" th:text="'v' + ${project.version}">v1.0.0</span>
             </div>
             <div class="project-actions">
-                <button class="btn btn-sm btn-primary" id="add-artifact">
+                <button class="btn btn-sm btn-primary" id="add-artifact" th:data-project-idx="${project.idx}">
                     <i class="fas fa-plus"></i> 산출물 추가
                 </button>
                 <button class="btn btn-sm btn-secondary" id="project-settings">
@@ -55,6 +55,7 @@
                 <div class="nav-section-content" id="docs-list">
                     <div th:each="doc : ${docs}" class="nav-item artifact-item"
                          th:data-artifact-id="${doc.artifactSubIdx}"
+                         data-type="docs"
                          th:data-section="'artifact-' + ${doc.artifactSubIdx}">
                         <span class="artifact-title" th:text="${doc.title}">API 명세서</span>
                         <div class="artifact-actions">
@@ -179,15 +180,18 @@
             </div>
 
             <!-- 각 산출물별 상세 내용 (동적으로 로드) -->
-            <div id="artifact-content" class="content-section" style="display: none;">
+            <div id="artifact-content" class="content-section">
                 <!-- 선택된 산출물의 상세 내용 -->
             </div>
         </div>
     </main>
 </div>
 
+<!-- 기본 모달 -->
+<th:block th:replace="~{layout/fragments :: common-modal}"></th:block>
 <!-- 필수 스크립트 -->
 <th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
 <script th:src="@{/js/pages/project/detail.js}"></script>
+<script src="/js/pages/project/artifact/docs/index.js"></script>
 </body>
 </html>

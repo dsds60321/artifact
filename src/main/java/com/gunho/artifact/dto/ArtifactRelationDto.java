@@ -15,7 +15,7 @@ public class ArtifactRelationDto {
             LocalDateTime updatedAt
     ) {
         public static ArtifactRelationDto.Response from(ArtifactRelation artifactRelation) {
-            return new ArtifactRelationDto.Response(artifactRelation.getProjectIdx(), artifactRelation.getArtifactSubIdx(), artifactRelation.getTitle(), artifactRelation.getSubType().name(), artifactRelation.getCreatedAt(), artifactRelation.getUpdatedAt());
+            return new ArtifactRelationDto.Response(artifactRelation.getProject().getIdx(), artifactRelation.getArtifactSubIdx(), artifactRelation.getTitle(), artifactRelation.getSubType().name(), artifactRelation.getCreatedAt(), artifactRelation.getUpdatedAt());
         }
     }
 

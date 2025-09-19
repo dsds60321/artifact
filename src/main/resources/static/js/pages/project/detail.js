@@ -10,6 +10,42 @@ class Detail {
         this.initSidebar();
     }
 
+    // 아티팩트 등록
+    async createArtifact() {
+        FormUtils.quickSetup('frm', {
+            title : {
+                required : '제목을 입력해주세요'
+            }
+        });
+
+        let isValid = FormUtils.validate('frm');
+
+        if (!document.frm.subType.value) {
+            NotificationManager.showError('산출물 종류를 선택해주세요');
+            isValid = false;
+            return;
+        }
+
+        if (!isValid) return;
+
+        FormUtils.onSubmit('frm', async (formData) => {
+            LoadingManager.show();
+            try {
+                // API 호출 로직
+                const { data } = await httpClient.post(`/project/artifact/new`, formData);
+                data.success ? NotificationManager.showSuccess(data.message) : NotificationManager.showError(data.message);
+            } catch (e) {
+                NotificationManager.showError('오류가 발생했습니다.')
+            } finally {
+                LoadingManager.hide();
+                location.reload();
+            }
+        });
+    }
+
+    // docs 선택
+
+
     bindCss() {
         document.querySelectorAll('.artifact-icon').forEach(elem => {
            if (elem.classList.contains('DOCS')) {
@@ -23,6 +59,36 @@ class Detail {
     }
 
     bindEvents() {
+
+        // 산출물 생성 모달
+        document.getElementById('add-artifact').addEventListener('click', async ({target}) => {
+            try {
+                const {data} = await axios.get(`/project/artifact/new/${target.dataset.projectIdx}`);
+                ModalManager.openModal({content: data, callBack: async () => {
+
+                    // 산출물 종류 선택
+                    const artifactTypesElems = document.querySelectorAll('.project-type-option');
+                        artifactTypesElems.forEach(elem => {
+                        elem.addEventListener('click', () =>{
+                            artifactTypesElems.forEach(elem => elem.classList.remove('selected'));
+                            document.frm.subType.value =  elem.dataset.type;
+                            elem.classList.add('selected');
+                        })
+                    });
+
+                  document.querySelector('#modal-submit').addEventListener('click', async () => {
+                      await this.createArtifact()
+                   });
+
+
+                }});
+            } catch (error) {
+                NotificationManager.showError('산출물 생성 모달을 불러오는데 실패했습니다.');
+            }
+        });
+
+
+        // GPT
         // 사이드바 섹션 토글
         document.querySelectorAll('.nav-section-header').forEach(header => {
             header.addEventListener('click', (e) => {
@@ -89,76 +155,104 @@ class Detail {
 
         // 새로운 active 설정
         item.classList.add('active');
-
-        const section = item.dataset.section;
-        this.showContent(section);
+        this.showContent(item);
     }
 
-    showContent(section) {
-        this.currentSection = section;
+
+    showContent(item) {
+        this.currentSection = item.dataset.section;
 
         // 모든 콘텐츠 숨기기
         document.querySelectorAll('.content-section').forEach(content => {
             content.classList.remove('active');
         });
 
-        if (section === 'overview') {
+        if (this.currentSection === 'overview') {
             document.getElementById('overview-content').classList.add('active');
             document.getElementById('current-section-title').textContent = '프로젝트 개요';
-        } else if (section.startsWith('artifact-')) {
-            this.loadArtifactContent(section);
+        } else if (this.currentSection.startsWith('artifact-')) {
+            this.loadArtifactContent(item);
         }
     }
 
-    async loadArtifactContent(section) {
-        const artifactId = section.replace('artifact-', '');
+    async loadArtifactContent(item) {
+        const type = item.dataset.type;
+        const idx = item.dataset.artifactId;
 
         try {
-            const response = await axios.get(`/api/artifacts/${artifactId}`);
-            const artifact = response.data;
-
-            document.getElementById('current-section-title').textContent = artifact.title;
+            const {data} = await axios.get(`/project/artifact/${type}/${idx}`);
 
             const contentDiv = document.getElementById('artifact-content');
-            contentDiv.innerHTML = this.renderArtifactContent(artifact);
+            contentDiv.innerHTML = this.renderArtifactContent(type, data);
             contentDiv.classList.add('active');
-
+            await this.initializeArtifactType(type);
         } catch (error) {
             NotificationManager.showError('산출물 정보를 불러오는데 실패했습니다.');
         }
     }
 
-    renderArtifactContent(artifact) {
+    async initializeArtifactType(type) {
+        switch (type.toLowerCase()) {
+            case 'docs':
+                this.initApiDocs();
+                break;
+            case 'flow':
+                this.initFlowDiagram();
+                break;
+            default:
+                break;
+        }
+    }
+
+    initApiDocs() {
+        // DOM이 완전히 로드된 후 실행
+        setTimeout(() => {
+            if (window.ApiDocsManager) {
+                window.apiDocsManager = new ApiDocsManager();
+            } else {
+                console.error('ApiDocsManager를 찾을 수 없습니다.');
+            }
+        }, 100);
+    }
+
+    initFlowDiagram() {
+        // Flow 다이어그램 초기화 로직
+        console.log('Flow 다이어그램 초기화');
+    }
+
+
+
+
+
+    renderArtifactContent(type, content) {
         // 산출물 타입에 따라 다른 렌더링
-        switch (artifact.subType) {
+        switch (type.toUpperCase()) {
             case 'DOCS':
-                return this.renderApiDocsContent(artifact);
+                return this.renderApiDocsContent(content);
             case 'FLOW':
-                return this.renderFlowContent(artifact);
+                return this.renderFlowContent(content);
             default:
                 return `<p>지원하지 않는 산출물 타입입니다.</p>`;
         }
     }
 
-    renderApiDocsContent(artifact) {
+    renderApiDocsContent(content) {
         return `
             <div class="artifact-content">
                 <div class="artifact-header">
                     <div class="artifact-info">
-                        <h3>${artifact.title}</h3>
-                        <p class="artifact-description">${artifact.description || '설명 없음'}</p>
+                        <h3>API DOCS</h3>
+                        <p class="artifact-description">설명 없음</p>
                     </div>
                     <div class="artifact-actions">
-                        <button class="btn btn-primary" onclick="projectDetail.editArtifact('${artifact.id}')">
+                        <button class="btn btn-primary">
                             <i class="fas fa-edit"></i> 편집
                         </button>
                     </div>
                 </div>
                 <div class="artifact-body">
-                    <!-- API 문서 내용 -->
-                    <div class="api-endpoints">
-                        <!-- 엔드포인트 목록 등 -->
-                    </div>
+                    ${content}
+                    
                 </div>
             </div>
         `;

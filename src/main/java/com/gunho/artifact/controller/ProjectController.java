@@ -6,6 +6,7 @@ import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.ArtifactService;
 import com.gunho.artifact.service.DashboardService;
 import com.gunho.artifact.service.ProjectService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -35,7 +36,7 @@ public class ProjectController {
 
     // 프로젝트 생성
     @PostMapping
-    public @ResponseBody ApiResponse<?> createProject(@RequestBody ProjectDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+    public @ResponseBody ApiResponse<?> createProject(@Valid @RequestBody ProjectDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
         return projectService.create(request, userDetails.getUser());
     }
 
