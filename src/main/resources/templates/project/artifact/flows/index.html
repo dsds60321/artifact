@@ -1,0 +1,388 @@
+<style>
+    /* 테마 선택자 스타일 */
+    .theme-selector {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+
+    .theme-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: var(--radius);
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        background: var(--background-gray);
+    }
+
+    .theme-option:hover,
+    .theme-option.active {
+        border-color: var(--primary-color);
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .theme-preview {
+        width: 60px;
+        height: 40px;
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .theme-preview.default {
+        background: linear-gradient(135deg, #fff 30%, #f8fafc 30%, #f8fafc 70%, #e2e8f0 70%);
+    }
+
+    .theme-preview.forest {
+        background: linear-gradient(135deg, #E9F5EE 30%, #2E7D32 30%, #2E7D32 70%, #1B5E20 70%);
+    }
+
+    .theme-preview.dark {
+        background: linear-gradient(135deg, #1a1a1a 30%, #333 30%, #333 70%, #555 70%);
+    }
+
+    .theme-preview.neutral {
+        background: linear-gradient(135deg, #f5f5f5 30%, #9e9e9e 30%, #9e9e9e 70%, #757575 70%);
+    }
+
+    .theme-preview.base {
+        background: linear-gradient(135deg, #f9f9f9 30%, #333 30%, #333 70%, #000 70%);
+    }
+
+    /* 노드/엣지 컨테이너 */
+    .nodes-container,
+    .edges-container {
+        min-height: 120px;
+    }
+
+    .node-item,
+    .edge-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .node-item:hover,
+    .edge-item:hover {
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+    }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .item-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .remove-btn {
+        background: none;
+        border: none;
+        color: var(--danger-color);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .remove-btn:hover {
+        background: rgba(220, 38, 38, 0.1);
+        transform: scale(1.1);
+    }
+
+    /* 모양 선택기 */
+    .shape-selector {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .shape-option {
+        padding: 8px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .shape-option:hover {
+        border-color: var(--primary-color);
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .shape-option.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* JSON 미리보기 */
+    .json-preview {
+        background: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .json-preview pre {
+        margin: 0;
+        white-space: pre-wrap;
+    }
+
+    .json-editor {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        resize: vertical;
+        background: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid var(--border-color);
+    }
+
+    /* 빈 상태 */
+    .empty-state {
+        text-align: center;
+        color: var(--text-muted);
+        font-style: italic;
+        padding: 40px 20px;
+        background: var(--background-gray);
+        border-radius: var(--radius);
+        border: 2px dashed var(--border-color);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    /* 그리드 레이아웃 */
+    .grid {
+        display: grid;
+    }
+
+    .grid-cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .grid-cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+
+    .required {
+        color: var(--danger-color);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+        .grid-cols-2,
+        .grid-cols-3,
+        .grid-cols-4 {
+            grid-template-columns: 1fr;
+        }
+
+        .theme-selector {
+            justify-content: center;
+        }
+
+        .d-flex {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 12px;
+        }
+
+        .btn-group {
+            justify-content: center;
+        }
+    }
+</style>
+<div class="container">
+    <form id="flowchartForm" name="flowchartForm">
+        <input type="hidden" name="projectIdx" th:value="${projectIdx}">
+        <input type="hidden" name="subType" value="flow">
+
+        <!-- 기본 정보 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2><i class="fas fa-info-circle"></i> 기본 정보</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">플로우차트 제목 <span class="required">*</span></label>
+                        <input type="text" class="form-control" name="title" id="title"
+                               placeholder="예: 회원가입 플로우" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">레이아웃 방향</label>
+                        <select class="form-control" name="layout" id="layout">
+                            <option value="TB">위에서 아래로 (Top to Bottom)</option>
+                            <option value="LR" selected>왼쪽에서 오른쪽으로 (Left to Right)</option>
+                            <option value="BT">아래에서 위로 (Bottom to Top)</option>
+                            <option value="RL">오른쪽에서 왼쪽으로 (Right to Left)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 테마 설정 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2><i class="fas fa-palette"></i> 테마 설정</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">테마 선택</label>
+                    <div class="theme-selector">
+                        <div class="theme-option" data-theme="default">
+                            <div class="theme-preview default"></div>
+                            <span>기본</span>
+                        </div>
+                        <div class="theme-option active" data-theme="forest">
+                            <div class="theme-preview forest"></div>
+                            <span>포레스트</span>
+                        </div>
+                        <div class="theme-option" data-theme="dark">
+                            <div class="theme-preview dark"></div>
+                            <span>다크</span>
+                        </div>
+                        <div class="theme-option" data-theme="neutral">
+                            <div class="theme-preview neutral"></div>
+                            <span>뉴트럴</span>
+                        </div>
+                        <div class="theme-option" data-theme="base">
+                            <div class="theme-preview base"></div>
+                            <span>베이스</span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="theme" id="theme" value="forest">
+                </div>
+            </div>
+        </div>
+
+        <!-- 노드 관리 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-sitemap"></i> 노드 관리</h2>
+                    <button type="button" class="btn btn-primary btn-sm" id="addNodeBtn">
+                        <i class="fas fa-plus"></i> 노드 추가
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="nodesList" class="nodes-container">
+                    <!-- 노드들이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 연결 관리 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-link"></i> 연결 관리</h2>
+                    <button type="button" class="btn btn-primary btn-sm" id="addEdgeBtn">
+                        <i class="fas fa-plus"></i> 연결 추가
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="edgesList" class="edges-container">
+                    <!-- 연결들이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- JSON 미리보기 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-code"></i> JSON 미리보기</h2>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-secondary" id="copyJsonBtn">
+                            <i class="fas fa-copy"></i> 복사
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="toggleJsonEditor">
+                            <i class="fas fa-edit"></i> 직접 편집
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="jsonPreview" class="json-preview">
+                    <pre><code>{}</code></pre>
+                </div>
+                <textarea id="jsonEditor" class="form-control json-editor" rows="15"
+                          style="display: none;" placeholder="JSON 데이터를 직접 입력하세요..."></textarea>
+            </div>
+        </div>
+
+        <!-- 액션 버튼 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="loadSampleBtn">
+                            <i class="fas fa-magic"></i> 샘플 데이터 로드
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearAllBtn">
+                            <i class="fas fa-trash"></i> 전체 초기화
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-info" id="previewBtn">
+                            <i class="fas fa-eye"></i> 미리보기
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 플로우차트 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

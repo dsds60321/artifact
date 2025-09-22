@@ -1,6 +1,6 @@
 package com.gunho.artifact.controller;
 
-import com.gunho.artifact.service.FlowChartGenerator2;
+import com.gunho.artifact.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import com.gunho.artifact.dto.ApiDocsRequest;
@@ -8,9 +8,6 @@ import com.gunho.artifact.dto.FlowChartRequest;
 import com.gunho.artifact.dto.PptDeckRequest;
 import com.gunho.artifact.model.FileArtifact;
 import com.gunho.artifact.model.UrlArtifact;
-import com.gunho.artifact.service.FlowChartGenerator;
-import com.gunho.artifact.service.PptDeckGenerator;
-import com.gunho.artifact.service.SimpleApiDocsGenerator;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +24,7 @@ public class GenerateController {
 
     private final FlowChartGenerator flowChartGenerator;
     private final FlowChartGenerator2 flowChartGenerator2;
+    private final FlowChartGenerator3 flowChartGenerator3;
     private final PptDeckGenerator pptDeckGenerator;
     private final SimpleApiDocsGenerator simpleApiDocsGenerator;
 

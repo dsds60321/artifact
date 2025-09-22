@@ -51,8 +51,9 @@ public class ApiDocsFlow {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public static ApiDocsFlow toEntity(ArtifactDto.Request req, User user) {
+    public static ApiDocsFlow toEntity(ArtifactDto.Request req, Project project, User user) {
         return ApiDocsFlow.builder()
+                .project(project)
                 .title(req.title())
                 .createdBy(user.getId())
                 .build();

@@ -83,6 +83,7 @@
                 <div class="nav-section-content" id="flows-list">
                     <div th:each="flow : ${flows}" class="nav-item artifact-item"
                          th:data-artifact-id="${flow.artifactSubIdx}"
+                         data-type="flows"
                          th:data-section="'artifact-' + ${flow.artifactSubIdx}">
                         <span class="artifact-title" th:text="${flow.title}">사용자 플로우</span>
                         <div class="artifact-actions">

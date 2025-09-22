@@ -228,59 +228,54 @@ class Detail {
         // 산출물 타입에 따라 다른 렌더링
         switch (type.toUpperCase()) {
             case 'DOCS':
-                return this.renderApiDocsContent(content);
-            case 'FLOW':
-                return this.renderFlowContent(content);
+                return this.renderHtml(type, content);
+            case 'FLOWS':
+                return this.renderHtml(type, content);
             default:
                 return `<p>지원하지 않는 산출물 타입입니다.</p>`;
         }
     }
 
-    renderApiDocsContent(content) {
+    renderHtml(type, content) {
+
+        function getHeader(type) {
+            const map = {
+                'DOCS' : {
+                    'icon'  : 'fa-file-code',
+                    'title' : 'API_DOCS'
+                },
+                'FLOWS' : {
+                    'icon'  : 'fa-project-diagram',
+                    'title' : 'API_FLOWS'
+                }
+            }
+
+            const config = map[type.toUpperCase()] || map['DOCS'];
+
+
+            return `
+                <div class="header">
+                    <div class="container">
+                        <h1><i class="fas ${config.icon}"></i> <span>${config.title}</span></h1>
+                        <div class="breadcrumb">
+                            <span>${config.title}</span>
+                        </div>
+                    </div>
+                </div>`
+
+        }
+
         return `
-            <div class="artifact-content">
-                <div class="artifact-header">
-                    <div class="artifact-info">
-                        <h3>API DOCS</h3>
-                        <p class="artifact-description">설명 없음</p>
-                    </div>
-                    <div class="artifact-actions">
-                        <button class="btn btn-primary">
-                            <i class="fas fa-edit"></i> 편집
-                        </button>
-                    </div>
-                </div>
-                <div class="artifact-body">
-                    ${content}
-                    
-                </div>
+            <div class="artifact-header">
+                ${getHeader(type)}
+            </div>
+            <div class="artifact-body">
+                ${content}
+                
             </div>
         `;
     }
 
-    renderFlowContent(artifact) {
-        return `
-            <div class="artifact-content">
-                <div class="artifact-header">
-                    <div class="artifact-info">
-                        <h3>${artifact.title}</h3>
-                        <p class="artifact-description">${artifact.description || '설명 없음'}</p>
-                    </div>
-                    <div class="artifact-actions">
-                        <button class="btn btn-primary" onclick="projectDetail.editArtifact('${artifact.id}')">
-                            <i class="fas fa-edit"></i> 편집
-                        </button>
-                    </div>
-                </div>
-                <div class="artifact-body">
-                    <!-- Flow 다이어그램 등 -->
-                    <div class="flow-diagram">
-                        <!-- Mermaid 다이어그램 등 -->
-                    </div>
-                </div>
-            </div>
-        `;
-    }
 
     editArtifact(artifactId) {
         window.location.href = `/artifacts/${artifactId}/edit`;

@@ -49,8 +49,9 @@ public class ApiDocsDocument {
     @Column(name = "created_by", length = 64)
     private String createdBy = "";
 
-    public static ApiDocsDocument toEntity(ArtifactDto.Request req, User user) {
+    public static ApiDocsDocument toEntity(ArtifactDto.Request req, Project project, User user) {
         return ApiDocsDocument.builder()
+                .project(project)
                 .title(req.title())
                 .createdBy(user.getId())
                 .build();

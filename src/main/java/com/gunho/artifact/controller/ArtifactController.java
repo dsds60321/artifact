@@ -26,7 +26,7 @@ public class ArtifactController {
     @GetMapping("/new/{idx}")
     public String newArtifact(Model model,  @PathVariable Long idx) {
         model.addAttribute("projectIdx", idx);
-        return "project/artifact/modal/artifact-add";
+        return "docs-add";
     }
 
     @GetMapping("/docs")
@@ -37,6 +37,16 @@ public class ArtifactController {
     @GetMapping("/docs/{idx}")
     public String docsEdit(@PathVariable Long idx) {
         return "project/artifact/docs/index";
+    }
+
+    @GetMapping("/flows")
+    public String flowsAdd() {
+        return "project/artifact/flows/index";
+    }
+
+    @GetMapping("/flows/{idx}")
+    public String flowsEdit(@PathVariable Long idx) {
+        return "project/artifact/flows/index";
     }
 
 }

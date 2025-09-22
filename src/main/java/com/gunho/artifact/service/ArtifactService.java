@@ -81,24 +81,18 @@ public class ArtifactService {
             return ApiResponse.failure("존재하지 않는 프로젝트입니다.");
         }
 
-        long artifactSubIdx = 0L;
 
         // docs
         if (subType.equalsIgnoreCase("docs")) {
-            ApiDocsDocument docs = ApiDocsDocument.toEntity(request, user);
+            ApiDocsDocument docs = ApiDocsDocument.toEntity(request, projectOpt.get(), user);
             ApiDocsDocument saved = apiDocsDocumentRepository.save(docs);
-            artifactSubIdx = saved.getIdx();
-            // flow
+        // flow
         } else {
-            ApiDocsFlow flow = ApiDocsFlow.toEntity(request, user);
+            ApiDocsFlow flow = ApiDocsFlow.toEntity(request, projectOpt.get(), user);
             ApiDocsFlow saved = apiDocsFlowRepository.save(flow);
-            artifactSubIdx = saved.getIdx();
         }
 
 
-        ArtifactDto.Request requestWithIdx = ArtifactDto.Request.withIdx(request, artifactSubIdx);
-        ArtifactRelation relation = ArtifactRelation.toEntity(requestWithIdx,  projectOpt.get(), user);
-        ArtifactRelation saved = artifactRelationRepository.save(relation);
         return ApiResponse.success("산출물 등록에 성공했습니다.");
     }
 }

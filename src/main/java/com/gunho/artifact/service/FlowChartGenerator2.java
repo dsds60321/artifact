@@ -17,7 +17,7 @@ import java.util.*;
 public class FlowChartGenerator2 {
 
     public List<FileArtifact> generate(FlowChartRequest req) throws Exception {
-        String visJsHtml = toVisJsHtml(req);
+        String visJsHtml = toJsHtml(req);
         String mermaid = toMermaid(req);
 
         String htmlBase64 = Base64.getEncoder().encodeToString(visJsHtml.getBytes(StandardCharsets.UTF_8));
@@ -30,7 +30,7 @@ public class FlowChartGenerator2 {
     }
 
     public List<UrlArtifact> generateAsFiles(FlowChartRequest req) throws Exception {
-        String visJsHtml = toVisJsHtml(req);
+        String visJsHtml = toJsHtml(req);
         String mermaid = toMermaid(req);
 
         byte[] htmlBytes = visJsHtml.getBytes(StandardCharsets.UTF_8);
@@ -69,7 +69,13 @@ public class FlowChartGenerator2 {
     /**
      * vis.js를 사용한 API Flow 시각화 HTML 생성
      */
-    private String toVisJsHtml(FlowChartRequest req) {
+    private String toJsHtml(FlowChartRequest req) {
+        // JSON에서 테마 정보 추출
+        Map<String, Object> themeVariables = req.getThemeVariables();
+        Map<String, Object> classes = req.getClasses();
+        String theme = req.getTheme();
+        String layout = req.getLayout();
+
         // 노드 데이터 생성 (Cytoscape.js 형식)
         StringBuilder elementsJson = new StringBuilder("[\n");
 
@@ -79,21 +85,23 @@ public class FlowChartGenerator2 {
             String id = (String) node.get("id");
             String label = String.valueOf(node.getOrDefault("label", id));
             String shape = String.valueOf(node.getOrDefault("shape", "process"));
+            String nodeClass = String.valueOf(node.getOrDefault("class", ""));
             String method = String.valueOf(node.getOrDefault("method", ""));
             String endpoint = String.valueOf(node.getOrDefault("endpoint", ""));
 
             String displayLabel = method.isEmpty() ? label : String.format("%s\\n%s %s", label, method, endpoint);
 
             elementsJson.append(String.format("""
-    {
-      "data": {
-        "id": "%s",
-        "label": "%s",
-        "type": "%s",
-        "method": "%s",
-        "endpoint": "%s"
-      }
-    }""", id, displayLabel.replace("\"", "\\\""), shape, method, endpoint));
+                    {
+                      "data": {
+                        "id": "%s",
+                        "label": "%s",
+                        "type": "%s",
+                        "nodeClass": "%s",
+                        "method": "%s",
+                        "endpoint": "%s"
+                      }
+                    }""", id, displayLabel.replace("\"", "\\\""), shape, nodeClass, method, endpoint));
 
             if (i < req.getNodes().size() - 1 || !req.getEdges().isEmpty()) {
                 elementsJson.append(",");
@@ -107,18 +115,24 @@ public class FlowChartGenerator2 {
             String from = (String) edge.get("from");
             String to = (String) edge.get("to");
             String label = String.valueOf(edge.getOrDefault("label", ""));
-            String type = String.valueOf(edge.getOrDefault("type", "success"));
+
+            // 스타일 처리
+            Map<String, Object> style = (Map<String, Object>) edge.get("style");
+            String styleType = "";
+            if (style != null && style.get("type") != null) {
+                styleType = String.valueOf(style.get("type"));
+            }
 
             elementsJson.append(String.format("""
-    {
-      "data": {
-        "id": "%s-%s",
-        "source": "%s",
-        "target": "%s",
-        "label": "%s",
-        "type": "%s"
-      }
-    }""", from, to, from, to, label.replace("\"", "\\\""), type));
+                    {
+                      "data": {
+                        "id": "%s-%s",
+                        "source": "%s",
+                        "target": "%s",
+                        "label": "%s",
+                        "styleType": "%s"
+                      }
+                    }""", from, to, from, to, label.replace("\"", "\\\""), styleType));
 
             if (i < req.getEdges().size() - 1) {
                 elementsJson.append(",");
@@ -128,651 +142,600 @@ public class FlowChartGenerator2 {
 
         elementsJson.append("]");
 
+        // 테마별 CSS 변수 생성
+        String themeCSS = generateThemeCSS(theme, themeVariables, classes);
+
+        // 레이아웃 방향 설정
+        String rankDir = getRankDir(layout);
+
         return String.format("""
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>%s - API Flow</title>
-        <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-        <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
-        <script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: linear-gradient(135deg, #1e293b 0%%, #64748b 50%%, #2563eb 100%%);
-                color: white;
-                height: 100vh;
-                overflow: hidden;
-                position: relative;
-            }
-
-            /* 배경 패턴 */
-            body::before {
-                content: '';
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%%;
-                height: 100%%;
-                background-image: 
-                    linear-gradient(45deg, rgba(255,255,255,0.05) 25%%, transparent 25%%),
-                    linear-gradient(-45deg, rgba(255,255,255,0.05) 25%%, transparent 25%%),
-                    linear-gradient(45deg, transparent 75%%, rgba(255,255,255,0.05) 75%%),
-                    linear-gradient(-45deg, transparent 75%%, rgba(255,255,255,0.05) 75%%);
-                background-size: 30px 30px;
-                background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
-                pointer-events: none;
-                opacity: 0.3;
-            }
-
-            /* 플로팅 파티클 */
-            body::after {
-                content: '✦ ❋ ✧ ⟡ ◆ ❖';
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%%;
-                height: 100%%;
-                font-size: 20px;
-                color: rgba(255,255,255,0.1);
-                word-spacing: 80px;
-                line-height: 120px;
-                animation: float 20s infinite linear;
-                pointer-events: none;
-            }
-
-            @keyframes float {
-                0%% { transform: translateY(100vh) rotate(0deg); }
-                100%% { transform: translateY(-100px) rotate(360deg); }
-            }
-
-            .header {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                border-bottom: 1px solid rgba(255,255,255,0.2);
-                padding: 16px 20px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-                z-index: 100;
-                position: relative;
-            }
-
-            .header h1 {
-                font-size: 18px;
-                font-weight: 600;
-                color: #1e293b;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .header-actions {
-                display: flex;
-                gap: 8px;
-            }
-
-            .main {
-                height: calc(100vh - 65px);
-                position: relative;
-                background: rgba(255, 255, 255, 0.85);
-                backdrop-filter: blur(10px);
-                margin: 16px;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-                overflow: hidden;
-            }
-
-            #cy {
-                width: 100%%;
-                height: 100%%;
-            }
-
-            .controls {
-                position: absolute;
-                top: 20px;
-                left: 20px;
-                z-index: 1000;
-                background: rgba(255, 255, 255, 0.9);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 12px;
-                padding: 8px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                display: flex;
-                gap: 6px;
-            }
-
-            .btn {
-                padding: 8px 14px;
-                border: 1px solid rgba(255,255,255,0.3);
-                background: rgba(255,255,255,0.8);
-                backdrop-filter: blur(5px);
-                border-radius: 8px;
-                font-size: 12px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                color: #64748b;
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-
-            .btn:hover {
-                background: rgba(255,255,255,0.95);
-                border-color: rgba(37, 99, 235, 0.3);
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-
-            .btn.active {
-                background: linear-gradient(135deg, #1e293b 0%%, #64748b 50%%, #2563eb 100%%);
-                color: white;
-                border-color: transparent;
-                box-shadow: 0 4px 15px rgba(30, 41, 59, 0.4);
-            }
-
-            .legend {
-                position: absolute;
-                bottom: 20px;
-                right: 20px;
-                background: rgba(255, 255, 255, 0.9);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 12px;
-                padding: 16px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                font-size: 12px;
-                min-width: 160px;
-            }
-
-            .legend-title {
-                font-weight: 600;
-                margin-bottom: 12px;
-                color: #1e293b;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                text-align: center;
-                border-bottom: 1px solid rgba(0,0,0,0.1);
-                padding-bottom: 8px;
-            }
-
-            .legend-item {
-                display: flex;
-                align-items: center;
-                margin-bottom: 8px;
-                gap: 10px;
-                padding: 4px 0;
-            }
-
-            .legend-item:last-child {
-                margin-bottom: 0;
-            }
-
-            .legend-shape {
-                width: 16px;
-                height: 16px;
-                flex-shrink: 0;
-                border: 2px solid;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 10px;
-            }
-
-            .legend-shape.circle {
-                border-radius: 50%%;
-            }
-
-            .legend-shape.square {
-                border-radius: 3px;
-            }
-
-            .legend-shape.diamond {
-                transform: rotate(45deg);
-                border-radius: 2px;
-            }
-
-            .legend-shape.triangle {
-                width: 0;
-                height: 0;
-                border-left: 8px solid transparent;
-                border-right: 8px solid transparent;
-                border-bottom: 14px solid;
-                border-top: none;
-                background: none !important;
-            }
-
-            .legend-label {
-                color: #64748b;
-                font-size: 11px;
-                font-weight: 500;
-            }
-
-            .info-panel {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                width: 240px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 12px;
-                padding: 16px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                display: none;
-                font-size: 12px;
-                z-index: 999;
-            }
-
-            .info-title {
-                font-weight: 600;
-                margin-bottom: 10px;
-                color: #1e293b;
-                font-size: 14px;
-                border-bottom: 1px solid rgba(0,0,0,0.1);
-                padding-bottom: 6px;
-            }
-
-            .info-detail {
-                margin-bottom: 6px;
-                color: #64748b;
-                font-size: 11px;
-            }
-
-            .info-detail strong {
-                color: #374151;
-                font-weight: 600;
-            }
-
-            .loading {
-                position: absolute;
-                top: 50%%;
-                left: 50%%;
-                transform: translate(-50%%, -50%%);
-                color: white;
-                font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                background: rgba(255,255,255,0.1);
-                padding: 20px 30px;
-                border-radius: 12px;
-                backdrop-filter: blur(10px);
-            }
-
-            .loading::before {
-                content: '';
-                width: 20px;
-                height: 20px;
-                border: 2px solid rgba(255, 255, 255, 0.3);
-                border-top: 2px solid white;
-                border-radius: 50%%;
-                animation: spin 1s linear infinite;
-            }
-
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-
-            @media (max-width: 768px) {
-                .main {
-                    margin: 8px;
-                }
-                .header {
-                    padding: 12px 16px;
-                }
-                .header h1 {
-                    font-size: 16px;
-                }
-                .controls {
-                    flex-direction: column;
-                    top: 16px;
-                    left: 16px;
-                }
-                .legend {
-                    bottom: 16px;
-                    right: 16px;
-                    min-width: 140px;
-                }
-                .info-panel {
-                    width: 220px;
-                    right: 16px;
-                    top: 16px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>
-                <span style="font-size: 16px;">🔄</span>
-                %s
-            </h1>
-            <div class="header-actions">
-                <button class="btn" onclick="fitGraph()">🎯 전체 보기</button>
-            </div>
-        </div>
-        
-        <div class="main">
-            <div id="loading" class="loading">Loading</div>
-            <div id="cy" style="display: none;"></div>
-            
-            <div class="controls">
-                <button class="btn active" onclick="changeLayout('hierarchy')">📊 플로우</button>
-                <button class="btn" onclick="changeLayout('breadthfirst')">🌐 방사형</button>
-                <button class="btn" onclick="changeLayout('circle')">⭕ 원형</button>
-            </div>
-            
-            <div class="legend">
-                <div class="legend-title">노드 타입</div>
-                <div class="legend-item">
-                    <div class="legend-shape circle" style="background: #dbeafe; border-color: #3b82f6;">👤</div>
-                    <span class="legend-label">Client</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-shape square" style="background: #dcfce7; border-color: #16a34a;">🔧</div>
-                    <span class="legend-label">API</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-shape diamond" style="background: #fef3c7; border-color: #d97706;">⚙️</div>
-                    <span class="legend-label">Service</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-shape square" style="background: #e0e7ff; border-color: #7c3aed;">🗄️</div>
-                    <span class="legend-label">Database</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-shape triangle" style="border-bottom-color: #dc2626;">⚠️</div>
-                    <span class="legend-label">Error</span>
-                </div>
-            </div>
-            
-            <div id="info-panel" class="info-panel">
-                <div id="info-title" class="info-title">Node Details</div>
-                <div id="info-details"></div>
-            </div>
-        </div>
-
-        <script>
-            if (typeof cytoscape !== 'undefined' && typeof dagre !== 'undefined') {
-                cytoscape.use(cytoscapeDagre);
-            }
-
-            let cy = null;
-
-            document.addEventListener('DOMContentLoaded', function() {
-                initializeCytoscape();
-            });
-
-            function initializeCytoscape() {
-                try {
-                    cy = cytoscape({
-                        container: document.getElementById('cy'),
+                        <!DOCTYPE html>
+                        <html lang="ko">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>%s - API Flow</title>
+                            <link rel="preconnect" href="https://fonts.googleapis.com">
+                            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                            <link href="https://fonts.googleapis.com/css2?family=%s&display=swap" rel="stylesheet">
+                            <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+                            <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+                            <script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
+                            <style>
+                                %s
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <h1>
+                                    <div class="header-icon">FL</div>
+                                    %s
+                                </h1>
+                                <div class="header-actions">
+                                    <button class="btn" onclick="fitGraph()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                                        </svg>
+                                        전체 보기
+                                    </button>
+                                </div>
+                            </div>
                         
-                        elements: %s,
+                            <div class="main">
+                                <div id="loading" class="loading">플로우차트 생성 중...</div>
+                                <div id="cy" style="display: none;"></div>
                         
-                        style: [
-                            {
-                                selector: 'node',
-                                style: {
-                                    'label': 'data(label)',
-                                    'text-valign': 'center',
-                                    'text-halign': 'center',
-                                    'font-size': '11px',
-                                    'font-weight': '600',
-                                    'color': '#374151',
-                                    'text-wrap': 'wrap',
-                                    'text-max-width': '90px',
-                                    'width': '80px',
-                                    'height': '50px',
-                                    'border-width': 2,
-                                    'transition-duration': '0.3s',
-                                    'box-shadow': '0 2px 10px rgba(0,0,0,0.1)'
+                                <div class="controls">
+                                    <button class="btn active" onclick="changeLayout('dagre')">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M3 3h18v4H3V3zm0 6h18v4H3V9zm0 6h18v4H3v-4z"/>
+                                        </svg>
+                                        다이어그램
+                                    </button>
+                                    <button class="btn" onclick="changeLayout('hierarchy')">계층형</button>
+                                    <button class="btn" onclick="changeLayout('breadthfirst')">방사형</button>
+                                    <button class="btn" onclick="changeLayout('circle')">원형</button>
+                                </div>
+                            </div>
+                        
+                            <script>
+                                if (typeof cytoscape !== 'undefined' && typeof dagre !== 'undefined') {
+                                    cytoscape.use(cytoscapeDagre);
                                 }
-                            },
-                            
-                            // Client/External - 원형 (심플)
-                            {
-                                selector: 'node[type = "client"], node[type = "external"]',
-                                style: {
-                                    'background-color': '#dbeafe',
-                                    'border-color': '#3b82f6',
-                                    'shape': 'ellipse',
-                                    'width': '90px',
-                                    'height': '60px'
+                        
+                                let cy = null;
+                        
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    initializeCytoscape();
+                                });
+                        
+                                function initializeCytoscape() {
+                                    try {
+                                        cy = cytoscape({
+                                            container: document.getElementById('cy'),
+                                            elements: %s,
+                                            style: %s,
+                                            layout: {
+                                                name: 'dagre',
+                                                directed: true,
+                                                padding: 50,
+                                                spacingFactor: 1.3,
+                                                animate: true,
+                                                animationDuration: 500,
+                                                rankDir: '%s'
+                                            }
+                                        });
+                        
+                                        // 이벤트 핸들러
+                                        cy.on('tap', 'node', function(evt) {
+                                            console.log('Node clicked:', evt.target.data());
+                                        });
+                        
+                                        // 로딩 완료
+                                        document.getElementById('loading').style.display = 'none';
+                                        document.getElementById('cy').style.display = 'block';
+                        
+                                        setTimeout(() => cy.fit(null, 40), 100);
+                        
+                                    } catch (error) {
+                                        console.error('Cytoscape 초기화 오류:', error);
+                                        document.getElementById('loading').textContent = '로드 중 오류가 발생했습니다';
+                                    }
                                 }
-                            },
-                            
-                            // API/Endpoint - 사각형 (심플)
-                            {
-                                selector: 'node[type = "api"], node[type = "endpoint"]',
-                                style: {
-                                    'background-color': '#dcfce7',
-                                    'border-color': '#16a34a',
-                                    'shape': 'rectangle',
-                                    'width': '90px',
-                                    'height': '50px'
+                        
+                                function fitGraph() {
+                                    if (cy) cy.fit(null, 50);
                                 }
-                            },
-                            
-                            // Service/Process - 다이아몬드 (심플)
-                            {
-                                selector: 'node[type = "service"], node[type = "process"]',
-                                style: {
-                                    'background-color': '#fef3c7',
-                                    'border-color': '#d97706',
-                                    'shape': 'diamond',
-                                    'width': '70px',
-                                    'height': '70px'
+                        
+                                function changeLayout(layoutName) {
+                                    if (!cy) return;
+                        
+                                    const layouts = {
+                                        'dagre': {
+                                            name: 'dagre',
+                                            directed: true,
+                                            padding: 50,
+                                            spacingFactor: 1.3,
+                                            animate: true,
+                                            animationDuration: 500,
+                                            rankDir: '%s'
+                                        },
+                                        'hierarchy': {
+                                            name: 'breadthfirst',
+                                            directed: true,
+                                            padding: 50,
+                                            spacingFactor: 1.4,
+                                            animate: true,
+                                            animationDuration: 500
+                                        },
+                                        'breadthfirst': {
+                                            name: 'breadthfirst',
+                                            directed: true,
+                                            padding: 50,
+                                            spacingFactor: 1.6,
+                                            animate: true,
+                                            animationDuration: 500
+                                        },
+                                        'circle': {
+                                            name: 'circle',
+                                            padding: 60,
+                                            animate: true,
+                                            animationDuration: 500
+                                        }
+                                    };
+                        
+                                    cy.layout(layouts[layoutName]).run();
+                        
+                                    document.querySelectorAll('.controls .btn').forEach(btn => btn.classList.remove('active'));
+                                    event.target.classList.add('active');
                                 }
-                            },
-                            
-                            // Database - 둥근 사각형 (심플)
-                            {
-                                selector: 'node[type = "db"], node[type = "database"]',
-                                style: {
-                                    'background-color': '#e0e7ff',
-                                    'border-color': '#7c3aed',
-                                    'shape': 'round-rectangle',
-                                    'width': '85px',
-                                    'height': '55px'
-                                }
-                            },
-                            
-                            // Error - 삼각형 (심플)
-                            {
-                                selector: 'node[type = "error"], node[type = "end"]',
-                                style: {
-                                    'background-color': '#fee2e2',
-                                    'border-color': '#dc2626',
-                                    'shape': 'triangle',
-                                    'width': '60px',
-                                    'height': '60px'
-                                }
-                            },
-                            
-                            // 엣지 스타일
-                            {
-                                selector: 'edge',
-                                style: {
-                                    'curve-style': 'bezier',
-                                    'target-arrow-shape': 'triangle',
-                                    'target-arrow-color': '#64748b',
-                                    'line-color': '#64748b',
-                                    'width': 2,
-                                    'label': 'data(label)',
-                                    'font-size': '10px',
-                                    'color': '#64748b',
-                                    'text-background-color': 'rgba(255,255,255,0.9)',
-                                    'text-background-opacity': 1,
-                                    'text-background-padding': '3px',
-                                    'text-background-shape': 'roundrectangle'
-                                }
-                            },
+                            </script>
+                        </body>
+                        </html>
+                        """,
+                req.getTitle(),
+                getFontFamily(themeVariables),
+                themeCSS,
+                req.getTitle(),
+                elementsJson.toString(),
+                generateCytoscapeStyles(theme, themeVariables, classes),
+                rankDir,
+                rankDir);
+    }
 
-                            {
-                                selector: 'edge[type = "success"]',
-                                style: {
-                                    'line-color': '#16a34a',
-                                    'target-arrow-color': '#16a34a'
-                                }
-                            },
-                            {
-                                selector: 'edge[type = "error"]',
-                                style: {
-                                    'line-color': '#dc2626',
-                                    'target-arrow-color': '#dc2626',
-                                    'line-style': 'dashed'
-                                }
-                            },
 
-                            {
-                                selector: 'node:hover',
-                                style: {
-                                    'border-width': 3,
-                                    'transform': 'scale(1.05)',
-                                    'box-shadow': '0 4px 20px rgba(0,0,0,0.2)'
-                                }
-                            }
-                        ],
+    private String generateThemeCSS(String theme, Map<String, Object> themeVariables, Map<String, Object> classes) {
+        // 테마별 기본 색상 정의
+        Map<String, String> themeDefaults = getThemeDefaults(theme);
 
-                        layout: {
-                            name: 'breadthfirst',
-                            directed: true,
-                            roots: '#' + findRootNode(),
-                            padding: 35,
-                            spacingFactor: 1.4,
-                            animate: true,
-                            animationDuration: 500,
-                            animationEasing: 'ease-out'
+        String primaryColor = getThemeVar(themeVariables, "primaryColor", themeDefaults.get("primaryColor"));
+        String primaryBorderColor = getThemeVar(themeVariables, "primaryBorderColor", themeDefaults.get("primaryBorderColor"));
+        String lineColor = getThemeVar(themeVariables, "lineColor", themeDefaults.get("lineColor"));
+        String fontFamily = getThemeVar(themeVariables, "fontFamily", themeDefaults.get("fontFamily"));
+
+        return String.format("""
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
                         }
-                    });
-
-                    // 이벤트 핸들러
-                    cy.on('tap', 'node', function(evt) {
-                        showNodeInfo(evt.target);
-                    });
-
-                    cy.on('tap', function(evt) {
-                        if (evt.target === cy) {
-                            hideNodeInfo();
+                        
+                        body {
+                            font-family: '%s';
+                            background: %s;
+                            color: %s;
+                            height: 100vh;
+                            overflow: hidden;
+                            font-weight: 400;
                         }
-                    });
+                        
+                        .header {
+                            background: rgba(255, 255, 255, 0.95);
+                            border-bottom: 1px solid %s;
+                            padding: 20px 32px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+                            z-index: 100;
+                            position: relative;
+                        }
+                        
+                        .header h1 {
+                            font-size: 18px;
+                            font-weight: 600;
+                            color: %s;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            letter-spacing: -0.01em;
+                        }
+                        
+                        .header-icon {
+                            width: 24px;
+                            height: 24px;
+                            background: %s;
+                            border-radius: 4px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-size: 12px;
+                            font-weight: 600;
+                        }
+                        
+                        .main {
+                            height: calc(100vh - 81px);
+                            position: relative;
+                            background: rgba(255, 255, 255, 0.9);
+                            margin: 20px;
+                            border: 1px solid %s;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                            border-radius: 12px;
+                            overflow: hidden;
+                        }
+                        
+                        #cy {
+                            width: 100%%;
+                            height: 100%%;
+                            background: %s;
+                        }
+                        
+                        .controls {
+                            position: absolute;
+                            top: 24px;
+                            left: 24px;
+                            z-index: 1000;
+                            background: rgba(255, 255, 255, 0.9);
+                            border: 1px solid %s;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                            border-radius: 12px;
+                            display: flex;
+                            padding: 4px;
+                            gap: 2px;
+                        }
+                        
+                        .btn {
+                            padding: 10px 16px;
+                            border: none;
+                            background: transparent;
+                            font-family: '%s', sans-serif;
+                            font-size: 13px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            transition: all 0.15s ease;
+                            color: #525252;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            white-space: nowrap;
+                            border-radius: 8px;
+                        }
+                        
+                        .btn:hover {
+                            background: rgba(255,255,255,0.8);
+                            color: #1a1a1a;
+                        }
+                        
+                        .btn.active {
+                            background: %s;
+                            color: #ffffff;
+                        }
+                        
+                        .loading {
+                            position: absolute;
+                            top: 50%%;
+                            left: 50%%;
+                            transform: translate(-50%%, -50%%);
+                            color: %s;
+                            font-size: 14px;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            background: rgba(255,255,255,0.9);
+                            padding: 24px 32px;
+                            border-radius: 12px;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                        }
+                        
+                        .loading::before {
+                            content: '';
+                            width: 18px;
+                            height: 18px;
+                            border: 2px solid rgba(0,0,0,0.1);
+                            border-top: 2px solid %s;
+                            border-radius: 50%%;
+                            animation: spin 1s linear infinite;
+                        }
+                        
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                        """,
+                fontFamily.replace(",", "', '"),
+                primaryColor,
+                primaryBorderColor,
+                primaryBorderColor,
+                primaryBorderColor,
+                primaryBorderColor,
+                primaryBorderColor,
+                primaryColor,
+                primaryBorderColor,
+                fontFamily.replace(",", "', '"),
+                primaryBorderColor,
+                primaryBorderColor,
+                primaryBorderColor);
+    }
 
-                    // 로딩 완료
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('cy').style.display = 'block';
+    private Map<String, String> getThemeDefaults(String theme) {
+        Map<String, String> defaults = new HashMap<>();
 
-                    setTimeout(() => cy.fit(null, 50), 600);
-
-                } catch (error) {
-                    console.error('Error:', error);
-                    document.getElementById('loading').textContent = 'Error loading';
-                }
+        if (theme != null) {
+            switch (theme.toLowerCase()) {
+                case "dark":
+                    defaults.put("primaryColor", "#1a1a1a");
+                    defaults.put("primaryBorderColor", "#404040");
+                    defaults.put("lineColor", "#666666");
+                    defaults.put("fontFamily", "Inter, Pretendard, sans-serif");
+                    break;
+                case "light":
+                    defaults.put("primaryColor", "#ffffff");
+                    defaults.put("primaryBorderColor", "#e5e5e5");
+                    defaults.put("lineColor", "#9ca3af");
+                    defaults.put("fontFamily", "Inter, Pretendard, sans-serif");
+                    break;
+                case "blue":
+                    defaults.put("primaryColor", "#eff6ff");
+                    defaults.put("primaryBorderColor", "#3b82f6");
+                    defaults.put("lineColor", "#60a5fa");
+                    defaults.put("fontFamily", "Inter, Pretendard, sans-serif");
+                    break;
+                case "green":
+                    defaults.put("primaryColor", "#ecfdf5");
+                    defaults.put("primaryBorderColor", "#10b981");
+                    defaults.put("lineColor", "#34d399");
+                    defaults.put("fontFamily", "Inter, Pretendard, sans-serif");
+                    break;
+                case "purple":
+                    defaults.put("primaryColor", "#faf5ff");
+                    defaults.put("primaryBorderColor", "#8b5cf6");
+                    defaults.put("lineColor", "#a78bfa");
+                    defaults.put("fontFamily", "Inter, Pretendard, sans-serif");
+                    break;
+                default:
+                    // 기본 테마
+                    defaults.put("primaryColor", "#f8fafc");
+                    defaults.put("primaryBorderColor", "#1a202c");
+                    defaults.put("lineColor", "#64748b");
+                    defaults.put("fontFamily", "Inter, sans-serif");
+                    break;
             }
+        } else {
+            // theme이 null인 경우 기본값
+            defaults.put("primaryColor", "#f8fafc");
+            defaults.put("primaryBorderColor", "#1a202c");
+            defaults.put("lineColor", "#64748b");
+            defaults.put("fontFamily", "Inter, sans-serif");
+        }
 
-            function findRootNode() {
-                const elements = %s;
-                const sources = new Set();
-                const targets = new Set();
-
-                elements.forEach(el => {
-                    if (el.data.source) {
-                        sources.add(el.data.source);
-                        targets.add(el.data.target);
-                    }
-                });
-
-                for (let source of sources) {
-                    if (!targets.has(source)) {
-                        return source;
-                    }
-                }
-
-                return sources.values().next().value || 'A';
-            }
-
-            function fitGraph() {
-                if (cy) cy.fit(null, 50);
-            }
-
-            function changeLayout(layoutName) {
-                if (!cy) return;
-
-                const layouts = {
-                    'hierarchy': {
-                        name: 'breadthfirst',
-                        directed: true,
-                        roots: '#' + findRootNode(),
-                        padding: 35,
-                        spacingFactor: 1.4,
-                        animate: true,
-                        animationDuration: 500
-                    },
-                    'breadthfirst': {
-                        name: 'breadthfirst',
-                        directed: true,
-                        padding: 35,
-                        spacingFactor: 1.6,
-                        animate: true,
-                        animationDuration: 500
-                    },
-                    'circle': {
-                        name: 'circle',
-                        padding: 35,
-                        animate: true,
-                        animationDuration: 500
-                    }
-                };
-
-                cy.layout(layouts[layoutName]).run();
-
-                document.querySelectorAll('.controls .btn').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
-            }
-
-            function showNodeInfo(node) {
-                const panel = document.getElementById('info-panel');
-                const title = document.getElementById('info-title');
-                const details = document.getElementById('info-details');
-
-                title.textContent = node.data('label').split('\\n')[0];
-
-                let html = '';
-                if (node.data('method')) html += `<div class="info-detail"><strong>Method:</strong> $${node.data('method')}</div>`;
-                if (node.data('endpoint')) html += `<div class="info-detail"><strong>Path:</strong> $${node.data('endpoint')}</div>`;
-                html += `<div class="info-detail"><strong>Type:</strong> $${node.data('type')}</div>`;
-                html += `<div class="info-detail"><strong>ID:</strong> $${node.data('id')}</div>`;
-
-                details.innerHTML = html;
-                panel.style.display = 'block';
-            }
-
-            function hideNodeInfo() {
-                document.getElementById('info-panel').style.display = 'none';
-            }
-        </script>
-    </body>
-    </html>
-    """, req.getTitle() != null ? req.getTitle() : "API Flow", req.getTitle() != null ? req.getTitle() : "API Flow", elementsJson.toString(), elementsJson.toString());
+        return defaults;
     }
 
 
 
+    private String generateCytoscapeStyles(String theme, Map<String, Object> themeVariables, Map<String, Object> classes) {
+        // 테마별 기본 색상 정의
+        Map<String, String> themeDefaults = getThemeDefaults(theme);
+        Map<String, Map<String, String>> classDefaults = getClassDefaults(theme);
+
+        String primaryColor = getThemeVar(themeVariables, "primaryColor", themeDefaults.get("primaryColor"));
+        String primaryBorderColor = getThemeVar(themeVariables, "lineColor", themeDefaults.get("lineColor"));
+        String lineColor = getThemeVar(themeVariables, "lineColor", themeDefaults.get("lineColor"));
+        String fontFamily = getFontFamily(themeVariables);
+
+        StringBuilder styles = new StringBuilder();
+
+        // 기본 노드 스타일
+        styles.append("""
+            {
+                selector: 'node',
+                style: {
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-family': '%s',
+                    'font-size': '12px',
+                    'font-weight': '600',
+                    'color': '%s',
+                    'text-wrap': 'wrap',
+                    'text-max-width': '120px',
+                    'width': '110px',
+                    'height': '65px',
+                    'border-width': 2,
+                    'transition-duration': '0.2s',
+                    'overlay-opacity': 0.05
+                }
+            },
+            """.formatted(fontFamily, primaryBorderColor));
+
+        // 노드 타입별 스타일
+        styles.append("""
+            {
+                selector: 'node[type = "external"]',
+                style: {
+                    'background-color': '%s',
+                    'border-color': '%s',
+                    'shape': 'ellipse',
+                    'width': '120px',
+                    'height': '70px'
+                }
+            },
+            {
+                selector: 'node[type = "service"]',
+                style: {
+                    'background-color': '%s',
+                    'border-color': '%s',
+                    'shape': 'rectangle',
+                    'width': '110px',
+                    'height': '65px'
+                }
+            },
+            {
+                selector: 'node[type = "db"]',
+                style: {
+                    'background-color': '%s',
+                    'border-color': '%s',
+                    'shape': 'round-rectangle',
+                    'width': '105px',
+                    'height': '70px'
+                }
+            },
+            """.formatted(
+                primaryColor, primaryBorderColor,
+                primaryColor, primaryBorderColor,
+                primaryColor, primaryBorderColor));
+
+        // 클래스별 스타일 (사용자 정의 또는 테마 기본값)
+        for (Map.Entry<String, Map<String, String>> entry : classDefaults.entrySet()) {
+            String className = entry.getKey();
+            Map<String, String> classColors = entry.getValue();
+
+            // 사용자 정의 classes가 있는 경우 우선 적용
+            if (classes != null && classes.containsKey(className)) {
+                Map<String, Object> userClass = (Map<String, Object>) classes.get(className);
+                String fill = (String) userClass.getOrDefault("fill", classColors.get("fill"));
+                String stroke = (String) userClass.getOrDefault("stroke", classColors.get("stroke"));
+
+                styles.append("""
+                    {
+                        selector: 'node[nodeClass = "%s"]',
+                        style: {
+                            'background-color': '%s',
+                            'border-color': '%s'
+                        }
+                    },
+                    """.formatted(className, fill, stroke));
+            } else {
+                // 테마 기본값 적용
+                styles.append("""
+                    {
+                        selector: 'node[nodeClass = "%s"]',
+                        style: {
+                            'background-color': '%s',
+                            'border-color': '%s'
+                        }
+                    },
+                    """.formatted(className, classColors.get("fill"), classColors.get("stroke")));
+            }
+        }
+
+        // 엣지 스타일
+        styles.append("""
+            {
+                selector: 'edge',
+                style: {
+                    'curve-style': 'straight',
+                    'target-arrow-shape': 'triangle',
+                    'target-arrow-color': '%s',
+                    'line-color': '%s',
+                    'width': 2,
+                    'label': 'data(label)',
+                    'font-size': '11px',
+                    'font-weight': '500',
+                    'font-family': '%s',
+                    'color': '%s',
+                    'text-background-color': 'rgba(255,255,255,0.9)',
+                    'text-background-opacity': 1,
+                    'text-background-padding': '4px',
+                    'source-distance-from-node': 5,
+                    'target-distance-from-node': 5
+                }
+            },
+            {
+                selector: 'edge[styleType = "thick"]',
+                style: {
+                    'width': 4,
+                    'line-color': '%s',
+                    'target-arrow-color': '%s'
+                }
+            },
+            {
+                selector: 'edge[styleType = "dotted"]',
+                style: {
+                    'line-style': 'dotted',
+                    'width': 2
+                }
+            }
+            """.formatted(lineColor, lineColor, fontFamily, primaryBorderColor, primaryBorderColor, primaryBorderColor));
+
+        return "[" + styles.toString() + "]";
+    }
+
+    private Map<String, Map<String, String>> getClassDefaults(String theme) {
+        Map<String, Map<String, String>> classDefaults = new HashMap<>();
+
+        if (theme != null) {
+            switch (theme.toLowerCase()) {
+                case "dark":
+                    classDefaults.put("primary", Map.of("fill", "#374151", "stroke", "#6b7280"));
+                    classDefaults.put("accent", Map.of("fill", "#451a03", "stroke", "#ea580c"));
+                    classDefaults.put("muted", Map.of("fill", "#1f2937", "stroke", "#4b5563"));
+                    break;
+                case "light":
+                    classDefaults.put("primary", Map.of("fill", "#f8fafc", "stroke", "#64748b"));
+                    classDefaults.put("accent", Map.of("fill", "#fef3c7", "stroke", "#f59e0b"));
+                    classDefaults.put("muted", Map.of("fill", "#f1f5f9", "stroke", "#94a3b8"));
+                    break;
+                case "blue":
+                    classDefaults.put("primary", Map.of("fill", "#dbeafe", "stroke", "#2563eb"));
+                    classDefaults.put("accent", Map.of("fill", "#fef3c7", "stroke", "#f59e0b"));
+                    classDefaults.put("muted", Map.of("fill", "#f1f5f9", "stroke", "#94a3b8"));
+                    break;
+                case "green":
+                    classDefaults.put("primary", Map.of("fill", "#dcfce7", "stroke", "#16a34a"));
+                    classDefaults.put("accent", Map.of("fill", "#fef3c7", "stroke", "#f59e0b"));
+                    classDefaults.put("muted", Map.of("fill", "#f1f5f9", "stroke", "#94a3b8"));
+                    break;
+                case "purple":
+                    classDefaults.put("primary", Map.of("fill", "#ede9fe", "stroke", "#7c3aed"));
+                    classDefaults.put("accent", Map.of("fill", "#fef3c7", "stroke", "#f59e0b"));
+                    classDefaults.put("muted", Map.of("fill", "#f1f5f9", "stroke", "#94a3b8"));
+                    break;
+                default:
+                    classDefaults.put("primary", Map.of("fill", "#E3F2FD", "stroke", "#1976D2"));
+                    classDefaults.put("accent", Map.of("fill", "#FFF3E0", "stroke", "#F57C00"));
+                    classDefaults.put("muted", Map.of("fill", "#F5F5F5", "stroke", "#9E9E9E"));
+                    break;
+            }
+        } else {
+            classDefaults.put("primary", Map.of("fill", "#E3F2FD", "stroke", "#1976D2"));
+            classDefaults.put("accent", Map.of("fill", "#FFF3E0", "stroke", "#F57C00"));
+            classDefaults.put("muted", Map.of("fill", "#F5F5F5", "stroke", "#9E9E9E"));
+        }
+
+        return classDefaults;
+    }
 
 
+    private String getThemeVar(Map<String, Object> themeVariables, String key, String defaultValue) {
+        if (themeVariables == null) return defaultValue;
+        Object value = themeVariables.get(key);
+        return value != null ? String.valueOf(value) : defaultValue;
+    }
+
+    private String getFontFamily(Map<String, Object> themeVariables) {
+        String fontFamily = getThemeVar(themeVariables, "fontFamily", "Inter, sans-serif");
+        return fontFamily.replace(" ", "+");
+    }
+
+    private String getRankDir(String layout) {
+        return switch (layout.toUpperCase()) {
+            case "LR" -> "LR";
+            case "RL" -> "RL";
+            case "BT" -> "BT";
+            default -> "TB";
+        };
+    }
 
 
     private String toMermaid(FlowChartRequest req) {
