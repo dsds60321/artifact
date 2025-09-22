@@ -23,6 +23,10 @@ public class ApiDocsFlow {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_idx", referencedColumnName = "idx")
+    private Project project;
+
     @Column(nullable = false)
     private String title;
 

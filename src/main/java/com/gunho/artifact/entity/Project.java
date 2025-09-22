@@ -43,10 +43,11 @@ public class Project {
     @Column(length = 1024)
     private String description;
 
-    @Column(name = "updated_by", nullable = false, length = 64)
+    @Builder.Default
+    @Column(name = "updated_by", length = 64)
     private String updatedBy = "";
 
-    @Column(name = "created_by", nullable = false, length = 64)
+    @Column(name = "created_by", length = 64)
     private String createdBy = "";
 
     @UpdateTimestamp
@@ -56,6 +57,12 @@ public class Project {
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "project" , cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ApiDocsDocument> documents = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project" , cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ApiDocsFlow> flows = new ArrayList<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ArtifactRelation> relations = new ArrayList<>();

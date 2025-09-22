@@ -52,18 +52,21 @@ class Index {
     bindEvents() {
 
         // 새 프로젝트 (헤더의 버튼)
-        document.getElementById('new-project')?.addEventListener('click', async () => {
-            try {
-                const {data} = await axios.get('/project/new');
-                ModalManager.openModal({ content : data , callBack : () => {
-                    document.querySelector('#modal-submit').addEventListener('click', async () => {
-                       await this.createProject()
-                    });
-                }});
-            } catch (error) {
-                NotificationManager.showError('프로젝트 생성 모달을 불러오는데 실패했습니다.');
-            }
-        });
+        document.querySelectorAll('#new-project').forEach(elem => {
+            elem.addEventListener('click', async () => {
+                try {
+                    const {data} = await axios.get('/project/new');
+                    ModalManager.openModal({ content : data , callBack : () => {
+                            document.querySelector('#modal-submit').addEventListener('click', async () => {
+                                await this.createProject()
+                            });
+                        }});
+                } catch (error) {
+                    NotificationManager.showError('프로젝트 생성 모달을 불러오는데 실패했습니다.');
+                }
+            });
+        })
+
 
         // 프로젝트 삭제
         document.querySelectorAll('#delete-project').forEach(elem => {

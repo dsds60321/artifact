@@ -1,6 +1,11 @@
 package com.gunho.artifact.dto;
 
+import com.gunho.artifact.entity.ApiDocsDocument;
+import com.gunho.artifact.entity.ApiDocsFlow;
+import com.gunho.artifact.entity.ArtifactRelation;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDateTime;
 
 public class ArtifactDto {
 
@@ -16,7 +21,19 @@ public class ArtifactDto {
         public static Request withIdx(ArtifactDto.Request req, long idx) {
             return new Request(idx, req.projectIdx, req.title, req.subType());
         }
+    }
 
-
+    public record DetailResponse(Long projectIdx,
+                                 Long artifactSubIdx,
+                                 String title,
+                                 String subType,
+                                 LocalDateTime createdAt,
+                                 LocalDateTime updatedAt) {
+        public static DetailResponse from(ApiDocsFlow flow) {
+            return new DetailResponse(flow.getProject().getIdx(), flow.getIdx(), flow.getTitle(), ArtifactRelation.SubType.FLOW.name(), flow.getCreatedAt(), flow.getUpdatedAt());
+        }
+        public static DetailResponse from(ApiDocsDocument docsDocument) {
+            return new DetailResponse(docsDocument.getProject().getIdx(), docsDocument.getIdx(), docsDocument.getTitle(), ArtifactRelation.SubType.FLOW.name(), docsDocument.getCreatedAt(), docsDocument.getUpdatedAt());
+        }
     }
 }
