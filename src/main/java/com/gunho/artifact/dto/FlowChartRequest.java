@@ -19,7 +19,7 @@ public class FlowChartRequest {
     @NotNull
     private List<Map<String, Object>> edges; // {from,to,label}
 
-    private Map<String, Object> themeVariables;
-    private Map<String, Object> classes;
+    private Map<String, Object> themeVariables; // 비 필수
+    private Map<String, Object> classes; // 비 필수
 }
 

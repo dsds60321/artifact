@@ -30,13 +30,13 @@ public class GenerateController {
 
     @PostMapping(value = "/flowchart", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<FileArtifact>> flowchart(@Valid @RequestBody FlowChartRequest req) throws Exception {
-        return ResponseEntity.ok(flowChartGenerator2.generate(req));
+        return ResponseEntity.ok(flowChartGenerator3.generate(req));
     }
 
     // URL 기반 응답(파일 저장 후 링크 반환)
     @PostMapping(value = "/flowchart-url", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UrlArtifact>> flowchartUrl(@Valid @RequestBody FlowChartRequest req) throws Exception {
-        return ResponseEntity.ok(flowChartGenerator2.generateAsFiles(req));
+        return ResponseEntity.ok(flowChartGenerator3.generateAsFiles(req));
     }
 
     @PostMapping(value = "/ppt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

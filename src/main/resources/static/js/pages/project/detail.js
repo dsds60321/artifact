@@ -196,7 +196,7 @@ class Detail {
             case 'docs':
                 this.initApiDocs();
                 break;
-            case 'flow':
+            case 'flows':
                 this.initFlowDiagram();
                 break;
             default:
@@ -217,7 +217,14 @@ class Detail {
 
     initFlowDiagram() {
         // Flow 다이어그램 초기화 로직
-        console.log('Flow 다이어그램 초기화');
+        // DOM이 완전히 로드된 후 실행
+        setTimeout(() => {
+            if (window.ApiFlowManager) {
+                window.apiFlowsManager = new ApiFlowManager();
+            } else {
+                console.error('ApiFlowManager 찾을 수 없습니다.');
+            }
+        }, 100);
     }
 
 
@@ -255,7 +262,7 @@ class Detail {
 
             return `
                 <div class="header">
-                    <div class="container">
+                    <div class="container max-w-100">
                         <h1><i class="fas ${config.icon}"></i> <span>${config.title}</span></h1>
                         <div class="breadcrumb">
                             <span>${config.title}</span>

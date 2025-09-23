@@ -41,6 +41,10 @@ body {
     padding: 0 20px;
 }
 
+.container.max-w-100 {
+    max-width: 100%;
+}
+
 .header {
     background: var(--white);
     border-bottom: 1px solid var(--border-color);

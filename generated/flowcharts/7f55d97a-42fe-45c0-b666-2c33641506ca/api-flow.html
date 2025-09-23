@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{TITLE}} - API Flow</title>
+    <title>회원가입 플로우(스타일 적용) - API Flow</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={{FONT_FAMILY}}&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter,+Pretendard,+sans-serif&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
     <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
     <script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
@@ -147,14 +147,42 @@
         }
 
         /* 테마별 동적 스타일 */
-        {{THEME_STYLES}}
+        .theme-base {
+    --primary-color: #FFFFFF;
+    --primary-border-color: #D1D5DB;
+    --bg-color: #ffffff;
+    --text-color: #374151;
+}
+
+.theme-base body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.theme-base .header {
+    border-bottom: 1px solid var(--primary-border-color);
+}
+
+.theme-base .header-icon {
+    background: var(--primary-border-color);
+}
+
+.theme-base .btn.active {
+    background: var(--primary-border-color);
+    color: white;
+}
+
+.theme-base .loading::before {
+    border-top-color: var(--primary-border-color);
+}
+
     </style>
 </head>
-<body class="theme-{{THEME}}">
+<body class="theme-base">
 <div class="header">
     <h1>
         <div class="header-icon">FL</div>
-        {{TITLE}}
+        회원가입 플로우(스타일 적용)
     </h1>
     <div class="header-actions">
         <button class="btn" onclick="fitGraph()">
@@ -196,8 +224,233 @@
 
     function initializeCytoscape() {
         try {
-            const elements = {{ELEMENTS_JSON}};
-            const cytoscapeStyles = {{CYTOSCAPE_STYLES}};
+            const elements = [
+{
+  "data": {
+    "id": "A",
+    "label": "Client",
+    "type": "external",
+    "nodeClass": "primary"
+  }
+},
+{
+  "data": {
+    "id": "B",
+    "label": "Auth API",
+    "type": "service",
+    "nodeClass": "primary"
+  }
+},
+{
+  "data": {
+    "id": "V1",
+    "label": "Validate Input",
+    "type": "service",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "X",
+    "label": "Check Duplicate Email",
+    "type": "service",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "H",
+    "label": "Hash Password",
+    "type": "service",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "U",
+    "label": "Create User",
+    "type": "service",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "C",
+    "label": "Users DB",
+    "type": "db",
+    "nodeClass": "accent"
+  }
+},
+{
+  "data": {
+    "id": "A-B",
+    "source": "A",
+    "target": "B",
+    "label": "POST /signup JSON",
+    "styleType": "thick"
+  }
+},
+{
+  "data": {
+    "id": "B-V1",
+    "source": "B",
+    "target": "V1",
+    "label": "PARSE & SANITIZE",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "V1-X",
+    "source": "V1",
+    "target": "X",
+    "label": "OK",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "X-C",
+    "source": "X",
+    "target": "C",
+    "label": "SELECT BY EMAIL",
+    "styleType": "dotted"
+  }
+},
+{
+  "data": {
+    "id": "C-X",
+    "source": "C",
+    "target": "X",
+    "label": "RESULT",
+    "styleType": "dotted"
+  }
+},
+{
+  "data": {
+    "id": "X-A",
+    "source": "X",
+    "target": "A",
+    "label": "EXISTS: 409 CONFLICT",
+    "styleType": "dotted"
+  }
+},
+{
+  "data": {
+    "id": "X-H",
+    "source": "X",
+    "target": "H",
+    "label": "NOT EXISTS",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "H-U",
+    "source": "H",
+    "target": "U",
+    "label": "BCRYPT/SCRYPT",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "U-C",
+    "source": "U",
+    "target": "C",
+    "label": "INSERT USER",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "C-B",
+    "source": "C",
+    "target": "B",
+    "label": "OK",
+    "styleType": ""
+  }
+},
+{
+  "data": {
+    "id": "B-A",
+    "source": "B",
+    "target": "A",
+    "label": "201 CREATED",
+    "styleType": "thick"
+  }
+}
+];
+            const cytoscapeStyles = [
+{
+  "selector": "node",
+  "style": {
+    "background-color": "#FFFFFF",
+    "border-color": "#D1D5DB",
+    "border-width": "2px",
+    "label": "data(label)",
+    "text-valign": "center",
+    "text-halign": "center",
+    "color": "#374151",
+    "font-size": "12px",
+    "font-weight": "500",
+    "text-wrap": "wrap",
+    "text-max-width": "120px",
+    "width": "120px",
+    "height": "60px",
+    "shape": "roundrectangle"
+  }
+},{
+  "selector": "node[type = 'service']",
+  "style": {
+    "background-color": "#FFFFFF",
+    "border-color": "#D1D5DB",
+    "shape": "roundrectangle"
+  }
+},{
+  "selector": "node[type = 'db']",
+  "style": {
+    "background-color": "#FFF3E0",
+    "border-color": "#F57C00",
+    "shape": "barrel"
+  }
+},{
+  "selector": "node[type = 'external']",
+  "style": {
+    "background-color": "#F3E5F5",
+    "border-color": "#7B1FA2",
+    "shape": "hexagon"
+  }
+},{
+  "selector": "edge",
+  "style": {
+    "width": "2px",
+    "line-color": "#D1D5DB",
+    "target-arrow-color": "#D1D5DB",
+    "target-arrow-shape": "triangle",
+    "label": "data(label)",
+    "font-size": "10px",
+    "text-rotation": "autorotate",
+    "text-margin-y": "-10px",
+    "color": "#374151",
+    "curve-style": "bezier"
+  }
+},{
+  "selector": "edge[styleType = 'thick']",
+  "style": {
+    "width": "4px",
+    "line-color": "#D1D5DB",
+    "target-arrow-color": "#D1D5DB"
+  }
+},{
+  "selector": "edge[styleType = 'dotted']",
+  "style": {
+    "line-style": "dotted",
+    "line-color": "#9E9E9E",
+    "target-arrow-color": "#9E9E9E"
+  }
+}
+];
 
             if (!elements || elements.length === 0) {
                 throw new Error('엘리먼트 데이터가 비어있습니다.');
@@ -209,7 +462,7 @@
                 style: cytoscapeStyles,
                 layout: {
                     name: 'dagre',
-                    rankDir: '{{LAYOUT}}',
+                    rankDir: 'LR',
                     spacingFactor: 1.5,
                     nodeDimensionsIncludeLabels: true,
                     animate: true,
@@ -256,7 +509,7 @@
         const layoutOptions = {
             dagre: {
                 name: 'dagre',
-                rankDir: '{{LAYOUT}}',
+                rankDir: 'LR',
                 spacingFactor: 1.5,
                 nodeDimensionsIncludeLabels: true,
                 animate: true,

@@ -6,6 +6,7 @@ import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.ArtifactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Description;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,15 +19,17 @@ public class ArtifactController {
 
     private final ArtifactService artifactService;
 
-    @PostMapping("/new")
-    public @ResponseBody ApiResponse<?> createArtifact(@Valid @RequestBody ArtifactDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
-        return artifactService.create(request, userDetails.getUser());
-    }
-
+    @Description("산출물 등록 모달")
     @GetMapping("/new/{idx}")
     public String newArtifact(Model model,  @PathVariable Long idx) {
         model.addAttribute("projectIdx", idx);
-        return "docs-add";
+        return "project/artifact/modal/docs-add";
+    }
+
+    @Description("산출물 등록")
+    @PostMapping("/new")
+    public @ResponseBody ApiResponse<?> createArtifact(@Valid @RequestBody ArtifactDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        return artifactService.create(request, userDetails.getUser());
     }
 
     @GetMapping("/docs")
