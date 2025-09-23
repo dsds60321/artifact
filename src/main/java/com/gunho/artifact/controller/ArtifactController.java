@@ -2,8 +2,10 @@ package com.gunho.artifact.controller;
 
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.ArtifactDto;
+import com.gunho.artifact.dto.FlowChartDto;
 import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.ArtifactService;
+import com.gunho.artifact.service.FlowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Description;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ArtifactController {
 
     private final ArtifactService artifactService;
+    private final FlowService flowService;
 
     @Description("산출물 등록 모달")
     @GetMapping("/new/{idx}")
@@ -43,13 +46,19 @@ public class ArtifactController {
     }
 
     @GetMapping("/flows")
-    public String flowsAdd() {
+    public String flowsAdd(Model model) {
         return "project/artifact/flows/index";
     }
 
     @GetMapping("/flows/{idx}")
-    public String flowsEdit(@PathVariable Long idx) {
+    public String flowsEdit(Model model, @PathVariable Long idx, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        flowService.getDetailView(model, idx, userDetails.getUser());
         return "project/artifact/flows/index";
     }
 
+    @Description("flow 저장")
+    @PostMapping("/flows")
+    public @ResponseBody ApiResponse<?> flowsCreate(@Valid @RequestBody FlowChartDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        return flowService.saveFlow(request, userDetails.getUser());
+    }
 }

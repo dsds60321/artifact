@@ -239,10 +239,22 @@
     }
 </style>
 <div class="container max-w-100">
+    <div id="server-data"
+         th:data-title="${title ?: ''}"
+         th:data-theme="${theme ?: 'default'}"
+         th:data-layout="${layout ?: 'LR'}"
+         th:data-flow-data="${flowData ?: ''}"
+         th:data-flow-idx="${idx ?: ''}"
+         th:data-project-idx="${projectIdx ?: ''}"
+         th:data-is-edit-mode="${idx != null}"
+         style="display: none;">
+    </div>
+
+
     <form id="flowchartForm" name="flowchartForm">
+        <input type="hidden" name="flowIdx" th:value="${idx}">
         <input type="hidden" name="projectIdx" th:value="${projectIdx}">
         <input type="hidden" name="subType" value="flow">
-
         <!-- 기본 정보 -->
         <div class="card mb-4">
             <div class="card-header">
@@ -253,15 +265,16 @@
                     <div class="form-group">
                         <label class="form-label">플로우차트 제목 <span class="required">*</span></label>
                         <input type="text" class="form-control" name="title" id="title"
+                               th:value="${title}"
                                placeholder="예: 회원가입 플로우" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">레이아웃 방향</label>
                         <select class="form-control" name="layout" id="layout">
-                            <option value="TB">위에서 아래로 (Top to Bottom)</option>
-                            <option value="LR" selected>왼쪽에서 오른쪽으로 (Left to Right)</option>
-                            <option value="BT">아래에서 위로 (Bottom to Top)</option>
-                            <option value="RL">오른쪽에서 왼쪽으로 (Right to Left)</option>
+                            <option value="TB" th:selected="${layout == 'TB'}">위에서 아래로 (Top to Bottom)</option>
+                            <option value="LR" th:selected="${layout == 'LR' or layout == null}">왼쪽에서 오른쪽으로 (Left to Right)</option>
+                            <option value="BT" th:selected="${layout == 'BT'}">아래에서 위로 (Bottom to Top)</option>
+                            <option value="RL" th:selected="${layout == 'RL'}">오른쪽에서 왼쪽으로 (Right to Left)</option>
                         </select>
                     </div>
                 </div>
@@ -277,28 +290,33 @@
                 <div class="form-group">
                     <label class="form-label">테마 선택</label>
                     <div class="theme-selector">
-                        <div class="theme-option" data-theme="default">
+                        <div class="theme-option" data-theme="default"
+                             th:classappend="${theme == 'default' or theme == null} ? 'active' : ''">
                             <div class="theme-preview default"></div>
                             <span>기본</span>
                         </div>
-                        <div class="theme-option active" data-theme="forest">
+                        <div class="theme-option" data-theme="forest"
+                             th:classappend="${theme == 'forest'} ? 'active' : ''">
                             <div class="theme-preview forest"></div>
                             <span>포레스트</span>
                         </div>
-                        <div class="theme-option" data-theme="dark">
+                        <div class="theme-option" data-theme="dark"
+                             th:classappend="${theme == 'dark'} ? 'active' : ''">
                             <div class="theme-preview dark"></div>
                             <span>다크</span>
                         </div>
-                        <div class="theme-option" data-theme="neutral">
+                        <div class="theme-option" data-theme="neutral"
+                             th:classappend="${theme == 'neutral'} ? 'active' : ''">
                             <div class="theme-preview neutral"></div>
                             <span>뉴트럴</span>
                         </div>
-                        <div class="theme-option" data-theme="base">
+                        <div class="theme-option" data-theme="base"
+                             th:classappend="${theme == 'base'} ? 'active' : ''">
                             <div class="theme-preview base"></div>
                             <span>베이스</span>
                         </div>
                     </div>
-                    <input type="hidden" name="theme" id="theme" value="forest">
+                    <input type="hidden" name="theme" id="theme" th:value="${theme ?: 'default'}">
                 </div>
             </div>
         </div>
@@ -315,7 +333,12 @@
             </div>
             <div class="card-body">
                 <div id="nodesList" class="nodes-container">
-                    <!-- 노드들이 동적으로 추가됩니다 -->
+                    <!-- 노드들이 JavaScript로 동적 렌더링됩니다 -->
+                    <div th:if="${flowData == null or flowData == ''}" class="empty-state">
+                        <i class="fas fa-sitemap"></i>
+                        <div>아직 노드가 없습니다.</div>
+                        <div>노드 추가 버튼을 클릭하여 시작하세요.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -332,7 +355,12 @@
             </div>
             <div class="card-body">
                 <div id="edgesList" class="edges-container">
-                    <!-- 연결들이 동적으로 추가됩니다 -->
+                    <!-- 연결들이 JavaScript로 동적 렌더링됩니다 -->
+                    <div th:if="${flowData == null or flowData == ''}" class="empty-state">
+                        <i class="fas fa-link"></i>
+                        <div>아직 연결이 없습니다.</div>
+                        <div>연결 추가 버튼을 클릭하여 시작하세요.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -378,7 +406,8 @@
                             <i class="fas fa-eye"></i> 미리보기
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> 플로우차트 생성
+                            <i class="fas fa-save"></i>
+                            <span th:text="${idx != null} ? '플로우 수정' : '플로우 저장'">플로우 저장</span>
                         </button>
                     </div>
                 </div>
@@ -386,3 +415,4 @@
         </div>
     </form>
 </div>
+

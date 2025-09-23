@@ -1,6 +1,7 @@
 package com.gunho.artifact.entity;
 
 import com.gunho.artifact.dto.ArtifactDto;
+import com.gunho.artifact.dto.FlowChartDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,9 @@ public class ApiDocsFlow {
     @Column(name = "layout")
     private String layout;
 
+    @Column(name = "theme")
+    private String theme;
+
     @Column(columnDefinition = "TEXT")
     private String flowData;
 
@@ -58,4 +62,14 @@ public class ApiDocsFlow {
                 .createdBy(user.getId())
                 .build();
     }
+
+    // 플로우 데이터 업데이트를 위한 메서드
+    public void updateFlowData(FlowChartDto.Request request, String flowData, String updatedBy) {
+        this.title = request.title();
+        this.layout = request.layout();
+        this.theme = request.theme();
+        this.flowData = flowData;
+        this.updatedBy = updatedBy;
+    }
+
 }
