@@ -24,7 +24,7 @@ public class ProjectController {
 
     @GetMapping
     public String index(Model model, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
-        dashboardService.getUserDatas2(model ,userDetails.getUser());
+        dashboardService.getUserDatas(model ,userDetails.getUser());
         return "project/index";
     }
 

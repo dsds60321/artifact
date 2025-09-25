@@ -1,7 +1,6 @@
 package com.gunho.artifact.service;
 
 import com.gunho.artifact.dto.DashboardDto;
-import com.gunho.artifact.dto.ProjectDto;
 import com.gunho.artifact.entity.ApiDocsDocument;
 import com.gunho.artifact.entity.ApiDocsFlow;
 import com.gunho.artifact.entity.Project;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
-import javax.smartcardio.CommandAPDU;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,21 +29,6 @@ public class DashboardService {
 
     // 데이터 응답
     public void getUserDatas(Model model, User user) {
-        List<Project> projects = projectRepository.findAllByUserIdx(user.getIdx());
-        if (Utils.isNotEmpty(projects)) {
-            List<ProjectDto.DashboardResponse> dashboardResponses = projects.stream()
-                    .map(ProjectDto.DashboardResponse::from)
-                    .toList(); // Java 16+ 불변 List 생성
-
-            model.addAttribute("PROJECTS", dashboardResponses);
-            log.info("사용자 {}의 프로젝트 {}개 로드", user.getNickname(), dashboardResponses.size()); // 변수명 수정
-        } else {
-            model.addAttribute("PROJECTS", Collections.emptyList()); // emptyList()가 더 적절
-        }
-
-    }
-
-    public void getUserDatas2(Model model, User user) {
         List<Project> projects = projectRepository.findAllByUserIdx(user.getIdx());
         List<DashboardDto.Response> dashboardResponses = new ArrayList<>();
         if (Utils.isNotEmpty(projects)) {

@@ -32,43 +32,4 @@ public class ProjectDto {
         }
     }
 
-    public record DashboardResponse(
-            Long idx,
-            String title,
-            String version,
-            String description,
-            String updatedBy,
-            String createdBy,
-            LocalDateTime createdAt,
-            LocalDateTime updatedAt,
-            long docsCount,
-            long flowsCount,
-            List<ArtifactRelationDto.Response> artifacts
-    ){
-
-        public static ProjectDto.DashboardResponse from(Project project) {
-            List<ArtifactRelationDto.Response> artifacts = project.getRelations().stream().map(ArtifactRelationDto.Response::from).toList();
-
-            long docsCount = artifacts.stream()
-                    .filter(a -> "DOCS".equals(a.subType()))
-                    .count();
-
-            long flowsCount = artifacts.stream()
-                    .filter(a -> "DOCS".equals(a.subType()))
-                    .count();
-
-
-            return new ProjectDto.DashboardResponse(project.getIdx()
-                    , project.getTitle()
-                    , project.getVersion()
-                    , project.getDescription()
-                    , project.getUpdatedBy()
-                    , project.getCreatedBy()
-                    , project.getCreatedAt()
-                    , project.getUpdatedAt(),
-                    docsCount, flowsCount, artifacts);
-        }
-    }
-
-
 }

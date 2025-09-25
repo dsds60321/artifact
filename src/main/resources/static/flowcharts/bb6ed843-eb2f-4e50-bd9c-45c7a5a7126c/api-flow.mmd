@@ -1,0 +1,8 @@
+flowchart LR
+%% 테스트
+USER["USER"]
+SERVER[SERVER]
+DB([DB])
+USER --> |산출물요청| SERVER
+SERVER --> |산출물응답| USER
+SERVER --> |DB 저장| DB

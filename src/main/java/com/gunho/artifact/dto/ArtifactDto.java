@@ -2,7 +2,7 @@ package com.gunho.artifact.dto;
 
 import com.gunho.artifact.entity.ApiDocsDocument;
 import com.gunho.artifact.entity.ApiDocsFlow;
-import com.gunho.artifact.entity.ArtifactRelation;
+import com.gunho.artifact.enums.SubType;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
@@ -15,13 +15,7 @@ public class ArtifactDto {
                           @NotNull(message = "제목은 필수 값 입니다.")
                           String title,
                           @NotNull(message = "산출물 종류는 필수 값 입니다.")
-                          String subType){
-
-
-        public static Request withIdx(ArtifactDto.Request req, long idx) {
-            return new Request(idx, req.projectIdx, req.title, req.subType());
-        }
-    }
+                          String subType){}
 
     public record DetailResponse(Long projectIdx,
                                  Long artifactSubIdx,
@@ -30,10 +24,10 @@ public class ArtifactDto {
                                  LocalDateTime createdAt,
                                  LocalDateTime updatedAt) {
         public static DetailResponse from(ApiDocsFlow flow) {
-            return new DetailResponse(flow.getProject().getIdx(), flow.getIdx(), flow.getTitle(), ArtifactRelation.SubType.FLOW.name(), flow.getCreatedAt(), flow.getUpdatedAt());
+            return new DetailResponse(flow.getProject().getIdx(), flow.getIdx(), flow.getTitle(), SubType.FLOW.name(), flow.getCreatedAt(), flow.getUpdatedAt());
         }
         public static DetailResponse from(ApiDocsDocument docsDocument) {
-            return new DetailResponse(docsDocument.getProject().getIdx(), docsDocument.getIdx(), docsDocument.getTitle(), ArtifactRelation.SubType.FLOW.name(), docsDocument.getCreatedAt(), docsDocument.getUpdatedAt());
+            return new DetailResponse(docsDocument.getProject().getIdx(), docsDocument.getIdx(), docsDocument.getTitle(), SubType.DOCS.name(), docsDocument.getCreatedAt(), docsDocument.getUpdatedAt());
         }
     }
 }

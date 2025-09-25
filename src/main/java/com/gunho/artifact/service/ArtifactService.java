@@ -2,12 +2,10 @@ package com.gunho.artifact.service;
 
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.ArtifactDto;
-import com.gunho.artifact.dto.ArtifactRelationDto;
 import com.gunho.artifact.dto.ProjectDto;
 import com.gunho.artifact.entity.*;
 import com.gunho.artifact.repository.ApiDocsDocumentRepository;
 import com.gunho.artifact.repository.ApiDocsFlowRepository;
-import com.gunho.artifact.repository.ArtifactRelationRepository;
 import com.gunho.artifact.repository.ProjectRepository;
 import com.gunho.artifact.util.Utils;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +23,6 @@ import java.util.stream.Collectors;
 public class ArtifactService {
 
     private final ProjectRepository projectRepository;
-    private final ArtifactRelationRepository artifactRelationRepository;
     private final ApiDocsFlowRepository apiDocsFlowRepository;
     private final ApiDocsDocumentRepository apiDocsDocumentRepository;
 

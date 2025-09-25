@@ -64,10 +64,6 @@ public class Project {
     @OneToMany(mappedBy = "project" , cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ApiDocsFlow> flows = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<ArtifactRelation> relations = new ArrayList<>();
-
-
     public static Project toEntity(ProjectDto.Request req, User user) {
         return Project.builder()
                 .user(user)
