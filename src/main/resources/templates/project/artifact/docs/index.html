@@ -132,3 +132,21 @@
         </div>
     </form>
 </div>
+<script>
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeContent);
+    } else {
+        initializeContent();
+    }
+
+    function initializeContent() {
+        console.log('콘텐츠 초기화 시작');
+
+        if (window.ApiDocsManager) {
+            window.apiDocsManager = new ApiDocsManager();
+        } else {
+            // 대체 로직
+            setTimeout(initializeContent, 50); // 재시도
+        }
+    }
+</script>

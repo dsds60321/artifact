@@ -1,5 +1,6 @@
 package com.gunho.artifact.controller;
 
+import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/generate")
-public class GenerateController {
+public class ApiController {
 
     private final FlowChartGenerator flowChartGenerator;
     private final FlowChartGenerator2 flowChartGenerator2;
@@ -35,8 +36,8 @@ public class GenerateController {
 
     // URL 기반 응답(파일 저장 후 링크 반환)
     @PostMapping(value = "/flowchart-url", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UrlArtifact>> flowchartUrl(@Valid @RequestBody FlowChartRequest req) throws Exception {
-        return ResponseEntity.ok(flowChartGenerator3.generateAsFiles(req));
+    public ApiResponse<UrlArtifact> flowchartUrl(@Valid @RequestBody FlowChartRequest req) throws Exception {
+        return flowChartGenerator3.generateAsFiles(req);
     }
 
     @PostMapping(value = "/ppt", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

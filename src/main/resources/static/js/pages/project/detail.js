@@ -183,52 +183,69 @@ class Detail {
             const {data} = await axios.get(`/project/artifact/${type}/${idx}`);
 
             const contentDiv = document.getElementById('artifact-content');
-            contentDiv.innerHTML = this.renderArtifactContent(type, data);
+
+            const {html, scripts} = this.extractScriptsFromHtml(data);
+
+
+            contentDiv.innerHTML = this.renderArtifactContent(type, html);
             contentDiv.classList.add('active');
-            await this.initializeArtifactType(type);
+            this.executeScripts(scripts);
+
         } catch (error) {
             NotificationManager.showError('산출물 정보를 불러오는데 실패했습니다.');
         }
-    }
+    };
 
-    async initializeArtifactType(type) {
-        switch (type.toLowerCase()) {
-            case 'docs':
-                this.initApiDocs();
-                break;
-            case 'flows':
-                this.initFlowDiagram();
-                break;
-            default:
-                break;
-        }
-    }
 
-    initApiDocs() {
-        // DOM이 완전히 로드된 후 실행
-        setTimeout(() => {
-            if (window.ApiDocsManager) {
-                window.apiDocsManager = new ApiDocsManager();
+    // HTML에서 스크립트 태그를 추출하는 함수
+    extractScriptsFromHtml(htmlString) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlString;
+
+        const scriptTags = tempDiv.querySelectorAll('script');
+        const scripts = [];
+
+        // 스크립트 내용 추출
+        scriptTags.forEach(script => {
+            if (script.src) {
+                // 외부 스크립트
+                scripts.push({type: 'src', content: script.src});
             } else {
-                console.error('ApiDocsManager를 찾을 수 없습니다.');
+                // 인라인 스크립트
+                scripts.push({type: 'inline', content: script.innerHTML});
             }
-        }, 100);
-    }
+            // 스크립트 태그 제거
+            script.remove();
+        });
 
-    initFlowDiagram() {
-        // Flow 다이어그램 초기화 로직
-        // DOM이 완전히 로드된 후 실행
-        setTimeout(() => {
-            if (window.ApiFlowManager) {
-                window.apiFlowsManager = new ApiFlowManager();
-            } else {
-                console.error('ApiFlowManager 찾을 수 없습니다.');
-            }
-        }, 100);
+        return {
+            html: tempDiv.innerHTML,
+            scripts: scripts
+        };
     }
 
 
-
+// 추출된 스크립트들을 실행하는 함수
+    executeScripts(scripts) {
+        scripts.forEach((script, index) => {
+            setTimeout(() => {
+                if (script.type === 'src') {
+                    // 외부 스크립트 로드
+                    const scriptElement = document.createElement('script');
+                    scriptElement.src = script.content;
+                    document.head.appendChild(scriptElement);
+                } else {
+                    // 인라인 스크립트 실행
+                    try {
+                        const func = new Function(script.content);
+                        func();
+                    } catch (e) {
+                        console.error('스크립트 실행 오류:', e);
+                    }
+                }
+            }, index * 10); // 순차적 실행을 위한 약간의 딜레이
+        });
+    }
 
 
     renderArtifactContent(type, content) {

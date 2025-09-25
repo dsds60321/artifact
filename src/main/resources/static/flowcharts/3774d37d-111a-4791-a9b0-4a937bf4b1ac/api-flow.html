@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 플로우(스타일 적용) - API Flow</title>
+    <title>테스트 - API Flow</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter,+Pretendard,+sans-serif&display=swap" rel="stylesheet">
@@ -147,42 +147,42 @@
         }
 
         /* 테마별 동적 스타일 */
-        .theme-base {
-    --primary-color: #FFFFFF;
-    --primary-border-color: #D1D5DB;
-    --bg-color: #ffffff;
-    --text-color: #374151;
+        .theme-default {
+    --primary-color: #E3F2FD;
+    --primary-border-color: #1976D2;
+    --bg-color: #f8fafc;
+    --text-color: #1e293b;
 }
 
-.theme-base body {
+.theme-default body {
     background: var(--bg-color);
     color: var(--text-color);
 }
 
-.theme-base .header {
+.theme-default .header {
     border-bottom: 1px solid var(--primary-border-color);
 }
 
-.theme-base .header-icon {
+.theme-default .header-icon {
     background: var(--primary-border-color);
 }
 
-.theme-base .btn.active {
+.theme-default .btn.active {
     background: var(--primary-border-color);
     color: white;
 }
 
-.theme-base .loading::before {
+.theme-default .loading::before {
     border-top-color: var(--primary-border-color);
 }
 
     </style>
 </head>
-<body class="theme-base">
+<body class="theme-default">
 <div class="header">
     <h1>
         <div class="header-icon">FL</div>
-        회원가입 플로우(스타일 적용)
+        테스트
     </h1>
     <div class="header-actions">
         <button class="btn" onclick="fitGraph()">
@@ -227,157 +227,36 @@
             const elements = [
 {
   "data": {
-    "id": "A",
-    "label": "Client",
+    "id": "USER",
+    "label": "USER",
     "type": "external",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "SERVER",
+    "label": "SERVER",
+    "type": "service",
     "nodeClass": "primary"
   }
 },
 {
   "data": {
-    "id": "B",
-    "label": "Auth API",
-    "type": "service",
-    "nodeClass": "primary"
+    "id": "USER-SERVER",
+    "source": "USER",
+    "target": "SERVER",
+    "label": "산출물요청",
+    "styleType": "normal"
   }
 },
 {
   "data": {
-    "id": "V1",
-    "label": "Validate Input",
-    "type": "service",
-    "nodeClass": ""
-  }
-},
-{
-  "data": {
-    "id": "X",
-    "label": "Check Duplicate Email",
-    "type": "service",
-    "nodeClass": ""
-  }
-},
-{
-  "data": {
-    "id": "H",
-    "label": "Hash Password",
-    "type": "service",
-    "nodeClass": ""
-  }
-},
-{
-  "data": {
-    "id": "U",
-    "label": "Create User",
-    "type": "service",
-    "nodeClass": ""
-  }
-},
-{
-  "data": {
-    "id": "C",
-    "label": "Users DB",
-    "type": "db",
-    "nodeClass": "accent"
-  }
-},
-{
-  "data": {
-    "id": "A-B",
-    "source": "A",
-    "target": "B",
-    "label": "POST /signup JSON",
-    "styleType": "thick"
-  }
-},
-{
-  "data": {
-    "id": "B-V1",
-    "source": "B",
-    "target": "V1",
-    "label": "PARSE & SANITIZE",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "V1-X",
-    "source": "V1",
-    "target": "X",
-    "label": "OK",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "X-C",
-    "source": "X",
-    "target": "C",
-    "label": "SELECT BY EMAIL",
-    "styleType": "dotted"
-  }
-},
-{
-  "data": {
-    "id": "C-X",
-    "source": "C",
-    "target": "X",
-    "label": "RESULT",
-    "styleType": "dotted"
-  }
-},
-{
-  "data": {
-    "id": "X-A",
-    "source": "X",
-    "target": "A",
-    "label": "EXISTS: 409 CONFLICT",
-    "styleType": "dotted"
-  }
-},
-{
-  "data": {
-    "id": "X-H",
-    "source": "X",
-    "target": "H",
-    "label": "NOT EXISTS",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "H-U",
-    "source": "H",
-    "target": "U",
-    "label": "BCRYPT/SCRYPT",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "U-C",
-    "source": "U",
-    "target": "C",
-    "label": "INSERT USER",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "C-B",
-    "source": "C",
-    "target": "B",
-    "label": "OK",
-    "styleType": ""
-  }
-},
-{
-  "data": {
-    "id": "B-A",
-    "source": "B",
-    "target": "A",
-    "label": "201 CREATED",
-    "styleType": "thick"
+    "id": "SERVER-USER",
+    "source": "SERVER",
+    "target": "USER",
+    "label": "산출물응답",
+    "styleType": "normal"
   }
 }
 ];
@@ -385,13 +264,13 @@
 {
   "selector": "node",
   "style": {
-    "background-color": "#FFFFFF",
-    "border-color": "#D1D5DB",
+    "background-color": "#E3F2FD",
+    "border-color": "#1976D2",
     "border-width": "2px",
     "label": "data(label)",
     "text-valign": "center",
     "text-halign": "center",
-    "color": "#374151",
+    "color": "#1e293b",
     "font-size": "12px",
     "font-weight": "500",
     "text-wrap": "wrap",
@@ -403,8 +282,8 @@
 },{
   "selector": "node[type = 'service']",
   "style": {
-    "background-color": "#FFFFFF",
-    "border-color": "#D1D5DB",
+    "background-color": "#E3F2FD",
+    "border-color": "#1976D2",
     "shape": "roundrectangle"
   }
 },{
@@ -425,22 +304,22 @@
   "selector": "edge",
   "style": {
     "width": "2px",
-    "line-color": "#D1D5DB",
-    "target-arrow-color": "#D1D5DB",
+    "line-color": "#1976D2",
+    "target-arrow-color": "#1976D2",
     "target-arrow-shape": "triangle",
     "label": "data(label)",
     "font-size": "10px",
     "text-rotation": "autorotate",
     "text-margin-y": "-10px",
-    "color": "#374151",
+    "color": "#1e293b",
     "curve-style": "bezier"
   }
 },{
   "selector": "edge[styleType = 'thick']",
   "style": {
     "width": "4px",
-    "line-color": "#D1D5DB",
-    "target-arrow-color": "#D1D5DB"
+    "line-color": "#1976D2",
+    "target-arrow-color": "#1976D2"
   }
 },{
   "selector": "edge[styleType = 'dotted']",

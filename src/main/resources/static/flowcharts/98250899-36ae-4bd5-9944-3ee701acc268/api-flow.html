@@ -147,38 +147,38 @@
         }
 
         /* 테마별 동적 스타일 */
-        .theme-default {
-    --primary-color: #E3F2FD;
-    --primary-border-color: #1976D2;
-    --bg-color: #f8fafc;
-    --text-color: #1e293b;
+        .theme-forest {
+    --primary-color: #E9F5EE;
+    --primary-border-color: #2E7D32;
+    --bg-color: #f0f9f0;
+    --text-color: #0d4a2d;
 }
 
-.theme-default body {
+.theme-forest body {
     background: var(--bg-color);
     color: var(--text-color);
 }
 
-.theme-default .header {
+.theme-forest .header {
     border-bottom: 1px solid var(--primary-border-color);
 }
 
-.theme-default .header-icon {
+.theme-forest .header-icon {
     background: var(--primary-border-color);
 }
 
-.theme-default .btn.active {
+.theme-forest .btn.active {
     background: var(--primary-border-color);
     color: white;
 }
 
-.theme-default .loading::before {
+.theme-forest .loading::before {
     border-top-color: var(--primary-border-color);
 }
 
     </style>
 </head>
-<body class="theme-default">
+<body class="theme-forest">
 <div class="header">
     <h1>
         <div class="header-icon">FL</div>
@@ -385,13 +385,13 @@
 {
   "selector": "node",
   "style": {
-    "background-color": "#E3F2FD",
-    "border-color": "#1976D2",
+    "background-color": "#E9F5EE",
+    "border-color": "#2E7D32",
     "border-width": "2px",
     "label": "data(label)",
     "text-valign": "center",
     "text-halign": "center",
-    "color": "#1e293b",
+    "color": "#0d4a2d",
     "font-size": "12px",
     "font-weight": "500",
     "text-wrap": "wrap",
@@ -403,8 +403,8 @@
 },{
   "selector": "node[type = 'service']",
   "style": {
-    "background-color": "#E3F2FD",
-    "border-color": "#1976D2",
+    "background-color": "#E9F5EE",
+    "border-color": "#2E7D32",
     "shape": "roundrectangle"
   }
 },{
@@ -425,22 +425,22 @@
   "selector": "edge",
   "style": {
     "width": "2px",
-    "line-color": "#1976D2",
-    "target-arrow-color": "#1976D2",
+    "line-color": "#2E7D32",
+    "target-arrow-color": "#2E7D32",
     "target-arrow-shape": "triangle",
     "label": "data(label)",
     "font-size": "10px",
     "text-rotation": "autorotate",
     "text-margin-y": "-10px",
-    "color": "#1e293b",
+    "color": "#0d4a2d",
     "curve-style": "bezier"
   }
 },{
   "selector": "edge[styleType = 'thick']",
   "style": {
     "width": "4px",
-    "line-color": "#1976D2",
-    "target-arrow-color": "#1976D2"
+    "line-color": "#2E7D32",
+    "target-arrow-color": "#2E7D32"
   }
 },{
   "selector": "edge[styleType = 'dotted']",

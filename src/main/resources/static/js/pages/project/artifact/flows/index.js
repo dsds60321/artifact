@@ -1,4 +1,13 @@
-// API 플로우 관리자 클래스
+// 전역 변수 선언
+let apiFlowManager;
+
+/**
+ * API 플로우 관리자 클래스
+ * - 노드 추가 시 기존 항목 유지
+ * - 모양 선택 이벤트 정상 작동
+ * - 서버 데이터 로드 후 이벤트 바인딩 보장
+ * - innerHTML로 삽입된 스크립트 자동 실행
+ */
 class ApiFlowManager {
     constructor() {
         this.nodes = [];
@@ -15,10 +24,13 @@ class ApiFlowManager {
     init() {
         console.log('API Flow 에디터 초기화');
 
-        // 서버 데이터 로드
+        // 서버 데이터 먼저 로드
         this.loadServerDataFromHtml();
 
+        // 기본 이벤트 바인딩
         this.bindEvents();
+
+        // 항상 렌더링 수행 (데이터 존재 여부와 상관없이)
         this.renderNodesList();
         this.renderEdgesList();
         this.updateJsonPreview();
@@ -51,26 +63,10 @@ class ApiFlowManager {
         this.flowIdx = serverData.flowIdx ? parseInt(serverData.flowIdx) : null;
         this.isEditMode = serverData.isEditMode;
 
-        console.log('HTML에서 로드된 서버 데이터:', serverData);
+        console.log('서버 데이터 로드:', serverData);
 
         // 기본 정보 설정
-        if (serverData.title) {
-            const titleInput = document.getElementById('title');
-            if (titleInput) {
-                titleInput.value = serverData.title;
-            }
-        }
-
-        if (serverData.theme) {
-            this.selectTheme(serverData.theme);
-        }
-
-        if (serverData.layout) {
-            const layoutSelect = document.getElementById('layout');
-            if (layoutSelect) {
-                layoutSelect.value = serverData.layout;
-            }
-        }
+        this.setFormValues(serverData);
 
         // 플로우 데이터 파싱 및 로드
         if (serverData.flowData && serverData.flowData.trim() !== '') {
@@ -86,6 +82,27 @@ class ApiFlowManager {
         });
     }
 
+    /**
+     * 폼 값 설정
+     */
+    setFormValues(serverData) {
+        // 제목 설정
+        if (serverData.title) {
+            const titleInput = document.getElementById('title');
+            if (titleInput) titleInput.value = serverData.title;
+        }
+
+        // 테마 설정
+        if (serverData.theme) {
+            this.selectTheme(serverData.theme);
+        }
+
+        // 레이아웃 설정
+        if (serverData.layout) {
+            const layoutSelect = document.getElementById('layout');
+            if (layoutSelect) layoutSelect.value = serverData.layout;
+        }
+    }
 
     /**
      * JSON 플로우 데이터 파싱 및 로드
@@ -102,8 +119,6 @@ class ApiFlowManager {
                     shape: node.shape || 'service',
                     class: node.class || ''
                 }));
-
-                // 노드 카운터 업데이트
                 this.nodeCounter = Math.max(this.nodeCounter, this.nodes.length);
             }
 
@@ -115,8 +130,6 @@ class ApiFlowManager {
                     label: edge.label || '',
                     style: edge.style || { type: 'normal' }
                 }));
-
-                // 엣지 카운터 업데이트
                 this.edgeCounter = Math.max(this.edgeCounter, this.edges.length);
             }
 
@@ -133,12 +146,14 @@ class ApiFlowManager {
 
         } catch (error) {
             console.error('플로우 데이터 파싱 오류:', error);
-            // 파싱 오류시 빈 데이터로 초기화
             this.nodes = [];
             this.edges = [];
         }
     }
 
+    /**
+     * 이벤트 바인딩
+     */
     bindEvents() {
         // 테마 선택 이벤트
         document.querySelectorAll('.theme-option').forEach(option => {
@@ -148,59 +163,43 @@ class ApiFlowManager {
         });
 
         // 노드 추가 버튼
-        document.getElementById('addNodeBtn').addEventListener('click', () => {
-            this.addNode();
-        });
+        this.bindElementEvent('addNodeBtn', 'click', () => this.addNode());
 
         // 엣지 추가 버튼
-        document.getElementById('addEdgeBtn').addEventListener('click', () => {
-            this.addEdge();
-        });
+        this.bindElementEvent('addEdgeBtn', 'click', () => this.addEdge());
 
-        // 샘플 데이터 로드
-        document.getElementById('loadSampleBtn').addEventListener('click', () => {
-            this.loadSampleData();
-        });
+        // 선택적 버튼들 (존재하는 경우만 바인딩)
+        this.bindElementEvent('loadSampleBtn', 'click', () => this.loadSampleData());
+        this.bindElementEvent('clearAllBtn', 'click', () => this.clearAll());
+        this.bindElementEvent('copyJsonBtn', 'click', () => this.copyJson());
+        this.bindElementEvent('toggleJsonEditor', 'click', () => this.toggleJsonEditor());
+        this.bindElementEvent('downloadBtn', 'click', () => this.downloadFile());
 
-        // 전체 초기화
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
-            this.clearAll();
-        });
-
-        // JSON 복사
-        document.getElementById('copyJsonBtn').addEventListener('click', () => {
-            this.copyJson();
-        });
-
-        // JSON 에디터 토글
-        document.getElementById('toggleJsonEditor').addEventListener('click', () => {
-            this.toggleJsonEditor();
-        });
-
-        // 미리보기
-        document.getElementById('previewBtn').addEventListener('click', () => {
-            this.preview();
-        });
-
-        // 폼 제출 (저장)
-        document.getElementById('flowchartForm').addEventListener('submit', (e) => {
-            this.submitForm(e);
-        });
+        // 폼 제출
+        this.bindElementEvent('flowchartForm', 'submit', (e) => this.submitForm(e));
 
         // 기본 정보 변경 감지
         ['title', 'layout'].forEach(field => {
-            document.getElementById(field).addEventListener('input', () => {
-                this.updateJsonPreview();
-            });
+            this.bindElementEvent(field, 'input', () => this.updateJsonPreview());
         });
 
         // JSON 에디터 변경 감지
-        document.getElementById('jsonEditor').addEventListener('input', () => {
-            this.parseJsonFromEditor();
-        });
+        this.bindElementEvent('jsonEditor', 'input', () => this.parseJsonFromEditor());
     }
 
-    // 테마 선택
+    /**
+     * 요소가 존재하는 경우에만 이벤트 바인딩하는 헬퍼 함수
+     */
+    bindElementEvent(elementId, eventType, handler) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.addEventListener(eventType, handler);
+        }
+    }
+
+    /**
+     * 테마 선택
+     */
     selectTheme(theme) {
         this.currentTheme = theme;
 
@@ -214,11 +213,17 @@ class ApiFlowManager {
             selectedTheme.classList.add('active');
         }
 
-        document.getElementById('theme').value = theme;
+        const themeInput = document.getElementById('theme');
+        if (themeInput) {
+            themeInput.value = theme;
+        }
+
         this.updateJsonPreview();
     }
 
-    // 노드 추가
+    /**
+     * 노드 추가 - 기존 항목 유지하면서 새 노드만 추가
+     */
     addNode() {
         const nodeId = `NODE_${++this.nodeCounter}`;
         const node = {
@@ -229,41 +234,212 @@ class ApiFlowManager {
         };
 
         this.nodes.push(node);
-        this.renderNodesList();
+        this.appendNewNode(node, this.nodes.length - 1);
         this.updateJsonPreview();
     }
 
-    // 노드 제거
+    /**
+     * 새로운 노드를 기존 목록에 추가
+     */
+    appendNewNode(node, index) {
+        const container = document.getElementById('nodesList');
+        if (!container) return;
+
+        // 빈 상태 메시지 제거
+        const emptyState = container.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        // 새 노드 HTML 생성 및 추가
+        const nodeHtml = this.createNodeHtml(node, index);
+        container.insertAdjacentHTML('beforeend', nodeHtml);
+
+        // 새로 추가된 노드에만 이벤트 바인딩
+        this.bindNodeEvents(container.lastElementChild);
+    }
+
+    /**
+     * 노드 HTML 생성
+     */
+    createNodeHtml(node, index) {
+        return `
+        <div class="node-item" data-node-index="${index}">
+            <div class="item-header">
+                <div class="item-title">
+                    <i class="fas fa-cube"></i>
+                    노드 ${index + 1}
+                </div>
+                <button type="button" class="remove-btn" data-action="remove-node" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="form-group">
+                    <label class="form-label">ID <span class="required">*</span></label>
+                    <input type="text" class="form-control" value="${this.escapeHtml(node.id)}" 
+                           data-action="update-node" data-index="${index}" data-field="id">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">라벨 <span class="required">*</span></label>
+                    <input type="text" class="form-control" value="${this.escapeHtml(node.label)}" 
+                           data-action="update-node" data-index="${index}" data-field="label">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">모양</label>
+                <div class="shape-selector">
+                    ${['service', 'external', 'db', 'process'].map(shape => `
+                        <div class="shape-option ${node.shape === shape ? 'active' : ''}" 
+                             data-action="update-node" data-index="${index}" data-field="shape" data-value="${shape}">
+                            ${this.getShapeLabel(shape)}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">클래스</label>
+                <select class="form-control" data-action="update-node" data-index="${index}" data-field="class">
+                    <option value="" ${!node.class ? 'selected' : ''}>기본</option>
+                    <option value="primary" ${node.class === 'primary' ? 'selected' : ''}>Primary</option>
+                    <option value="accent" ${node.class === 'accent' ? 'selected' : ''}>Accent</option>
+                    <option value="muted" ${node.class === 'muted' ? 'selected' : ''}>Muted</option>
+                </select>
+            </div>
+        </div>
+    `;
+    }
+
+    /**
+     * 노드 목록 렌더링
+     */
+    renderNodesList() {
+        const container = document.getElementById('nodesList');
+        if (!container) {
+            console.error('nodesList 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+
+        if (this.nodes.length === 0) {
+            container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-sitemap"></i>
+                <div>아직 노드가 없습니다.</div>
+                <div>노드 추가 버튼을 클릭하여 시작하세요.</div>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = this.nodes.map((node, index) =>
+            this.createNodeHtml(node, index)
+        ).join('');
+
+        // 모든 노드에 이벤트 바인딩
+        container.querySelectorAll('.node-item').forEach(nodeElement => {
+            this.bindNodeEvents(nodeElement);
+        });
+
+        console.log(`노드 목록 렌더링 완료: ${this.nodes.length}개`);
+    }
+
+    /**
+     * 노드 이벤트 바인딩 - 중복 바인딩 방지 및 모양 선택 이벤트 포함
+     */
+    bindNodeEvents(nodeElement) {
+        // 중복 바인딩 방지
+        if (nodeElement.hasAttribute('data-events-bound')) {
+            return;
+        }
+
+        // 노드 제거 버튼
+        const removeBtn = nodeElement.querySelector('[data-action="remove-node"]');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.index);
+                this.removeNode(index);
+            });
+        }
+
+        // 모든 업데이트 가능한 요소들
+        const updateElements = nodeElement.querySelectorAll('[data-action="update-node"]');
+        updateElements.forEach(element => {
+            const index = parseInt(element.dataset.index);
+            const field = element.dataset.field;
+
+            if (element.tagName === 'INPUT') {
+                element.addEventListener('input', (e) => {
+                    this.updateNode(index, field, e.target.value);
+                });
+            } else if (element.tagName === 'SELECT') {
+                element.addEventListener('change', (e) => {
+                    this.updateNode(index, field, e.target.value);
+                });
+            } else if (element.classList.contains('shape-option')) {
+                // 모양 선택 이벤트 - 핵심 수정 부분
+                element.addEventListener('click', (e) => {
+                    const value = e.currentTarget.dataset.value;
+
+                    // 노드 데이터 업데이트 (shape 필드에 값 저장)
+                    this.updateNode(index, field, value);
+
+                    // 시각적 업데이트 (active 클래스 변경)
+                    const shapeSelector = e.currentTarget.parentElement;
+                    shapeSelector.querySelectorAll('.shape-option').forEach(option => {
+                        option.classList.remove('active');
+                    });
+                    e.currentTarget.classList.add('active');
+                });
+            }
+        });
+
+        // 바인딩 완료 표시
+        nodeElement.setAttribute('data-events-bound', 'true');
+    }
+
+    /**
+     * 노드 업데이트 - nodes 배열의 shape 값 업데이트 보장
+     */
+    updateNode(index, field, value) {
+        if (index < 0 || index >= this.nodes.length) return;
+
+        console.log(`노드 업데이트: index=${index}, field=${field}, value=${value}`);
+
+        // nodes 배열 객체의 필드 값 업데이트
+        this.nodes[index][field] = value;
+
+        this.updateJsonPreview();
+
+        // ID 변경 시 엣지 목록도 업데이트
+        if (field === 'id') {
+            this.renderEdgesList();
+        }
+    }
+
+    /**
+     * 노드 제거
+     */
     removeNode(index) {
         if (index < 0 || index >= this.nodes.length) return;
 
         const nodeId = this.nodes[index].id;
 
-        // 관련된 엣지들도 제거
+        // 관련 엣지들 제거
         this.edges = this.edges.filter(edge =>
             edge.from !== nodeId && edge.to !== nodeId
         );
 
+        // 노드 데이터 제거
         this.nodes.splice(index, 1);
+
+        // 전체 재렌더링 (인덱스 문제 해결)
         this.renderNodesList();
         this.renderEdgesList();
         this.updateJsonPreview();
     }
 
-    // 노드 업데이트
-    updateNode(index, field, value) {
-        if (index < 0 || index >= this.nodes.length) return;
-
-        this.nodes[index][field] = value;
-        this.updateJsonPreview();
-
-        // ID가 변경된 경우 엣지들도 업데이트
-        if (field === 'id') {
-            this.renderEdgesList(); // 드롭다운 목록 갱신
-        }
-    }
-
-    // 엣지 추가
+    /**
+     * 엣지 추가
+     */
     addEdge() {
         if (this.nodes.length < 2) {
             alert('엣지를 추가하려면 최소 2개의 노드가 필요합니다.');
@@ -272,26 +448,154 @@ class ApiFlowManager {
 
         const edge = {
             from: this.nodes[0].id,
-            to: this.nodes.length > 1 ? this.nodes[1].id : this.nodes[0].id,
+            to: this.nodes[1].id,
             label: `연결 ${++this.edgeCounter}`,
             style: { type: 'normal' }
         };
 
         this.edges.push(edge);
-        this.renderEdgesList();
+        this.appendNewEdge(edge, this.edges.length - 1);
         this.updateJsonPreview();
     }
 
-    // 엣지 제거
-    removeEdge(index) {
-        if (index < 0 || index >= this.edges.length) return;
+    /**
+     * 새로운 엣지 추가
+     */
+    appendNewEdge(edge, index) {
+        const container = document.getElementById('edgesList');
+        if (!container) return;
 
-        this.edges.splice(index, 1);
-        this.renderEdgesList();
-        this.updateJsonPreview();
+        const emptyState = container.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        const edgeHtml = this.createEdgeHtml(edge, index);
+        container.insertAdjacentHTML('beforeend', edgeHtml);
+        this.bindEdgeEvents(container.lastElementChild);
     }
 
-    // 엣지 업데이트
+    /**
+     * 엣지 HTML 생성
+     */
+    createEdgeHtml(edge, index) {
+        const fromOptions = this.nodes.map(node =>
+            `<option value="${node.id}" ${edge.from === node.id ? 'selected' : ''}>${node.label || node.id}</option>`
+        ).join('');
+
+        const toOptions = this.nodes.map(node =>
+            `<option value="${node.id}" ${edge.to === node.id ? 'selected' : ''}>${node.label || node.id}</option>`
+        ).join('');
+
+        return `
+        <div class="edge-item" data-edge-index="${index}">
+            <div class="item-header">
+                <div class="item-title">
+                    <i class="fas fa-arrow-right"></i>
+                    연결 ${index + 1}
+                </div>
+                <button type="button" class="remove-btn" data-action="remove-edge" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="form-group">
+                    <label class="form-label">시작 노드</label>
+                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="from">
+                        ${fromOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">끝 노드</label>
+                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="to">
+                        ${toOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">스타일</label>
+                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="styleType">
+                        <option value="normal" ${edge.style.type === 'normal' ? 'selected' : ''}>일반</option>
+                        <option value="dotted" ${edge.style.type === 'dotted' ? 'selected' : ''}>점선</option>
+                        <option value="thick" ${edge.style.type === 'thick' ? 'selected' : ''}>굵게</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">라벨</label>
+                <input type="text" class="form-control" value="${this.escapeHtml(edge.label || '')}"
+                       data-action="update-edge" data-index="${index}" data-field="label"
+                       placeholder="연결 라벨">
+            </div>
+        </div>`;
+    }
+
+    /**
+     * 엣지 목록 렌더링
+     */
+    renderEdgesList() {
+        const container = document.getElementById('edgesList');
+        if (!container) {
+            console.error('edgesList 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+
+        if (this.edges.length === 0) {
+            container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-link"></i>
+                <div>아직 연결이 없습니다.</div>
+                <div>연결 추가 버튼을 클릭하여 시작하세요.</div>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = this.edges.map((edge, index) =>
+            this.createEdgeHtml(edge, index)
+        ).join('');
+
+        container.querySelectorAll('.edge-item').forEach(edgeElement => {
+            this.bindEdgeEvents(edgeElement);
+        });
+    }
+
+    /**
+     * 엣지 이벤트 바인딩
+     */
+    bindEdgeEvents(edgeElement) {
+        if (edgeElement.hasAttribute('data-events-bound')) return;
+
+        // 엣지 제거 버튼
+        const removeBtn = edgeElement.querySelector('[data-action="remove-edge"]');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.index);
+                this.removeEdge(index);
+            });
+        }
+
+        // 엣지 업데이트 요소들
+        const updateElements = edgeElement.querySelectorAll('[data-action="update-edge"]');
+        updateElements.forEach(element => {
+            const index = parseInt(element.dataset.index);
+            const field = element.dataset.field;
+
+            if (element.tagName === 'INPUT') {
+                element.addEventListener('input', (e) => {
+                    this.updateEdge(index, field, e.target.value);
+                });
+            } else if (element.tagName === 'SELECT') {
+                element.addEventListener('change', (e) => {
+                    this.updateEdge(index, field, e.target.value);
+                });
+            }
+        });
+
+        edgeElement.setAttribute('data-events-bound', 'true');
+    }
+
+    /**
+     * 엣지 업데이트
+     */
     updateEdge(index, field, value) {
         if (index < 0 || index >= this.edges.length) return;
 
@@ -303,165 +607,157 @@ class ApiFlowManager {
         this.updateJsonPreview();
     }
 
-    // 노드 목록 렌더링
-    renderNodesList() {
-        const container = document.getElementById('nodesList');
+    /**
+     * 엣지 제거
+     */
+    removeEdge(index) {
+        if (index < 0 || index >= this.edges.length) return;
 
-        if (this.nodes.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-sitemap"></i>
-                    <div>아직 노드가 없습니다.</div>
-                    <div>노드 추가 버튼을 클릭하여 시작하세요.</div>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = this.nodes.map((node, index) => `
-            <div class="node-item">
-                <div class="item-header">
-                    <div class="item-title">
-                        <i class="fas fa-cube"></i>
-                        노드 ${index + 1}
-                    </div>
-                    <button type="button" class="remove-btn" onclick="apiFlowManager.removeNode(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="form-group">
-                        <label class="form-label">ID <span class="required">*</span></label>
-                        <input type="text" class="form-control" value="${this.escapeHtml(node.id)}" 
-                               onchange="apiFlowManager.updateNode(${index}, 'id', this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">라벨 <span class="required">*</span></label>
-                        <input type="text" class="form-control" value="${this.escapeHtml(node.label)}" 
-                               onchange="apiFlowManager.updateNode(${index}, 'label', this.value)">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">모양</label>
-                    <div class="shape-selector">
-                        ${['service', 'external', 'db', 'process'].map(shape => `
-                            <div class="shape-option ${node.shape === shape ? 'active' : ''}" 
-                                 onclick="apiFlowManager.updateNode(${index}, 'shape', '${shape}')">
-                                ${this.getShapeLabel(shape)}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">클래스</label>
-                    <select class="form-control" onchange="apiFlowManager.updateNode(${index}, 'class', this.value)">
-                        <option value="" ${!node.class ? 'selected' : ''}>기본</option>
-                        <option value="primary" ${node.class === 'primary' ? 'selected' : ''}>Primary</option>
-                        <option value="accent" ${node.class === 'accent' ? 'selected' : ''}>Accent</option>
-                        <option value="muted" ${node.class === 'muted' ? 'selected' : ''}>Muted</option>
-                    </select>
-                </div>
-            </div>
-        `).join('');
+        this.edges.splice(index, 1);
+        this.renderEdgesList();
+        this.updateJsonPreview();
     }
 
-    // 엣지 목록 렌더링
-    renderEdgesList() {
-        const container = document.getElementById('edgesList');
-
-        if (this.edges.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-link"></i>
-                    <div>아직 연결이 없습니다.</div>
-                    <div>연결 추가 버튼을 클릭하여 시작하세요.</div>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = this.edges.map((edge, index) => `
-            <div class="edge-item">
-                <div class="item-header">
-                    <div class="item-title">
-                        <i class="fas fa-arrow-right"></i>
-                        연결 ${index + 1}
-                    </div>
-                    <button type="button" class="remove-btn" onclick="apiFlowManager.removeEdge(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="form-group">
-                        <label class="form-label">시작 노드 <span class="required">*</span></label>
-                        <select class="form-control" onchange="apiFlowManager.updateEdge(${index}, 'from', this.value)">
-                            ${this.nodes.map(node => `
-                                <option value="${node.id}" ${edge.from === node.id ? 'selected' : ''}>
-                                    ${this.escapeHtml(node.label)} (${this.escapeHtml(node.id)})
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">종료 노드 <span class="required">*</span></label>
-                        <select class="form-control" onchange="apiFlowManager.updateEdge(${index}, 'to', this.value)">
-                            ${this.nodes.map(node => `
-                                <option value="${node.id}" ${edge.to === node.id ? 'selected' : ''}>
-                                    ${this.escapeHtml(node.label)} (${this.escapeHtml(node.id)})
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">스타일</label>
-                        <select class="form-control" onchange="apiFlowManager.updateEdge(${index}, 'styleType', this.value)">
-                            <option value="normal" ${edge.style?.type === 'normal' || !edge.style?.type ? 'selected' : ''}>기본</option>
-                            <option value="thick" ${edge.style?.type === 'thick' ? 'selected' : ''}>굵게</option>
-                            <option value="dotted" ${edge.style?.type === 'dotted' ? 'selected' : ''}>점선</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">라벨</label>
-                    <input type="text" class="form-control" value="${this.escapeHtml(edge.label || '')}" 
-                           onchange="apiFlowManager.updateEdge(${index}, 'label', this.value)"
-                           placeholder="연결 설명 (예: POST /signup JSON)">
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // 모양 라벨 반환
+    /**
+     * 유틸리티 메서드들
+     */
     getShapeLabel(shape) {
-        const labels = {
+        const shapeLabels = {
             'service': '서비스',
             'external': '외부',
             'db': '데이터베이스',
             'process': '프로세스'
         };
-        return labels[shape] || shape;
+        return shapeLabels[shape] || shape;
     }
 
-    // HTML 이스케이프
-    escapeHtml(str) {
-        if (!str) return '';
+    escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
-        div.textContent = str;
+        div.textContent = text;
         return div.innerHTML;
     }
 
-    // 폼 제출 (저장)
-    submitForm(e) {
-        e.preventDefault();
+    /**
+     * JSON 미리보기 업데이트
+     */
+    updateJsonPreview() {
+        const flowData = {
+            title: document.getElementById('title')?.value || '',
+            layout: document.getElementById('layout')?.value || 'LR',
+            theme: this.currentTheme,
+            nodes: this.nodes,
+            edges: this.edges
+        };
 
-        const title = document.getElementById('title').value;
-        if (!title.trim()) {
-            alert('플로우차트 제목을 입력해주세요.');
+        const jsonPreview = document.getElementById('jsonPreview');
+        if (jsonPreview) {
+            jsonPreview.innerHTML = `<pre><code>${JSON.stringify(flowData, null, 2)}</code></pre>`;
+        }
+
+    }
+
+    /**
+     * 구현해야 할 메서드들 (기본 구조만 제공)
+     */
+    loadSampleData() {
+        console.log('샘플 데이터 로드');
+        // 샘플 데이터 구현
+    }
+
+    clearAll() {
+        if (confirm('모든 데이터를 초기화하시겠습니까?')) {
+            this.nodes = [];
+            this.edges = [];
+            this.nodeCounter = 0;
+            this.edgeCounter = 0;
+            this.renderNodesList();
+            this.renderEdgesList();
+            this.updateJsonPreview();
+        }
+    }
+
+    copyJson() {
+        const jsonText = JSON.stringify({
+            title: document.getElementById('title')?.value || '',
+            layout: document.getElementById('layout')?.value || 'LR',
+            theme: this.currentTheme,
+            nodes: this.nodes,
+            edges: this.edges
+        }, null, 2);
+
+        navigator.clipboard.writeText(jsonText).then(() => {
+            console.log('JSON 복사 완료');
+        });
+    }
+
+    toggleJsonEditor() {
+        const jsonPreview = document.getElementById('jsonPreview');
+        const jsonEditor = document.getElementById('jsonEditor');
+
+        if (jsonPreview && jsonEditor) {
+            if (jsonEditor.style.display === 'none') {
+                jsonEditor.style.display = 'block';
+                jsonPreview.style.display = 'none';
+            } else {
+                jsonEditor.style.display = 'none';
+                jsonPreview.style.display = 'block';
+            }
+        }
+    }
+
+    async downloadFile() {
+        // 미리보기 구현
+        if (!this.validForm()) {
             return;
         }
 
+        try {
+            const jsonText = document.querySelector('#jsonPreview pre code').textContent;
+            const request = JSON.parse(jsonText);
+
+            // 프로젝트 정보 추가
+            if (this.projectIdx) {
+                request.projectIdx = this.projectIdx;
+            }
+
+            if (this.flowIdx && this.isEditMode) {
+                request.flowIdx = this.flowIdx;
+            }
+
+            const {data} = await axios.post('/api/generate/flowchart-url', request);
+            console.log('data ' , data);
+            if (data.success) {
+                window.open(data.data.url, '_blank');
+            } else {
+                NotificationManager.showError(data.message);
+            }
+        } catch (e) {
+            console.error(e);
+            NotificationManager.showError('오류가 발생했습니다. 관리자에게 문의해주시기 바랍니다.');
+        }
+    }
+
+    validForm() {
+        const title = document.getElementById('title').value;
+        if (!title.trim()) {
+            NotificationManager.showError('플로우차트 제목을 입력해주세요.');
+            return false;
+        }
+
         if (this.nodes.length === 0) {
-            alert('최소 1개의 노드를 추가해주세요.');
+            NotificationManager.showError('최소 1개의 노드를 추가해주세요.');
+            return false;
+        }
+
+
+        return true;
+    }
+
+    submitForm(e) {
+        e.preventDefault();
+
+        if (!this.validForm()) {
             return;
         }
 
@@ -516,234 +812,19 @@ class ApiFlowManager {
         }
     }
 
-    // ... 나머지 기존 메서드들 (updateJsonPreview, loadSampleData, clearAll, copyJson, preview 등) 유지 ...
-
-    // JSON 미리보기 업데이트
-    updateJsonPreview() {
-        const title = document.getElementById('title').value || '플로우차트';
-        const layout = document.getElementById('layout').value || 'LR';
-
-        const jsonData = {
-            title: title,
-            layout: layout,
-            theme: this.currentTheme,
-            nodes: this.nodes.map(node => {
-                const cleanNode = { ...node };
-                if (!cleanNode.class) delete cleanNode.class;
-                return cleanNode;
-            }),
-            edges: this.edges.map(edge => {
-                const cleanEdge = { ...edge };
-                if (!cleanEdge.label) delete cleanEdge.label;
-                if (cleanEdge.style?.type === 'normal') delete cleanEdge.style;
-                return cleanEdge;
-            })
-        };
-
-        // 테마 변수와 클래스 정의 추가
-        if (this.currentTheme !== 'default') {
-            jsonData.themeVariables = this.getThemeVariables(this.currentTheme);
-            jsonData.classes = this.getThemeClasses(this.currentTheme);
-        }
-
-        const jsonString = JSON.stringify(jsonData, null, 2);
-        document.querySelector('#jsonPreview pre code').textContent = jsonString;
-        document.getElementById('jsonEditor').value = jsonString;
-    }
-
-    // 샘플 데이터 로드
-    loadSampleData() {
-        if (confirm('현재 데이터가 삭제되고 샘플 데이터로 교체됩니다. 계속하시겠습니까?')) {
-            const sampleData = {
-                "title": "회원가입 플로우(스타일 적용)",
-                "layout": "LR",
-                "theme": "default",
-                "nodes": [
-                    {"id":"A","label":"Client","shape":"external","class":"primary"},
-                    {"id":"B","label":"Auth API","shape":"service","class":"primary"},
-                    {"id":"V1","label":"Validate Input","shape":"service"},
-                    {"id":"X","label":"Check Duplicate Email","shape":"service"},
-                    {"id":"H","label":"Hash Password","shape":"service"},
-                    {"id":"U","label":"Create User","shape":"service"},
-                    {"id":"C","label":"Users DB","shape":"db","class":"accent"}
-                ],
-                "edges": [
-                    {"from":"A","to":"B","label":"POST /signup JSON","style":{"type":"thick"}},
-                    {"from":"B","to":"V1","label":"PARSE & SANITIZE"},
-                    {"from":"V1","to":"X","label":"OK"},
-                    {"from":"X","to":"C","label":"SELECT BY EMAIL","style":{"type":"dotted"}},
-                    {"from":"C","to":"X","label":"RESULT","style":{"type":"dotted"}},
-                    {"from":"X","to":"A","label":"EXISTS: 409 CONFLICT","style":{"type":"dotted"}},
-                    {"from":"X","to":"H","label":"NOT EXISTS"},
-                    {"from":"H","to":"U","label":"BCRYPT/SCRYPT"},
-                    {"from":"U","to":"C","label":"INSERT USER"},
-                    {"from":"C","to":"B","label":"OK"},
-                    {"from":"B","to":"A","label":"201 CREATED","style":{"type":"thick"}}
-                ]
-            };
-
-            this.loadDataFromJson(sampleData);
-        }
-    }
-
-    // JSON 데이터로부터 로드
-    loadDataFromJson(data) {
-        // 기본 정보 설정
-        document.getElementById('title').value = data.title || '';
-        document.getElementById('layout').value = data.layout || 'LR';
-
-        // 테마 설정
-        if (data.theme) {
-            this.selectTheme(data.theme);
-        }
-
-        // 노드와 엣지 설정
-        this.nodes = data.nodes || [];
-        this.edges = data.edges || [];
-
-        // 카운터 재설정
-        this.nodeCounter = this.nodes.length;
-        this.edgeCounter = this.edges.length;
-
-        // UI 업데이트
-        this.renderNodesList();
-        this.renderEdgesList();
-        this.updateJsonPreview();
-    }
-
-    // 테마 변수 반환
-    getThemeVariables(theme) {
-        const themes = {
-            forest: {
-                "primaryColor": "#E9F5EE",
-                "primaryBorderColor": "#2E7D32",
-                "lineColor": "#2E7D32",
-                "fontFamily": "Inter, Pretendard, sans-serif"
-            },
-            dark: {
-                "primaryColor": "#2D2D2D",
-                "primaryBorderColor": "#404040",
-                "lineColor": "#666666",
-                "fontFamily": "Inter, Pretendard, sans-serif"
-            },
-            neutral: {
-                "primaryColor": "#F5F5F5",
-                "primaryBorderColor": "#9E9E9E",
-                "lineColor": "#757575",
-                "fontFamily": "Inter, Pretendard, sans-serif"
-            },
-            base: {
-                "primaryColor": "#FFFFFF",
-                "primaryBorderColor": "#D1D5DB",
-                "lineColor": "#6B7280",
-                "fontFamily": "Inter, Pretendard, sans-serif"
-            }
-        };
-        return themes[theme] || {};
-    }
-
-    // 테마 클래스 반환
-    getThemeClasses(theme) {
-        return {
-            "primary": { "fill": "#E3F2FD", "stroke": "#1976D2" },
-            "accent": { "fill": "#FFF3E0", "stroke": "#F57C00" },
-            "muted": { "fill": "#F5F5F5", "stroke": "#9E9E9E" }
-        };
-    }
-
-    // 전체 초기화
-    clearAll() {
-        if (confirm('모든 데이터가 삭제됩니다. 계속하시겠습니까?')) {
-            this.nodes = [];
-            this.edges = [];
-            this.nodeCounter = 0;
-            this.edgeCounter = 0;
-
-            document.getElementById('title').value = '';
-            document.getElementById('layout').value = 'LR';
-            this.selectTheme('default');
-
-            this.renderNodesList();
-            this.renderEdgesList();
-            this.updateJsonPreview();
-        }
-    }
-
-    // JSON 복사
-    copyJson() {
-        const jsonText = document.querySelector('#jsonPreview pre code').textContent;
-        navigator.clipboard.writeText(jsonText).then(() => {
-            const btn = document.getElementById('copyJsonBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> 복사됨!';
-            btn.classList.add('btn-success');
-
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.remove('btn-success');
-            }, 2000);
-        });
-    }
-
-    // JSON 에디터 토글
-    toggleJsonEditor() {
-        const preview = document.getElementById('jsonPreview');
-        const editor = document.getElementById('jsonEditor');
-        const btn = document.getElementById('toggleJsonEditor');
-
-        if (editor.style.display === 'none' || !editor.style.display) {
-            preview.style.display = 'none';
-            editor.style.display = 'block';
-            btn.innerHTML = '<i class="fas fa-eye"></i> 미리보기';
-        } else {
-            preview.style.display = 'block';
-            editor.style.display = 'none';
-            btn.innerHTML = '<i class="fas fa-edit"></i> 직접 편집';
-        }
-    }
-
-    // JSON 에디터에서 파싱
     parseJsonFromEditor() {
-        // 실시간 파싱은 성능상 제외, 토글시에만 적용
-    }
-
-    // 미리보기
-    preview() {
-        const jsonText = document.querySelector('#jsonPreview pre code').textContent;
-
-        try {
-            const data = JSON.parse(jsonText);
-            console.log('미리보기 데이터:', data);
-
-            fetch('/api/generate/flowchart-url', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: jsonText
-            })
-                .then(response => response.json())
-                .then(result => {
-                    console.log('생성 결과:', result);
-                    if (result && result.length > 0) {
-                        const htmlUrl = result.find(r => r.fileName === 'api-flow.html')?.url;
-                        if (htmlUrl) {
-                            window.open(htmlUrl, '_blank');
-                        }
-                    } else {
-                        alert('미리보기 생성에 실패했습니다.');
-                    }
-                })
-                .catch(error => {
-                    console.error('오류:', error);
-                    alert('미리보기 생성 중 오류가 발생했습니다.');
-                });
-
-        } catch (error) {
-            alert('JSON 형식이 올바르지 않습니다.');
-        }
+        console.log('JSON 에디터 파싱');
+        // JSON 에디터 파싱 로직 구현
     }
 }
 
-// 글로벌 변수로 등록
+// DOM 로드 후 인스턴스 생성 및 전역 등록
+document.addEventListener('DOMContentLoaded', () => {
+    apiFlowManager = new ApiFlowManager();
+
+    // 전역 스코프에 등록 (하나만!)
+    window.apiFlowManager = apiFlowManager;
+});
+
+// 클래스도 전역 스코프에 등록 (필요한 경우)
 window.ApiFlowManager = ApiFlowManager;

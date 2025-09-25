@@ -1,5 +1,6 @@
 package com.gunho.artifact.service;
 
+import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.FlowChartRequest;
 import com.gunho.artifact.model.FileArtifact;
 import com.gunho.artifact.model.UrlArtifact;
@@ -33,7 +34,7 @@ public class FlowChartGenerator3 {
         return out;
     }
 
-    public List<UrlArtifact> generateAsFiles(FlowChartRequest req) throws Exception {
+    public ApiResponse<UrlArtifact> generateAsFiles(FlowChartRequest req) throws Exception {
         String html = generateHtmlFromTemplate(req);
         String mermaid = toMermaid(req);
 
@@ -41,7 +42,7 @@ public class FlowChartGenerator3 {
         byte[] mmdBytes = mermaid.getBytes(StandardCharsets.UTF_8);
 
         String batchId = UUID.randomUUID().toString();
-        Path dir = Path.of("generated", "flowcharts", batchId);
+        Path dir = Path.of("src", "main", "resources", "static", "flowcharts", batchId);
         Files.createDirectories(dir);
 
         Path htmlPath = dir.resolve("api-flow.html");
@@ -52,22 +53,15 @@ public class FlowChartGenerator3 {
         String htmlSha = sha256Hex(htmlBytes);
         String mmdSha = sha256Hex(mmdBytes);
 
-        List<UrlArtifact> out = new ArrayList<>();
-        out.add(new UrlArtifact(
+        UrlArtifact urlArtifact = new UrlArtifact(
                 "api-flow.html",
                 "text/html",
                 Files.size(htmlPath),
                 htmlSha,
-                "/files/flowcharts/" + batchId + "/api-flow.html"
-        ));
-        out.add(new UrlArtifact(
-                "api-flow.mmd",
-                "text/plain",
-                Files.size(mmdPath),
-                mmdSha,
-                "/files/flowcharts/" + batchId + "/api-flow.mmd"
-        ));
-        return out;
+                "/flowcharts/" + batchId + "/api-flow.html"
+        );
+
+        return ApiResponse.success(urlArtifact);
     }
 
     /**
