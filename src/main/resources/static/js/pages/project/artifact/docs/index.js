@@ -3,9 +3,10 @@ let apiDocsManager;
 // API 문서 관리자 클래스
 class ApiDocsManager {
     constructor() {
-        console.log('실행')
         this.endpoints = [];
         this.endpointCounter = 0;
+        this.projectIdx = null;
+        this.docsIdx = null;
         this.init();
     }
 
@@ -299,6 +300,8 @@ class ApiDocsManager {
         }
 
         const apiSpec = {
+            projectIdx: this.projectIdx,
+            docsIdx: this.docsIdx,
             title,
             version,
             endpoints: this.endpoints.map(ep => ({
@@ -314,7 +317,7 @@ class ApiDocsManager {
         console.log('API 명세 저장:', apiSpec);
 
         // 실제 저장 API 호출
-        fetch('/api/docs', {
+        fetch('/project/artifact/docs', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -2,9 +2,11 @@ package com.gunho.artifact.controller;
 
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.ArtifactDto;
+import com.gunho.artifact.dto.DocsDto;
 import com.gunho.artifact.dto.FlowChartDto;
 import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.ArtifactService;
+import com.gunho.artifact.service.DocsService;
 import com.gunho.artifact.service.FlowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class ArtifactController {
 
     private final ArtifactService artifactService;
     private final FlowService flowService;
+    private final DocsService docsService;
 
     @Description("산출물 등록 모달")
     @GetMapping("/new/{idx}")
@@ -41,8 +44,15 @@ public class ArtifactController {
     }
 
     @GetMapping("/docs/{idx}")
-    public String docsEdit(@PathVariable Long idx) {
+    public String docsEdit(Model model,@PathVariable Long idx, @AuthenticationPrincipal ArtifactUserDetails user) {
+        docsService.getDetailView(model, idx, user.getUser());
         return "project/artifact/docs/index";
+    }
+
+    @Description("docs 저장")
+    @PostMapping("/docs")
+    public @ResponseBody ApiResponse<?> docsCreate(@Valid @RequestBody DocsDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        return docsService.saveDocs(request, userDetails.getUser());
     }
 
     @GetMapping("/flows")

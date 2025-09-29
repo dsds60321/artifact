@@ -1,6 +1,7 @@
 package com.gunho.artifact.entity;
 
 import com.gunho.artifact.dto.ArtifactDto;
+import com.gunho.artifact.dto.DocsDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,9 +31,12 @@ public class ApiDocsDocument {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
+    private String version;
+
     @Builder.Default
-    @Column(name = "request_json", columnDefinition = "TEXT")
-    private String requestJson = "{}";
+    @Column(name = "endpoints", columnDefinition = "TEXT")
+    private String endpoints = "{}";
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -55,5 +59,12 @@ public class ApiDocsDocument {
                 .title(req.title())
                 .createdBy(user.getId())
                 .build();
+    }
+
+    public void updateEndPoints(DocsDto.Request request, String endPoints, String id) {
+        this.title = request.title();
+        this.version = request.version();
+        this.endpoints = endPoints;
+        this.updatedBy = id;
     }
 }

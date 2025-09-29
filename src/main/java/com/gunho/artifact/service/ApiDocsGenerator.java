@@ -1,30 +1,41 @@
 package com.gunho.artifact.service;
 
+import com.gunho.artifact.dto.ApiResponse;
+import com.gunho.artifact.model.UrlArtifact;
 import lombok.RequiredArgsConstructor;
 import com.gunho.artifact.dto.ApiDocsRequest;
-import com.gunho.artifact.model.FileArtifact;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class SimpleApiDocsGenerator {
+public class ApiDocsGenerator {
 
-    public List<FileArtifact> generate(ApiDocsRequest req) {
-        String openapiJson = buildOpenApiJson(req);
+    public ApiResponse<UrlArtifact> generateAsFiles(ApiDocsRequest req) throws Exception {
+        String openApiJson = buildOpenApiJson(req);
+        String html = buildScalarHtmlInline(openApiJson);
+        byte[] htmlBytes = html.getBytes(StandardCharsets.UTF_8);
+        String batchId = UUID.randomUUID().toString();
+        Path dir = Path.of("src", "main", "resources", "static", "docs", batchId);
+        Files.createDirectories(dir);
 
-        // Scalar 인라인 렌더링 HTML (중복 id 제거, 컨테이너 div 제거)
-        String html = buildScalarHtmlInline(openapiJson);
+        Path htmlPath = dir.resolve("api-docs.html");
+        Files.write(htmlPath, htmlBytes);
+        String htmlSha = sha256Hex(htmlBytes);
 
-        String openapiB64 = Base64.getEncoder().encodeToString(openapiJson.getBytes(StandardCharsets.UTF_8));
-        String htmlB64 = Base64.getEncoder().encodeToString(html.getBytes(StandardCharsets.UTF_8));
-
-        return List.of(
-                new FileArtifact("openapi.json", "application/json", openapiB64), // 참고용 제공
-                new FileArtifact("index.html", "text/html; charset=UTF-8", htmlB64)
+        UrlArtifact urlArtifact = new UrlArtifact(
+                "api-docs.html",
+                "text/html",
+                Files.size(htmlPath),
+                htmlSha,
+                "/docs/" + batchId + "/api-docs.html"
         );
+        return ApiResponse.success(urlArtifact);
     }
 
     private String buildOpenApiJson(ApiDocsRequest req) {
@@ -128,6 +139,12 @@ public class SimpleApiDocsGenerator {
 
     private String escape(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static String sha256Hex(byte[] data) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] d = md.digest(data);
+        return HexFormat.of().formatHex(d);
     }
 }
 

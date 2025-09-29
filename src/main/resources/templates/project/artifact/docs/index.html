@@ -84,6 +84,8 @@
 </style>
 <div class="container max-w-100">
     <form id="apiDocsForm">
+        <input type="hidden" name="docsIdx" th:value="${idx}">
+        <input type="hidden" name="projectIdx" th:value="${projectIdx}">
         <!-- 기본 정보 -->
         <div class="card mb-4">
             <div class="card-header">
