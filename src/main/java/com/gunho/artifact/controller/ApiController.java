@@ -31,7 +31,7 @@ public class ApiController {
     }
 
     @Description("API 명세서")
-    @PostMapping(value = "/api-docs", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/docs-url", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<UrlArtifact> apiDocs(@Valid @RequestBody ApiDocsRequest req) throws Exception {
         return apiDocsGenerator.generateAsFiles(req);
     }

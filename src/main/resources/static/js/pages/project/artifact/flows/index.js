@@ -270,41 +270,54 @@ class ApiFlowManager {
                     <i class="fas fa-cube"></i>
                     노드 ${index + 1}
                 </div>
-                <button type="button" class="remove-btn" data-action="remove-node" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="접기/펼치기" onclick="window.apiFlowsManager.toggleResponse(this)">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    
+                    <button type="button" class="btn btn-sm btn-secondary"  onclick="window.apiFlowsManager.addNode()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                            
+                    <button type="button" class="remove-btn" data-action="remove-node" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="form-group">
-                    <label class="form-label">ID <span class="required">*</span></label>
-                    <input type="text" class="form-control" value="${this.escapeHtml(node.id)}" 
-                           data-action="update-node" data-index="${index}" data-field="id">
+            <div class="flow-content">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="form-group">
+                        <label class="form-label">ID <span class="required">*</span></label>
+                        <input type="text" class="form-control" value="${this.escapeHtml(node.id)}" 
+                               data-action="update-node" data-index="${index}" data-field="id">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">라벨 <span class="required">*</span></label>
+                        <input type="text" class="form-control" value="${this.escapeHtml(node.label)}" 
+                               data-action="update-node" data-index="${index}" data-field="label">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">라벨 <span class="required">*</span></label>
-                    <input type="text" class="form-control" value="${this.escapeHtml(node.label)}" 
-                           data-action="update-node" data-index="${index}" data-field="label">
+                    <label class="form-label">모양</label>
+                    <div class="shape-selector">
+                        ${['service', 'external', 'db', 'process'].map(shape => `
+                            <div class="shape-option ${node.shape === shape ? 'active' : ''}" 
+                                 data-action="update-node" data-index="${index}" data-field="shape" data-value="${shape}">
+                                ${this.getShapeLabel(shape)}
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">모양</label>
-                <div class="shape-selector">
-                    ${['service', 'external', 'db', 'process'].map(shape => `
-                        <div class="shape-option ${node.shape === shape ? 'active' : ''}" 
-                             data-action="update-node" data-index="${index}" data-field="shape" data-value="${shape}">
-                            ${this.getShapeLabel(shape)}
-                        </div>
-                    `).join('')}
+                <div class="form-group">
+                    <label class="form-label">클래스</label>
+                    <select class="form-control" data-action="update-node" data-index="${index}" data-field="class">
+                        <option value="" ${!node.class ? 'selected' : ''}>기본</option>
+                        <option value="primary" ${node.class === 'primary' ? 'selected' : ''}>Primary</option>
+                        <option value="accent" ${node.class === 'accent' ? 'selected' : ''}>Accent</option>
+                        <option value="muted" ${node.class === 'muted' ? 'selected' : ''}>Muted</option>
+                    </select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">클래스</label>
-                <select class="form-control" data-action="update-node" data-index="${index}" data-field="class">
-                    <option value="" ${!node.class ? 'selected' : ''}>기본</option>
-                    <option value="primary" ${node.class === 'primary' ? 'selected' : ''}>Primary</option>
-                    <option value="accent" ${node.class === 'accent' ? 'selected' : ''}>Accent</option>
-                    <option value="muted" ${node.class === 'muted' ? 'selected' : ''}>Muted</option>
-                </select>
             </div>
         </div>
     `;
@@ -475,6 +488,25 @@ class ApiFlowManager {
         this.bindEdgeEvents(container.lastElementChild);
     }
 
+    toggleResponse(elem) {
+        const icon = elem.querySelector('i.fas');
+        const wrapper = elem.closest('.node-item, .edge-item'); // 버튼을 품고 있는 카드
+        if (!wrapper) return;
+
+        const content = wrapper.querySelector('.flow-content');
+        if (!content) return;
+
+        const isCollapsed = icon.classList.contains('fa-chevron-down');
+        if (isCollapsed) {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            content.style.display = '';
+        } else {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+            content.style.display = 'none';
+        }
+
+    }
+
     /**
      * 엣지 HTML 생성
      */
@@ -494,37 +526,50 @@ class ApiFlowManager {
                     <i class="fas fa-arrow-right"></i>
                     연결 ${index + 1}
                 </div>
-                <button type="button" class="remove-btn" data-action="remove-edge" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="grid grid-cols-3 gap-3">
-                <div class="form-group">
-                    <label class="form-label">시작 노드</label>
-                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="from">
-                        ${fromOptions}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">끝 노드</label>
-                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="to">
-                        ${toOptions}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">스타일</label>
-                    <select class="form-control" data-action="update-edge" data-index="${index}" data-field="styleType">
-                        <option value="normal" ${edge.style.type === 'normal' ? 'selected' : ''}>일반</option>
-                        <option value="dotted" ${edge.style.type === 'dotted' ? 'selected' : ''}>점선</option>
-                        <option value="thick" ${edge.style.type === 'thick' ? 'selected' : ''}>굵게</option>
-                    </select>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="접기/펼치기" onclick="window.apiFlowsManager.toggleResponse(this)">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                        
+                    <button type="button" class="btn btn-sm btn-secondary"  onclick="window.apiFlowsManager.addEdge()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    
+                    <button type="button" class="remove-btn" data-action="remove-edge" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">라벨</label>
-                <input type="text" class="form-control" value="${this.escapeHtml(edge.label || '')}"
-                       data-action="update-edge" data-index="${index}" data-field="label"
-                       placeholder="연결 라벨">
+            <div class="flow-content">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="form-group">
+                        <label class="form-label">시작 노드</label>
+                        <select class="form-control" data-action="update-edge" data-index="${index}" data-field="from">
+                            ${fromOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">끝 노드</label>
+                        <select class="form-control" data-action="update-edge" data-index="${index}" data-field="to">
+                            ${toOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">스타일</label>
+                        <select class="form-control" data-action="update-edge" data-index="${index}" data-field="styleType">
+                            <option value="normal" ${edge.style.type === 'normal' ? 'selected' : ''}>일반</option>
+                            <option value="dotted" ${edge.style.type === 'dotted' ? 'selected' : ''}>점선</option>
+                            <option value="thick" ${edge.style.type === 'thick' ? 'selected' : ''}>굵게</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">라벨</label>
+                    <input type="text" class="form-control" value="${this.escapeHtml(edge.label || '')}"
+                           data-action="update-edge" data-index="${index}" data-field="label"
+                           placeholder="연결 라벨">
+                </div>
             </div>
         </div>`;
     }

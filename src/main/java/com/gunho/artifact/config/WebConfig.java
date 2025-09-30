@@ -22,6 +22,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .setCachePeriod(0)  // 캐시 비활성화로 빠른 접근
                 .resourceChain(false);  // 리소스 체인 비활성화
 
+        registry.addResourceHandler("/docs/**")
+                .addResourceLocations("file:src/main/resources/static/docs/")
+                .setCachePeriod(0)  // 캐시 비활성화로 빠른 접근
+                .resourceChain(false);  // 리소스 체인 비활성화
+
     }
 
     @Override

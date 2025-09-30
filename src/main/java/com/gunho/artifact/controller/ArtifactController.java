@@ -39,7 +39,11 @@ public class ArtifactController {
     }
 
     @GetMapping("/docs")
-    public String docsAdd() {
+    public String docsAdd(Model model, @RequestParam(value = "projectIdx", required = false) Long projectIdx) {
+        model.addAttribute("idx", null);
+        model.addAttribute("projectIdx", projectIdx);
+        model.addAttribute("docs", null);
+        model.addAttribute("apiDocsSpec", docsService.buildEmptySpecJson());
         return "project/artifact/docs/index";
     }
 

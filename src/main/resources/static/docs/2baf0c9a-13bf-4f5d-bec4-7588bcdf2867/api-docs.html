@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API 문서</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+  </style>
+</head>
+<body>
+  <!-- OpenAPI 스펙을 인라인으로 제공 (이 요소 하나만 id="api-reference") -->
+  <script id="api-reference" type="application/json">
+  {"openapi":"3.0.3","info":{"title":"주문 API","version":"1.0"},"paths":{"/api/orders":{"post":{"summary":"테스트","tags":["Order"],"parameters":[{"in":"body","name":"Create","required":true,"schema":{"type":"object","properties":{"trxId":{"type":"string","description":"거래번호"},"trackId":{"type":"string","description":"주문번호","minLength":3,"maxLength":5},"amount":{"type":"integer","description":"금액","minimum":1000,"maximum":9999999},"user":{"type":"object","properties":{"name":{"type":"string"}}}},"required":["trxId","trackId","amount"]},"description":"등록"}],"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","properties":{"resultCd":{"type":"integer","description":"응답코드","default":"200"},"message":{"type":"string","description":"응답 메시지"}},"required":["resultCd","message"]}}}}}}}}}
+  </script>
+
+  <!-- Scalar API Reference 스크립트 -->
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>

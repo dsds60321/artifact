@@ -81,9 +81,32 @@
     .collapsible:hover {
         background: rgba(37, 99, 235, 0.05);
     }
+
+    .json-preview {
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        max-height: 420px;
+        overflow: auto;
+        padding: 16px;
+        white-space: pre;
+    }
+
+    .btn-group {
+        display: inline-flex;
+        gap: 6px;
+    }
+
+    .param-content,
+    .response-content {
+        margin-top: 12px;
+    }
 </style>
 <div class="container max-w-100">
-    <form id="apiDocsForm">
+    <form id="apiDocsForm" th:attr="data-project-idx=${projectIdx},data-docs-idx=${idx}">
         <input type="hidden" name="docsIdx" th:value="${idx}">
         <input type="hidden" name="projectIdx" th:value="${projectIdx}">
         <!-- 기본 정보 -->
@@ -95,11 +118,13 @@
                 <div class="grid grid-cols-2">
                     <div class="form-group">
                         <label class="form-label">제목</label>
-                        <input type="text" class="form-control" id="title" placeholder="예: 주문 API" required>
+                        <input type="text" class="form-control" id="title" placeholder="예: 주문 API" required
+                               th:value="${docs != null ? docs.title : ''}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">버전</label>
-                        <input type="text" class="form-control" id="version" placeholder="예: 1.0.0" required>
+                        <input type="text" class="form-control" id="version" placeholder="예: 1.0.0" required
+                               th:value="${docs != null ? docs.version : ''}">
                     </div>
                 </div>
             </div>
@@ -125,15 +150,40 @@
             </div>
         </div>
 
+        <!-- JSON 미리보기 -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-code-branch"></i> JSON 미리보기</h2>
+                <span class="text-muted" style="font-size: 12px;">유효한 JSON 형식으로 스키마/콘텐츠를 입력하세요.</span>
+            </div>
+            <div class="card-body">
+                <pre id="apiJsonPreview" class="json-preview">{
+              "title": "",
+              "version": "",
+              "endpoints": []
+            }</pre>
+            </div>
+        </div>
+
         <!-- 저장 버튼 -->
-        <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-secondary" onclick="history.back()">취소</button>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> 저장
-            </button>
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="downloadBtn">
+                            <i class="fas fa-download"></i> 다운로드
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <i class="fas fa-save"></i>
+                            <span th:text="${idx != null} ? '문서 수정' : '문서 저장'">문서 저장</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
 </div>
+<div style="display: none;" id="apiDocsInitialData" th:text="${apiDocsSpec}"></div>
 <script>
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeContent);
@@ -142,8 +192,6 @@
     }
 
     function initializeContent() {
-        console.log('콘텐츠 초기화 시작');
-
         if (window.ApiDocsManager) {
             window.apiDocsManager = new ApiDocsManager();
         } else {
