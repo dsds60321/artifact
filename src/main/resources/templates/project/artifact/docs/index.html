@@ -104,6 +104,43 @@
     .response-content {
         margin-top: 12px;
     }
+
+    .param-table-wrapper {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .param-table th,
+    .param-table td {
+        vertical-align: middle;
+        background: var(--white);
+    }
+
+    .param-table tbody tr:nth-child(2n+1) td {
+        background: var(--background-gray-light, #f8fafc);
+    }
+
+    .param-detail-row td {
+        background: var(--background-gray);
+    }
+
+    .param-detail {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--white);
+    }
+
+    .request-body-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        background: var(--white);
+    }
+
+    .font-monospace {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
 </style>
 <div class="container max-w-100">
     <form id="apiDocsForm" th:attr="data-project-idx=${projectIdx},data-docs-idx=${idx}">

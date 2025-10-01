@@ -25,6 +25,7 @@ public class ApiDocsRequest {
         @NotBlank private String path;   // /orders
         private String summary;
         private List<Map<String, Object>> params;    // {in,name,required,type}
+        private Map<String, Object> requestBody;     // OpenAPI requestBody 구조
         private Map<String, Map<String, Object>> responses; // "200": {description: "..."}
         private List<String> tags;
     }

@@ -78,8 +78,32 @@ public class ApiDocsGenerator {
 
             if (ep.getSummary() != null) methodObj.put("summary", ep.getSummary());
             if (ep.getTags() != null) methodObj.put("tags", ep.getTags());
+            Map<String, Object> requestBody = ep.getRequestBody();
             if (ep.getParams() != null && !ep.getParams().isEmpty()) {
-                methodObj.put("parameters", ep.getParams());
+                List<Map<String, Object>> filtered = new ArrayList<>();
+                for (Map<String, Object> param : ep.getParams()) {
+                    if (param == null) {
+                        continue;
+                    }
+                    Object locationObj = param.get("in");
+                    String location = locationObj != null ? locationObj.toString().toLowerCase(Locale.ROOT) : "";
+                    if ("requestbody".equals(location) || "body".equals(location)) {
+                        if (requestBody == null) {
+                            requestBody = legacyParamToRequestBody(param);
+                        }
+                    } else {
+                        filtered.add(param);
+                    }
+                }
+                if (!filtered.isEmpty()) {
+                    methodObj.put("parameters", filtered);
+                }
+            }
+            if (requestBody != null && !requestBody.isEmpty()) {
+                Map<String, Object> sanitized = sanitizeRequestBody(requestBody);
+                if (!sanitized.isEmpty()) {
+                    methodObj.put("requestBody", sanitized);
+                }
             }
 
             Map<String, Object> responses = new LinkedHashMap<>();
@@ -97,6 +121,74 @@ public class ApiDocsGenerator {
         root.put("paths", paths);
 
         return toJson(root);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Map<String, Object> sanitizeRequestBody(Map<String, Object> requestBody) {
+        if (requestBody == null) {
+            return Collections.emptyMap();
+        }
+        Map<String, Object> copy = new LinkedHashMap<>(requestBody);
+        copy.remove("enabled");
+        copy.remove("contentType");
+
+        Object required = copy.get("required");
+        if (required instanceof String str) {
+            copy.put("required", Boolean.parseBoolean(str));
+        }
+
+        Object contentObj = copy.get("content");
+        if (contentObj instanceof Map<?, ?> contentMap) {
+            Map<String, Object> sanitizedContent = new LinkedHashMap<>();
+            contentMap.forEach((key, value) -> sanitizedContent.put(String.valueOf(key), value));
+            copy.put("content", sanitizedContent);
+        } else if (contentObj == null) {
+            copy.remove("content");
+        }
+
+        Object sanitizedContentObj = copy.get("content");
+        if (sanitizedContentObj instanceof Map<?, ?> sanitizedContent && sanitizedContent.isEmpty()) {
+            copy.remove("content");
+        }
+
+        return copy.isEmpty() ? Collections.emptyMap() : copy;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Map<String, Object> legacyParamToRequestBody(Map<String, Object> param) {
+        if (param == null) {
+            return null;
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        Object description = param.get("description");
+        if (description != null) {
+            body.put("description", description);
+        }
+        Object required = param.get("required");
+        if (required instanceof Boolean bool && bool) {
+            body.put("required", true);
+        } else if (required instanceof String str && Boolean.parseBoolean(str)) {
+            body.put("required", true);
+        }
+
+        Object contentTypeObj = param.get("contentType");
+        String contentType = (contentTypeObj != null && !contentTypeObj.toString().isBlank()) ? contentTypeObj.toString() : "application/json";
+        Map<String, Object> mediaType = new LinkedHashMap<>();
+        Object schemaObj = param.get("schema");
+        if (schemaObj instanceof Map<?, ?> schemaMap) {
+            mediaType.put("schema", schemaMap);
+        } else {
+            mediaType.put("schema", Map.of("type", "object"));
+        }
+        Object example = param.get("example");
+        if (example != null) {
+            mediaType.put("example", example);
+        }
+
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put(contentType, mediaType);
+        body.put("content", content);
+        return body;
     }
 
     // Scalar API Reference: 인라인 JSON + 단일 script#api-reference (컨테이너 div 제거)

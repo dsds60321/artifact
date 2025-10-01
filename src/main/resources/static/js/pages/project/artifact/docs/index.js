@@ -156,6 +156,12 @@ class ApiDocsManager {
                 exampleName: decodeURIComponent(segments[4])
             };
         }
+        if (kind === 'request') {
+            return {
+                kind,
+                endpointId: Number(segments[1])
+            };
+        }
         return { kind: 'unknown' };
     }
 
@@ -208,6 +214,23 @@ class ApiDocsManager {
                 contentType: ctx.contentType,
                 content,
                 schemaRoot: content.schema
+            };
+        }
+        if (ctx.kind === 'request') {
+            const endpoint = this.findEndpoint(ctx.endpointId);
+            if (!endpoint) return null;
+            if (!endpoint.requestBody) {
+                endpoint.requestBody = this.createDefaultRequestBody();
+            }
+            if (!endpoint.requestBody.schema || typeof endpoint.requestBody.schema !== 'object') {
+                endpoint.requestBody.schema = { type: 'object', properties: {}, required: [] };
+                this.normalizeSchemaNode(endpoint.requestBody.schema);
+            }
+            return {
+                kind: ctx.kind,
+                endpoint,
+                requestBody: endpoint.requestBody,
+                schemaRoot: endpoint.requestBody.schema
             };
         }
         return null;
@@ -295,34 +318,126 @@ class ApiDocsManager {
         }
     }
 
+    createDefaultRequestBody() {
+        const schema = { type: 'object', properties: {}, required: [], __collapsed: false };
+        this.normalizeSchemaNode(schema);
+        return {
+            enabled: false,
+            required: false,
+            description: '',
+            contentType: 'application/json',
+            schema,
+            example: undefined,
+            __collapsed: false
+        };
+    }
+
+    extractRequestBody(params = []) {
+        const filteredParams = [];
+        let legacyParam = null;
+        params.forEach((param) => {
+            if (!param || typeof param !== 'object') return;
+            const location = (param.in || '').toLowerCase();
+            if ((location === 'requestbody' || location === 'body') && legacyParam === null) {
+                legacyParam = param;
+            } else if (location === 'requestbody' || location === 'body') {
+                // 무시하되 첫 번째 파라미터만 사용
+            } else {
+                filteredParams.push(param);
+            }
+        });
+        return { params: filteredParams, legacyParam };
+    }
+
+    normalizeRequestBody(rawBody, legacyParam) {
+        const base = this.createDefaultRequestBody();
+        if (!rawBody && !legacyParam) {
+            return base;
+        }
+
+        const result = {
+            ...base,
+            enabled: Boolean(rawBody?.content || rawBody?.enabled || legacyParam),
+            required: Boolean(rawBody?.required ?? legacyParam?.required),
+            description: rawBody?.description || legacyParam?.description || '',
+            __collapsed: Boolean(rawBody?.__collapsed)
+        };
+
+        let contentEntry = null;
+        if (rawBody?.content && typeof rawBody.content === 'object') {
+            const entries = Object.entries(rawBody.content);
+            if (entries.length > 0) {
+                contentEntry = entries[0];
+            }
+        }
+
+        if (!contentEntry && legacyParam) {
+            const type = legacyParam.contentType || (Array.isArray(legacyParam.contentTypes) ? legacyParam.contentTypes[0] : null);
+            contentEntry = [type || 'application/json', {
+                schema: legacyParam.schema,
+                example: legacyParam.example
+            }];
+            if (legacyParam.required !== undefined && rawBody?.required === undefined) {
+                result.required = Boolean(legacyParam.required);
+            }
+        }
+
+        if (contentEntry) {
+            const [contentType, contentData] = contentEntry;
+            result.contentType = contentType || 'application/json';
+            const schema = this.clone(contentData?.schema) || { type: 'object', properties: {}, required: [] };
+            this.normalizeSchemaNode(schema);
+            result.schema = schema;
+            if (contentData?.example !== undefined) {
+                result.example = this.clone(contentData.example);
+            } else if (contentData?.examples) {
+                const firstExample = Object.values(contentData.examples)[0];
+                if (firstExample && typeof firstExample === 'object' && firstExample.value !== undefined) {
+                    result.example = this.clone(firstExample.value);
+                }
+            }
+        }
+
+        return result;
+    }
+
     /* -------------------------------------------------------------
      * 엔드포인트 / 파라미터 / 응답 기본 조작
      * ----------------------------------------------------------- */
     normalizeEndpoint(endpoint = {}) {
+        const rawParams = Array.isArray(endpoint.params) ? endpoint.params : [];
+        const { params: filteredParams, legacyParam } = this.extractRequestBody(rawParams);
         const normalized = {
             id: this.generateId(),
             method: endpoint.method || 'GET',
             path: endpoint.path || '',
             summary: endpoint.summary || '',
             tags: Array.isArray(endpoint.tags) ? endpoint.tags.slice() : [],
-            params: Array.isArray(endpoint.params) ? endpoint.params.map((param) => this.normalizeParam(param)) : [],
+            params: filteredParams.map((param) => this.normalizeParam(param)),
             responses: this.normalizeResponses(endpoint.responses || {})
         };
+        normalized.requestBody = this.normalizeRequestBody(endpoint.requestBody, legacyParam);
         normalized.__collapsed = Boolean(endpoint.__collapsed);
         return normalized;
     }
 
     normalizeParam(param = {}) {
         const schema = this.clone(param.schema) || {};
+        const location = String(param.in || 'query');
         if (!schema.type) {
-            schema.type = param.in === 'body' ? 'object' : 'string';
+            const lowered = location.toLowerCase();
+            schema.type = lowered === 'body' || lowered === 'requestbody' ? 'object' : 'string';
         }
         this.normalizeSchemaNode(schema);
+        let normalizedLocation = location;
+        if (normalizedLocation.toLowerCase() === 'requestbody' || normalizedLocation.toLowerCase() === 'body') {
+            normalizedLocation = 'query';
+        }
         return {
             id: this.generateId(),
-            in: param.in || 'query',
+            in: normalizedLocation || 'query',
             name: param.name || '',
-            required: param.in === 'path' ? true : Boolean(param.required),
+            required: normalizedLocation === 'path' ? true : Boolean(param.required),
             description: param.description || '',
             schema,
             example: param.example !== undefined ? this.clone(param.example) : undefined,
@@ -407,6 +522,7 @@ class ApiDocsManager {
             summary: '',
             tags: [],
             params: [],
+            requestBody: this.createDefaultRequestBody(),
             responses: {
                 '200': {
                     description: 'OK',
@@ -625,14 +741,16 @@ class ApiDocsManager {
         if (!param) return;
         switch (field) {
             case 'in':
-                param.in = value;
-                if (value === 'path') {
-                    param.required = true;
+                {
+                    const allowed = ['query', 'path', 'header', 'cookie'];
+                    const normalized = allowed.includes(value) ? value : 'query';
+                    param.in = normalized;
+                    if (normalized === 'path') {
+                        param.required = true;
+                    }
+                    this.renderEndpoints();
+                    return;
                 }
-                if (value === 'body' && (!param.schema || !param.schema.type || param.schema.type === 'string')) {
-                    param.schema = { type: 'object', properties: {}, required: [] };
-                }
-                break;
             case 'name':
             case 'description':
                 param[field] = value;
@@ -644,6 +762,16 @@ class ApiDocsManager {
                 param[field] = value;
         }
         this.renderJsonPreview();
+    }
+
+    updateParamSchemaType(endpointId, paramId, type) {
+        const param = this.findParam(endpointId, paramId);
+        if (!param) return;
+        if (!param.schema || typeof param.schema !== 'object') {
+            param.schema = { type };
+        }
+        this.prepareSchemaForType(param.schema, type);
+        this.renderEndpoints();
     }
 
     updateParamExample(endpointId, paramId, rawValue) {
@@ -671,6 +799,57 @@ class ApiDocsManager {
         this.renderJsonPreview();
     }
 
+    ensureRequestBody(endpoint) {
+        if (!endpoint.requestBody) {
+            endpoint.requestBody = this.createDefaultRequestBody();
+        }
+        if (!endpoint.requestBody.schema || typeof endpoint.requestBody.schema !== 'object') {
+            endpoint.requestBody.schema = { type: 'object', properties: {}, required: [] };
+            this.normalizeSchemaNode(endpoint.requestBody.schema);
+        }
+        return endpoint.requestBody;
+    }
+
+    toggleRequestBodyEnabled(endpointId, enabled) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        requestBody.enabled = Boolean(enabled);
+        this.renderEndpoints();
+    }
+
+    updateRequestBodyField(endpointId, field, value) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        if (field === 'required') {
+            requestBody.required = Boolean(value);
+        } else if (field === 'contentType') {
+            requestBody.contentType = value.trim() || 'application/json';
+        } else if (field === 'description') {
+            requestBody.description = value;
+        }
+        this.renderJsonPreview();
+    }
+
+    updateRequestBodyExample(endpointId, rawValue) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        const text = rawValue.trim();
+        if (!text) {
+            delete requestBody.example;
+            this.renderJsonPreview();
+            return;
+        }
+        try {
+            requestBody.example = JSON.parse(text);
+            this.renderJsonPreview();
+        } catch (error) {
+            this.notifyError('JSON 형식이 올바르지 않습니다.');
+        }
+    }
+
     /* -------------------------------------------------------------
      * 스키마 편집 로직
      * ----------------------------------------------------------- */
@@ -680,6 +859,10 @@ class ApiDocsManager {
 
     makeResponseSchemaContext(endpointId, code, contentType) {
         return `response|${endpointId}|${encodeURIComponent(code)}|${encodeURIComponent(contentType)}`;
+    }
+
+    makeRequestBodySchemaContext(endpointId) {
+        return `request|${endpointId}`;
     }
 
     handleSchemaTypeChange(contextKey, encodedPath, newType) {
@@ -1156,6 +1339,7 @@ class ApiDocsManager {
                     </div>
 
                     ${this.renderParamsSection(endpoint)}
+                    ${this.renderRequestBodySection(endpoint)}
                     ${this.renderResponsesSection(endpoint)}
                 </div>
             </div>
@@ -1174,83 +1358,155 @@ class ApiDocsManager {
     }
 
     renderParamsSection(endpoint) {
+        const rows = endpoint.params.map((param) => this.renderParamRow(endpoint, param)).join('');
+        const emptyRow = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-3">파라미터를 추가해 주세요.</td>
+            </tr>
+        `;
         return `
-            <div class="mb-3">
+            <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <label class="form-label mb-0">파라미터</label>
                     <button type="button" class="btn btn-sm btn-secondary" onclick="window.apiDocsManager.addParam(${endpoint.id})">
                         <i class="fas fa-plus"></i> 추가
                     </button>
                 </div>
-                ${endpoint.params.map((param) => this.renderParam(endpoint, param)).join('') || '<div class="empty-state small">파라미터를 추가해 주세요.</div>'}
+                <div class="table-responsive param-table-wrapper">
+                    <table class="table table-sm align-middle param-table">
+                        <thead>
+                            <tr>
+                                <th style="width:18%">이름</th>
+                                <th style="width:14%">위치</th>
+                                <th style="width:16%">타입</th>
+                                <th style="width:10%" class="text-center">필수</th>
+                                <th>설명</th>
+                                <th style="width:14%" class="text-end">설정</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows || emptyRow}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         `;
     }
 
-    renderParam(endpoint, param) {
+    renderParamRow(endpoint, param) {
+        const schemaType = param.schema?.type || 'string';
         const contextKey = this.makeParamSchemaContext(endpoint.id, param.id);
-        const schemaPath = 'root';
-        if (!param.schema) param.schema = { type: 'string' };
         const collapsed = Boolean(param.__collapsed);
-        const contentStyle = collapsed ? 'style="display:none;"' : '';
-        const toggleIcon = collapsed ? 'fa-chevron-down' : 'fa-chevron-up';
+        const detailStyle = collapsed ? 'style="display:none;"' : '';
+        const typeOptions = ['string', 'integer', 'number', 'boolean', 'array', 'object'];
+        const paramTypeSelect = typeOptions.map((type) => `<option value="${type}" ${schemaType === type ? 'selected' : ''}>${type}</option>`).join('');
+        const exampleValue = param.example !== undefined ? this.escapeHtml(String(param.example)) : '';
+        const locationOptions = ['query', 'path', 'header', 'cookie'];
+        const locationSelect = locationOptions.map((type) => `<option value="${type}" ${param.in === type ? 'selected' : ''}>${type}</option>`).join('');
         return `
-            <div class="param-item">
-                <div class="param-header">
-                    <div>
-                        <span class="param-type">${this.escapeHtml(param.in)}</span>
-                        <strong>${this.escapeHtml(param.name || '이름없음')}</strong>
-                        ${param.required ? '<span class="badge badge-primary">필수</span>' : ''}
-                    </div>
+            <tr>
+                <td>
+                    <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(param.name)}" placeholder="파라미터명"
+                           onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'name', this.value)">
+                </td>
+                <td>
+                    <select class="form-control form-control-sm" onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'in', this.value)">
+                        ${locationSelect}
+                    </select>
+                </td>
+                <td>
+                    <select class="form-control form-control-sm" onchange="window.apiDocsManager.updateParamSchemaType(${endpoint.id}, ${param.id}, this.value)">
+                        ${paramTypeSelect}
+                    </select>
+                </td>
+                <td class="text-center">
+                    <input type="checkbox" ${param.required ? 'checked' : ''} onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'required', this.checked)">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(param.description)}" placeholder="파라미터 설명"
+                           onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'description', this.value)">
+                </td>
+                <td class="text-end">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" title="접기/펼치기" onclick="window.apiDocsManager.toggleParam(${endpoint.id}, ${param.id})">
-                            <i class="fas ${toggleIcon}"></i>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" title="스키마 편집" onclick="window.apiDocsManager.toggleParam(${endpoint.id}, ${param.id})">
+                            <i class="fas fa-sliders-h"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-secondary" title="파라미터 추가" onclick="window.apiDocsManager.addParam(${endpoint.id})">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button type="button" class="remove-btn" title="파라미터 삭제" onclick="window.apiDocsManager.removeParam(${endpoint.id}, ${param.id})">
+                        <button type="button" class="btn btn-outline-danger btn-sm" title="삭제" onclick="window.apiDocsManager.removeParam(${endpoint.id}, ${param.id})">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                </div>
-                <div class="param-content" ${contentStyle}>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="form-label">이름</label>
-                        <input type="text" class="form-control" value="${this.escapeHtml(param.name)}"
-                               onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'name', this.value)"
-                               placeholder="파라미터명">
+                </td>
+            </tr>
+            <tr class="param-detail-row" ${detailStyle}>
+                <td colspan="6">
+                    <div class="param-detail">
+                        <div class="mb-3">
+                            <label class="form-label">스키마</label>
+                            ${this.renderSchemaEditor(contextKey, param.schema, 'root')}
+                        </div>
+                        <div>
+                            <label class="form-label">예시 값</label>
+                            <input type="text" class="form-control" value="${exampleValue}" placeholder="예: KRW"
+                                   onchange="window.apiDocsManager.updateParamExample(${endpoint.id}, ${param.id}, this.value)">
+                            <small class="text-muted">타입과 일치하는 값을 입력하세요.</small>
+                        </div>
                     </div>
-                    <div>
-                        <label class="form-label">위치</label>
-                        <select class="form-control" onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'in', this.value)">
-                            ${['query', 'path', 'header', 'cookie', 'requestBody'].map((type) => `<option value="${type}" ${param.in === type ? 'selected' : ''}>${type}</option>`).join('')}
-                        </select>
+                </td>
+            </tr>
+        `;
+    }
+
+    renderRequestBodySection(endpoint) {
+        const requestBody = this.ensureRequestBody(endpoint);
+        const schemaContext = this.makeRequestBodySchemaContext(endpoint.id);
+        const exampleText = this.escapeHtml(this.formatJsonExample(requestBody.example));
+        const content = requestBody.enabled ? `
+            <div class="card request-body-card">
+                <div class="card-body">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="form-label">설명</label>
+                            <input type="text" class="form-control" value="${this.escapeHtml(requestBody.description)}" placeholder="요청 본문 설명"
+                                   onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'description', this.value)">
+                        </div>
+                        <div>
+                            <label class="form-label">콘텐츠 타입</label>
+                            <input type="text" class="form-control" value="${this.escapeHtml(requestBody.contentType)}" placeholder="application/json"
+                                   onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'contentType', this.value)">
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between" style="gap:8px;">
+                            <div>
+                                <label class="form-label mb-0">필수 여부</label>
+                                <div class="text-muted small">요청 시 반드시 포함</div>
+                            </div>
+                            <input type="checkbox" ${requestBody.required ? 'checked' : ''}
+                                   onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'required', this.checked)">
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center" style="gap:8px;margin-top:24px;">
-                        <label class="form-label mb-0">필수</label>
-                        <input type="checkbox" ${param.required ? 'checked' : ''}
-                               onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'required', this.checked)">
+                    <div class="mt-3">
+                        <label class="form-label">스키마</label>
+                        ${this.renderSchemaEditor(schemaContext, requestBody.schema, 'root')}
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">예시 (JSON)</label>
+                        <textarea class="form-control font-monospace" rows="6" placeholder='{"name":"홍길동"}'
+                                  onchange="window.apiDocsManager.updateRequestBodyExample(${endpoint.id}, this.value)">${exampleText}</textarea>
+                        <small class="text-muted">JSON 형식으로 입력해 주세요. 비워두면 예시가 제외됩니다.</small>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <label class="form-label">설명</label>
-                    <input type="text" class="form-control" value="${this.escapeHtml(param.description)}"
-                           onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'description', this.value)"
-                           placeholder="파라미터 설명">
+            </div>
+        ` : `<div class="empty-state small">POST/PUT 요청 본문이 필요하다면 스위치를 켜주세요.</div>`;
+        return `
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">요청 본문</label>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" ${requestBody.enabled ? 'checked' : ''}
+                               onchange="window.apiDocsManager.toggleRequestBodyEnabled(${endpoint.id}, this.checked)">
+                        <label class="form-check-label">사용</label>
+                    </div>
                 </div>
-                <div class="mt-3">
-                    <label class="form-label">스키마</label>
-                    ${this.renderSchemaEditor(contextKey, param.schema, schemaPath)}
-                </div>
-                <div class="mt-3">
-                    <label class="form-label">예시 값</label>
-                    <input type="text" class="form-control" value="${param.example !== undefined ? this.escapeHtml(String(param.example)) : ''}"
-                           onchange="window.apiDocsManager.updateParamExample(${endpoint.id}, ${param.id}, this.value)"
-                           placeholder="예: KRW">
-                </div>
-                </div>
+                ${content}
             </div>
         `;
     }
@@ -1774,6 +2030,15 @@ class ApiDocsManager {
         return encodeURIComponent(String(value ?? ''));
     }
 
+    formatJsonExample(value) {
+        if (value === undefined) return '';
+        try {
+            return JSON.stringify(value, null, 2);
+        } catch (error) {
+            return '';
+        }
+    }
+
     /* -------------------------------------------------------------
      * JSON 생성 & 저장
      * ----------------------------------------------------------- */
@@ -1813,6 +2078,28 @@ class ApiDocsManager {
                 if (param.example !== undefined) paramSpec.example = this.clone(param.example);
                 return paramSpec;
             });
+        }
+
+        if (endpoint.requestBody?.enabled) {
+            const contentType = endpoint.requestBody.contentType || 'application/json';
+            const bodyContent = {
+                schema: this.clone(endpoint.requestBody.schema) || { type: 'object' }
+            };
+            if (endpoint.requestBody.example !== undefined) {
+                bodyContent.example = this.clone(endpoint.requestBody.example);
+            }
+            const requestBodySpec = {
+                content: {
+                    [contentType]: bodyContent
+                }
+            };
+            if (endpoint.requestBody.description) {
+                requestBodySpec.description = endpoint.requestBody.description;
+            }
+            if (endpoint.requestBody.required) {
+                requestBodySpec.required = true;
+            }
+            result.requestBody = requestBodySpec;
         }
 
         Object.entries(endpoint.responses || {}).forEach(([code, response]) => {
