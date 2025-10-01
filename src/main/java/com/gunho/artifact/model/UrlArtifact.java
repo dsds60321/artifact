@@ -9,6 +9,5 @@ public class UrlArtifact {
     private String fileName;
     private String contentType;
     private long size;
-    private String sha256;
     private String url; // 예: /files/flowcharts/{id}/flowchart.png
 }

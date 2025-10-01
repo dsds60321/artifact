@@ -1,6 +1,7 @@
 package com.gunho.artifact.controller;
 
 import com.gunho.artifact.dto.ApiResponse;
+import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,8 @@ import com.gunho.artifact.dto.FlowChartRequest;
 import com.gunho.artifact.model.UrlArtifact;
 import org.springframework.context.annotation.Description;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,14 +29,14 @@ public class ApiController {
     // URL 기반 응답(파일 저장 후 링크 반환)
     @Description("API FLOW")
     @PostMapping(value = "/flowchart-url", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<UrlArtifact> flowchartUrl(@Valid @RequestBody FlowChartRequest req) throws Exception {
-        return flowChartGenerator.generateAsFiles(req);
+    public ApiResponse<UrlArtifact> flowchartUrl(@AuthenticationPrincipal ArtifactUserDetails userDetails, @Valid @RequestBody FlowChartRequest req) throws Exception {
+        return flowChartGenerator.generateAsFiles(req, userDetails.getUser());
     }
 
     @Description("API 명세서")
     @PostMapping(value = "/docs-url", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<UrlArtifact> apiDocs(@Valid @RequestBody ApiDocsRequest req) throws Exception {
-        return apiDocsGenerator.generateAsFiles(req);
+    public ApiResponse<UrlArtifact> apiDocs(@AuthenticationPrincipal ArtifactUserDetails userDetails,@Valid @RequestBody ApiDocsRequest req) throws Exception {
+        return apiDocsGenerator.generateAsFiles(req, userDetails.getUser());
     }
 }
 

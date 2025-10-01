@@ -1,10 +1,17 @@
 package com.gunho.artifact.service;
 
 import com.gunho.artifact.dto.ApiResponse;
+import com.gunho.artifact.entity.ApiDocsDocument;
+import com.gunho.artifact.entity.ArtifactFile;
+import com.gunho.artifact.entity.User;
+import com.gunho.artifact.exception.ArtifactException;
 import com.gunho.artifact.model.UrlArtifact;
+import com.gunho.artifact.repository.ArtifactFileRepository;
+import com.gunho.artifact.repository.ApiDocsDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import com.gunho.artifact.dto.ApiDocsRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -16,25 +23,41 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ApiDocsGenerator {
 
-    public ApiResponse<UrlArtifact> generateAsFiles(ApiDocsRequest req) throws Exception {
+    private final ArtifactFileRepository artifactFileRepository;
+    private final ApiDocsDocumentRepository apiDocsDocumentRepository;
+
+    @Transactional
+    public ApiResponse<UrlArtifact> generateAsFiles(ApiDocsRequest req, User user) throws Exception {
+        ApiDocsDocument document = apiDocsDocumentRepository.findByIdxAndUserIdx(req.getDocsIdx(), user.getIdx())
+                .orElseThrow(() -> new ArtifactException("문서를 찾을 수 없습니다."));
+
         String openApiJson = buildOpenApiJson(req);
         String html = buildScalarHtmlInline(openApiJson);
         byte[] htmlBytes = html.getBytes(StandardCharsets.UTF_8);
-        String batchId = UUID.randomUUID().toString();
-        Path dir = Path.of("src", "main", "resources", "static", "docs", batchId);
+        Path dir = Path.of("src", "main", "resources", "static",  "artifact", user.getId() ,"docs", req.getDocsIdx().toString());
         Files.createDirectories(dir);
 
         Path htmlPath = dir.resolve("api-docs.html");
         Files.write(htmlPath, htmlBytes);
-        String htmlSha = sha256Hex(htmlBytes);
+        long fileSize = Files.size(htmlPath);
 
         UrlArtifact urlArtifact = new UrlArtifact(
-                "api-docs.html",
+                "%s.html".formatted(req.getTitle()),
                 "text/html",
-                Files.size(htmlPath),
-                htmlSha,
-                "/docs/" + batchId + "/api-docs.html"
+                fileSize,
+                "/static/artifact/" + user.getId() +  "/docs/" +  req.getDocsIdx().toString()  + "/%s.html".formatted(req.getTitle())
         );
+
+        ArtifactFile artifactFile = document.getFile();
+        if (artifactFile == null) {
+            artifactFile = ArtifactFile.toEntity(user, req.getTitle(), req.getTitle(), dir.toString(), "html", fileSize);
+            document.updateFile(artifactFile);
+        } else {
+            artifactFile.updateMetadata(req.getTitle(), req.getTitle(), dir.toString(), "html", fileSize);
+        }
+
+        artifactFileRepository.save(artifactFile);
+
         return ApiResponse.success(urlArtifact);
     }
 
@@ -147,4 +170,3 @@ public class ApiDocsGenerator {
         return HexFormat.of().formatHex(d);
     }
 }
-

@@ -9,6 +9,10 @@ import java.util.Map;
 
 @Data
 public class FlowChartRequest {
+    @NotNull
+    private Long projectIdx;
+    @NotNull
+    private Long flowIdx;
     @NotBlank
     private String title;
     private String layout = "TB"; // TB, LR 등

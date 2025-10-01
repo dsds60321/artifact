@@ -2,11 +2,18 @@ package com.gunho.artifact.service;
 
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.FlowChartRequest;
+import com.gunho.artifact.entity.ApiDocsFlow;
+import com.gunho.artifact.entity.ArtifactFile;
+import com.gunho.artifact.entity.User;
+import com.gunho.artifact.exception.ArtifactException;
 import com.gunho.artifact.model.UrlArtifact;
+import com.gunho.artifact.repository.ArtifactFileRepository;
+import com.gunho.artifact.repository.ApiDocsFlowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,34 +25,43 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FlowChartGenerator {
 
+    private final ArtifactFileRepository artifactFileRepository;
+    private final ApiDocsFlowRepository apiDocsFlowRepository;
     private String htmlTemplate;
 
-    public ApiResponse<UrlArtifact> generateAsFiles(FlowChartRequest req) throws Exception {
+    @Transactional
+    public ApiResponse<UrlArtifact> generateAsFiles(FlowChartRequest req, User user) throws Exception {
+        ApiDocsFlow flow = apiDocsFlowRepository.findByIdxAndUserIdx(req.getFlowIdx(), user.getIdx())
+                .orElseThrow(() -> new ArtifactException("플로우를 찾을 수 없습니다."));
+
+
         String html = generateHtmlFromTemplate(req);
-        String mermaid = toMermaid(req);
 
         byte[] htmlBytes = html.getBytes(StandardCharsets.UTF_8);
-        byte[] mmdBytes = mermaid.getBytes(StandardCharsets.UTF_8);
 
-        String batchId = UUID.randomUUID().toString();
-        Path dir = Path.of("src", "main", "resources", "static", "flowcharts", batchId);
+        Path dir = Path.of("src", "main", "resources", "static", "artifact", user.getId(), "flowcharts", req.getFlowIdx().toString());
         Files.createDirectories(dir);
 
-        Path htmlPath = dir.resolve("api-flow.html");
-        Path mmdPath = dir.resolve("api-flow.mmd");
+        Path htmlPath = dir.resolve(req.getTitle() + ".html");
         Files.write(htmlPath, htmlBytes);
-        Files.write(mmdPath, mmdBytes);
-
-        String htmlSha = sha256Hex(htmlBytes);
-        String mmdSha = sha256Hex(mmdBytes);
+        long fileSize = Files.size(htmlPath);
 
         UrlArtifact urlArtifact = new UrlArtifact(
-                "api-flow.html",
+                "%s.html".formatted(req.getTitle()),
                 "text/html",
-                Files.size(htmlPath),
-                htmlSha,
-                "/flowcharts/" + batchId + "/api-flow.html"
+                fileSize,
+                "/static/artifact/" + user.getId() +  "/flowcharts/" +  req.getFlowIdx().toString()  + "/%s.html".formatted(req.getTitle())
         );
+
+        ArtifactFile artifactFile = flow.getFile();
+        if (artifactFile == null) {
+            artifactFile = ArtifactFile.toEntity(user, req.getTitle(), req.getTitle(), dir.toString(), "html", fileSize);
+            flow.updateFile(artifactFile);
+        } else {
+            artifactFile.updateMetadata(req.getTitle(), req.getTitle(), dir.toString(), "html", fileSize);
+        }
+
+        artifactFileRepository.save(artifactFile);
 
         return ApiResponse.success(urlArtifact);
     }

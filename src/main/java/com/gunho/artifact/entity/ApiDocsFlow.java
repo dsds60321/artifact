@@ -40,6 +40,10 @@ public class ApiDocsFlow {
     @Column(columnDefinition = "TEXT")
     private String flowData;
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "file_idx")
+    private ArtifactFile file;
+
     @Builder.Default
     @Column(name = "updated_by",  length = 64)
     private String updatedBy = "";
@@ -70,6 +74,10 @@ public class ApiDocsFlow {
         this.theme = request.theme();
         this.flowData = flowData;
         this.updatedBy = updatedBy;
+    }
+
+    public void updateFile(ArtifactFile file) {
+        this.file = file;
     }
 
 }

@@ -31,7 +31,7 @@ public class ApiDocsDocument {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String version;
 
     @Builder.Default
@@ -53,6 +53,10 @@ public class ApiDocsDocument {
     @Column(name = "created_by", length = 64)
     private String createdBy = "";
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "file_idx")
+    private ArtifactFile file;
+
     public static ApiDocsDocument toEntity(ArtifactDto.Request req, Project project, User user) {
         return ApiDocsDocument.builder()
                 .project(project)
@@ -66,5 +70,9 @@ public class ApiDocsDocument {
         this.version = request.version();
         this.endpoints = endPoints;
         this.updatedBy = id;
+    }
+
+    public void updateFile(ArtifactFile file) {
+        this.file = file;
     }
 }

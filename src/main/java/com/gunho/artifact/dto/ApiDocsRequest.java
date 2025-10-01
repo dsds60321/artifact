@@ -9,6 +9,10 @@ import java.util.Map;
 
 @Data
 public class ApiDocsRequest {
+    @NotNull
+    private Long projectIdx;
+    @NotNull
+    private Long docsIdx;
     @NotBlank
     private String title;
     private String version = "1.0.0";

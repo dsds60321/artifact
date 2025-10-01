@@ -1225,7 +1225,7 @@ class ApiDocsManager {
                     <div>
                         <label class="form-label">위치</label>
                         <select class="form-control" onchange="window.apiDocsManager.updateParamField(${endpoint.id}, ${param.id}, 'in', this.value)">
-                            ${['query', 'path', 'header', 'cookie', 'body'].map((type) => `<option value="${type}" ${param.in === type ? 'selected' : ''}>${type}</option>`).join('')}
+                            ${['query', 'path', 'header', 'cookie', 'requestBody'].map((type) => `<option value="${type}" ${param.in === type ? 'selected' : ''}>${type}</option>`).join('')}
                         </select>
                     </div>
                     <div class="d-flex align-items-center" style="gap:8px;margin-top:24px;">
@@ -1901,11 +1901,36 @@ class ApiDocsManager {
             const payload = this.buildPayload();
 
             const {data} = await axios.post('/api/generate/docs-url', payload);
-            if (data.success) {
-                window.open(data.data.url, '_blank');
-            } else {
-                NotificationManager.showError(data.message);
+            if (!data.success || !data.data?.url) {
+                NotificationManager.showError(data.message || '다운로드 URL을 가져오지 못했습니다.');
+                return;
             }
+
+            const fileResponse = await axios.get(data.data.url, {responseType: 'blob'});
+            const blobUrl = window.URL.createObjectURL(fileResponse.data);
+
+            let filename = data.data.filename || 'api-docs';
+            const disposition = fileResponse.headers['content-disposition'];
+            if (disposition) {
+                const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+                const encodedName = utf8Match?.[1] || asciiMatch?.[1];
+                if (encodedName) {
+                    try {
+                        filename = decodeURIComponent(encodedName);
+                    } catch (decodeError) {
+                        filename = encodedName;
+                    }
+                }
+            }
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            downloadLink.remove();
+            window.URL.revokeObjectURL(blobUrl);
         } catch (e) {
             console.error(e);
             NotificationManager.showError('오류가 발생했습니다. 관리자에게 문의해주시기 바랍니다.');
