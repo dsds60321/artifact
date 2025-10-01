@@ -267,6 +267,9 @@ public class FlowChartGenerator {
                     "font-weight": "500",
                     "text-wrap": "wrap",
                     "text-max-width": "120px",
+                    "white-space": "normal",
+                    "word-wrap": "break-word",
+                    "overflow-wrap": "break-word",
                     "width": "120px",
                     "height": "60px",
                     "shape": "roundrectangle"
