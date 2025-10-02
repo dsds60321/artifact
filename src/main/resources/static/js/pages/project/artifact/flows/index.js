@@ -771,12 +771,12 @@ class ApiFlowManager {
             }
 
             const {data} = await axios.post('/api/generate/flowchart-url', request);
-            console.log('data ' , data);
-            if (data.success) {
-                window.open(data.data.url, '_blank');
-            } else {
-                NotificationManager.showError(data.message);
+            if (!data.success || !data.data?.url) {
+                NotificationManager.showError(data.message || '다운로드 URL을 가져오지 못했습니다.');
+                return;
             }
+
+            await UTIL.file.download({url : data.data.url, fileName : data.data.fileName || 'api-flow'});
         } catch (e) {
             console.error(e);
             NotificationManager.showError('오류가 발생했습니다. 관리자에게 문의해주시기 바랍니다.');

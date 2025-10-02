@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시스템흐름_거래 -&gt; 정산 - API Flow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter,+Pretendard,+sans-serif&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family, 'Inter', 'Pretendard', sans-serif);
+            height: 100vh;
+            overflow: hidden;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            background: var(--bg-color, #f8fafc);
+            color: var(--text-color, #1e293b);
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+            z-index: 100;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--primary-border-color, #1976D2);
+        }
+
+        .main {
+            height: calc(100vh - 81px);
+            position: relative;
+            background: rgba(255, 255, 255, 0.9);
+            margin: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #cy {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            display: flex;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: #525252;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            border-radius: 8px;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.8);
+            color: #1a1a1a;
+        }
+
+        .btn.active {
+            background: var(--primary-border-color, #1976D2);
+            color: #ffffff;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.9);
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            color: var(--text-color, #1e293b);
+        }
+
+        .loading::before {
+            content: '';
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-border-color, #1976D2);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 테마별 동적 스타일 */
+        .theme-default {
+    --primary-color: #E3F2FD;
+    --primary-border-color: #1976D2;
+    --bg-color: #f8fafc;
+    --text-color: #1e293b;
+}
+
+.theme-default body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.theme-default .header {
+    border-bottom: 1px solid var(--primary-border-color);
+}
+
+.theme-default .header-icon {
+    background: var(--primary-border-color);
+}
+
+.theme-default .btn.active {
+    background: var(--primary-border-color);
+    color: white;
+}
+
+.theme-default .loading::before {
+    border-top-color: var(--primary-border-color);
+}
+
+    </style>
+</head>
+<body class="theme-default">
+<div class="header">
+    <h1>
+        <div class="header-icon">FL</div>
+        시스템흐름_거래 -&gt; 정산
+    </h1>
+    <div class="header-actions">
+        <button class="btn" onclick="fitGraph()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+            </svg>
+            전체 보기
+        </button>
+    </div>
+</div>
+
+<div class="main">
+    <div id="loading" class="loading">플로우차트 생성 중...</div>
+    <div id="cy" style="display: none;"></div>
+
+    <div class="controls">
+        <button class="btn active" onclick="changeLayout('dagre')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 3h18v4H3V3zm0 6h18v4H3V9zm0 6h18v4H3v-4z"/>
+            </svg>
+            다이어그램
+        </button>
+        <button class="btn" onclick="changeLayout('hierarchy')">계층형</button>
+        <button class="btn" onclick="changeLayout('breadthfirst')">방사형</button>
+        <button class="btn" onclick="changeLayout('circle')">원형</button>
+    </div>
+</div>
+
+<script>
+    if (typeof cytoscape !== 'undefined' && typeof dagre !== 'undefined') {
+        cytoscape.use(cytoscapeDagre);
+    }
+
+    let cy = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initializeCytoscape, 200);
+    });
+
+    function initializeCytoscape() {
+        try {
+            const elements = [
+{
+  "data": {
+    "id": "결제저장모듈:8002",
+    "label": "결제저장모듈:8002",
+    "type": "process",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "DB",
+    "label": "DB",
+    "type": "db",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "매입_스케쥴러:8003",
+    "label": "매입_스케쥴러:8003",
+    "type": "process",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "배치:8005",
+    "label": "배치:8005",
+    "type": "process",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "단말기",
+    "label": "단말기",
+    "type": "external",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "E2U",
+    "label": "E2U",
+    "type": "external",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "웹:8080",
+    "label": "웹:8080",
+    "type": "service",
+    "nodeClass": ""
+  }
+},
+{
+  "data": {
+    "id": "SERV_PAY(pay-receiver):8002-DB",
+    "source": "SERV_PAY(pay-receiver):8002",
+    "target": "DB",
+    "label": "원장 거래 생성 (payment)",
+    "styleType": "thick"
+  }
+},
+{
+  "data": {
+    "id": "SERV_PAY(capture-scheduler):8003-DB",
+    "source": "SERV_PAY(capture-scheduler):8003",
+    "target": "DB",
+    "label": "매입 데이터 생성 (capture)",
+    "styleType": "thick"
+  }
+},
+{
+  "data": {
+    "id": "SERV_PAY(settlement-batch):8005-DB",
+    "source": "SERV_PAY(settlement-batch):8005",
+    "target": "DB",
+    "label": "매입, 정산 데이터 생성 ( settlement_merchant, ...)",
+    "styleType": "thick"
+  }
+},
+{
+  "data": {
+    "id": "단말기-E2U",
+    "source": "단말기",
+    "target": "E2U",
+    "label": "결제 요청",
+    "styleType": "dotted"
+  }
+},
+{
+  "data": {
+    "id": "SERV_PAY(settlement-app):8080-DB",
+    "source": "SERV_PAY(settlement-app):8080",
+    "target": "DB",
+    "label": "정산확정-> ( settlement_merchant.. 정산데이터 생성 )",
+    "styleType": "thick"
+  }
+},
+{
+  "data": {
+    "id": "E2U-SERV_PAY(pay-receiver):8002",
+    "source": "E2U",
+    "target": "SERV_PAY(pay-receiver):8002",
+    "label": "HOOK 전송 ( 결제 데이터 )",
+    "styleType": "dotted"
+  }
+}
+];
+            const cytoscapeStyles = [
+{
+  "selector": "node",
+  "style": {
+    "background-color": "#E3F2FD",
+    "border-color": "#1976D2",
+    "border-width": "2px",
+    "label": "data(label)",
+    "text-valign": "center",
+    "text-halign": "center",
+    "color": "#1e293b",
+    "font-size": "12px",
+    "font-weight": "500",
+    "text-wrap": "wrap",
+    "text-max-width": "120px",
+    "white-space": "normal",
+    "word-wrap": "break-word",
+    "overflow-wrap": "break-word",
+    "width": "120px",
+    "height": "60px",
+    "shape": "roundrectangle"
+  }
+},{
+  "selector": "node[type = 'service']",
+  "style": {
+    "background-color": "#E3F2FD",
+    "border-color": "#1976D2",
+    "shape": "roundrectangle"
+  }
+},{
+  "selector": "node[type = 'db']",
+  "style": {
+    "background-color": "#FFF3E0",
+    "border-color": "#F57C00",
+    "shape": "barrel"
+  }
+},{
+  "selector": "node[type = 'external']",
+  "style": {
+    "background-color": "#F3E5F5",
+    "border-color": "#7B1FA2",
+    "shape": "hexagon"
+  }
+},{
+  "selector": "edge",
+  "style": {
+    "width": "2px",
+    "line-color": "#1976D2",
+    "target-arrow-color": "#1976D2",
+    "target-arrow-shape": "triangle",
+    "label": "data(label)",
+    "font-size": "10px",
+    "text-rotation": "autorotate",
+    "text-margin-y": "-10px",
+    "color": "#1e293b",
+    "curve-style": "bezier"
+  }
+},{
+  "selector": "edge[styleType = 'thick']",
+  "style": {
+    "width": "4px",
+    "line-color": "#1976D2",
+    "target-arrow-color": "#1976D2"
+  }
+},{
+  "selector": "edge[styleType = 'dotted']",
+  "style": {
+    "line-style": "dotted",
+    "line-color": "#9E9E9E",
+    "target-arrow-color": "#9E9E9E"
+  }
+}
+];
+
+            if (!elements || elements.length === 0) {
+                throw new Error('엘리먼트 데이터가 비어있습니다.');
+            }
+
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: elements,
+                style: cytoscapeStyles,
+                layout: {
+                    name: 'dagre',
+                    rankDir: 'LR',
+                    spacingFactor: 1.5,
+                    nodeDimensionsIncludeLabels: true,
+                    animate: true,
+                    animationDuration: 500
+                },
+                minZoom: 0.3,
+                maxZoom: 3,
+                wheelSensitivity: 0.2
+            });
+
+            // 이벤트 리스너
+            cy.on('tap', 'node', function(evt) {
+                console.log('노드 클릭:', evt.target.data());
+            });
+
+            cy.on('tap', 'edge', function(evt) {
+                console.log('엣지 클릭:', evt.target.data());
+            });
+
+            // 로딩 완료
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('cy').style.display = 'block';
+
+            setTimeout(() => {
+                if (cy) {
+                    cy.fit();
+                    cy.center();
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error('Cytoscape 초기화 오류:', error);
+            document.getElementById('loading').textContent =
+                '플로우차트 렌더링 중 오류가 발생했습니다: ' + error.message;
+        }
+    }
+
+    function changeLayout(layoutName) {
+        if (!cy) return;
+
+        document.querySelectorAll('.controls .btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.btn').classList.add('active');
+
+        const layoutOptions = {
+            dagre: {
+                name: 'dagre',
+                rankDir: 'LR',
+                spacingFactor: 1.5,
+                nodeDimensionsIncludeLabels: true,
+                animate: true,
+                animationDuration: 500
+            },
+            hierarchy: {
+                name: 'dagre',
+                rankDir: 'TB',
+                spacingFactor: 2.0,
+                animate: true,
+                animationDuration: 500
+            },
+            breadthfirst: {
+                name: 'breadthfirst',
+                directed: true,
+                spacingFactor: 1.75,
+                animate: true,
+                animationDuration: 500
+            },
+            circle: {
+                name: 'circle',
+                spacingFactor: 1.5,
+                animate: true,
+                animationDuration: 500
+            }
+        };
+
+        const layout = layoutOptions[layoutName] || layoutOptions.dagre;
+        cy.layout(layout).run();
+
+        setTimeout(() => {
+            if (cy) {
+                cy.fit();
+                cy.center();
+            }
+        }, layout.animationDuration + 100);
+    }
+
+    function fitGraph() {
+        if (cy) {
+            cy.animate({
+                fit: {
+                    eles: cy.elements(),
+                    padding: 50
+                },
+                center: {
+                    eles: cy.elements()
+                }
+            }, {
+                duration: 500
+            });
+        }
+    }
+</script>
+</body>
+</html>

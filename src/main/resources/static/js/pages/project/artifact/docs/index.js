@@ -2193,31 +2193,8 @@ class ApiDocsManager {
                 return;
             }
 
-            const fileResponse = await axios.get(data.data.url, {responseType: 'blob'});
-            const blobUrl = window.URL.createObjectURL(fileResponse.data);
+            await UTIL.file.download({url : data.data.url, fileName : data.data.fileName || 'api-docs'});
 
-            let filename = data.data.filename || 'api-docs';
-            const disposition = fileResponse.headers['content-disposition'];
-            if (disposition) {
-                const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-                const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
-                const encodedName = utf8Match?.[1] || asciiMatch?.[1];
-                if (encodedName) {
-                    try {
-                        filename = decodeURIComponent(encodedName);
-                    } catch (decodeError) {
-                        filename = encodedName;
-                    }
-                }
-            }
-
-            const downloadLink = document.createElement('a');
-            downloadLink.href = blobUrl;
-            downloadLink.download = filename;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            downloadLink.remove();
-            window.URL.revokeObjectURL(blobUrl);
         } catch (e) {
             console.error(e);
             NotificationManager.showError('오류가 발생했습니다. 관리자에게 문의해주시기 바랍니다.');
