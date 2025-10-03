@@ -740,7 +740,6 @@ class FormUtils {
 
             } catch (error) {
                 console.error('Form submit error:', error);
-                NotificationManager.showError('처리 중 오류가 발생했습니다.');
             } finally {
                 if (config.showLoading) {
                     LoadingManager.hide();

@@ -25,6 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FlowChartGenerator {
 
+    private final QuotaService quotaService;
     private final ArtifactFileRepository artifactFileRepository;
     private final ApiDocsFlowRepository apiDocsFlowRepository;
     private String htmlTemplate;
@@ -33,7 +34,7 @@ public class FlowChartGenerator {
     public ApiResponse<UrlArtifact> generateAsFiles(FlowChartRequest req, User user) throws Exception {
         ApiDocsFlow flow = apiDocsFlowRepository.findByIdxAndUserIdx(req.getFlowIdx(), user.getIdx())
                 .orElseThrow(() -> new ArtifactException("플로우를 찾을 수 없습니다."));
-
+        quotaService.consumeByDownload(user.getIdx());
 
         String html = generateHtmlFromTemplate(req);
 
@@ -62,7 +63,6 @@ public class FlowChartGenerator {
         }
 
         artifactFileRepository.save(artifactFile);
-
         return ApiResponse.success(urlArtifact);
     }
 

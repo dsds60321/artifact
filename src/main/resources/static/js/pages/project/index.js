@@ -23,15 +23,13 @@ class Index {
 
         FormUtils.onSubmit('frm', async (formData) => {
             LoadingManager.show();
-            try {
-                // API 호출 로직
-                const { data } = await httpClient.post('/project', formData);
-                data.success ? NotificationManager.showSuccess(data.message) : NotificationManager.showError(data.message);
-            } catch (e) {
-                NotificationManager.showError('오류가 발생했습니다.')
-            } finally {
-                LoadingManager.hide();
-                location.reload();
+            // API 호출 로직
+            const { data } = await httpClient.post('/project', formData);
+            if (data.success) {
+                NotificationManager.showSuccess(data.message);
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
             }
         });
     }

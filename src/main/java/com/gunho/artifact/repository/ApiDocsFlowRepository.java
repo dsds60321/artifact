@@ -18,5 +18,4 @@ public interface ApiDocsFlowRepository extends JpaRepository<ApiDocsFlow, Long> 
 
     @Query("SELECT f FROM ApiDocsFlow f JOIN f.project p WHERE f.idx = :flowIdx AND p.user.idx = :userIdx")
     Optional<ApiDocsFlow> findByIdxAndUserIdx(@Param("flowIdx") Long flowIdx, @Param("userIdx") Long userIdx);
-
 }

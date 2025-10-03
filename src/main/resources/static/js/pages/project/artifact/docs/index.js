@@ -2184,21 +2184,18 @@ class ApiDocsManager {
             return;
         }
 
-        try {
-            const payload = this.buildPayload();
+        const payload = this.buildPayload();
 
-            const {data} = await axios.post('/api/generate/docs-url', payload);
-            if (!data.success || !data.data?.url) {
-                NotificationManager.showError(data.message || '다운로드 URL을 가져오지 못했습니다.');
-                return;
-            }
-
-            await UTIL.file.download({url : data.data.url, fileName : data.data.fileName || 'api-docs'});
-
-        } catch (e) {
-            console.error(e);
-            NotificationManager.showError('오류가 발생했습니다. 관리자에게 문의해주시기 바랍니다.');
+        const {data} = await axios.post('/api/generate/docs-url', payload);
+        if (!data.success || !data.data?.url) {
+            NotificationManager.showError(data.message || '다운로드 URL을 가져오지 못했습니다.');
+            return;
+        } else {
+            NotificationManager.showSuccess(data.message);
         }
+
+        await UTIL.file.download({url : data.data.url, fileName : data.data.fileName || 'api-docs'});
+
     }
 
     saveApiDocs() {

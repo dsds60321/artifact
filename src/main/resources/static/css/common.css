@@ -286,6 +286,7 @@ textarea.form-control {
 
 .d-flex { display: flex; }
 .align-items-center { align-items: center; }
+.flex-direction-row-reserve {flex-direction : row-reverse;}
 .justify-content-between { justify-content: space-between; }
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }

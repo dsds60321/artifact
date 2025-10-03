@@ -11,7 +11,7 @@
     <div class="container max-w-100">
         <h1><i class="fas fa-project-diagram"></i> <span th:text="${project.title}">프로젝트명</span></h1>
         <div class="breadcrumb">
-            <a th:href="@{/}">프로젝트 관리</a> > <span th:text="${project.title}">프로젝트명</span>
+            <a th:href="@{/project}">프로젝트 관리</a> > <span th:text="${project.title}">프로젝트명</span>
         </div>
     </div>
 </div>
@@ -28,9 +28,9 @@
                 <button class="btn btn-sm btn-primary" id="add-artifact" th:data-project-idx="${project.idx}">
                     <i class="fas fa-plus"></i> 산출물 추가
                 </button>
-                <button class="btn btn-sm btn-secondary" id="project-settings">
-                    <i class="fas fa-cog"></i>
-                </button>
+<!--                <button class="btn btn-sm btn-secondary" id="project-settings">-->
+<!--                    <i class="fas fa-cog"></i>-->
+<!--                </button>-->
             </div>
         </div>
 
@@ -63,7 +63,7 @@
                             <button class="btn-icon edit-artifact" th:data-artifact-id="${doc.artifactSubIdx}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-icon delete-artifact" th:data-artifact-id="${doc.artifactSubIdx}">
+                            <button class="btn-icon delete-artifact" th:data-type="docs" th:data-artifact-id="${doc.artifactSubIdx}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -91,7 +91,7 @@
                             <button class="btn-icon edit-artifact" th:data-artifact-id="${flow.artifactSubIdx}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-icon delete-artifact" th:data-artifact-id="${flow.artifactSubIdx}">
+                            <button class="btn-icon delete-artifact" th:data-type="flows" th:data-artifact-id="${flow.artifactSubIdx}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -100,19 +100,19 @@
             </div>
 
             <!-- 기타 산출물 (필요시) -->
-            <div class="nav-section">
-                <div class="nav-section-header" data-toggle="others">
-                    <div class="nav-section-title">
-                        <i class="fas fa-folder"></i>
-                        <span>기타 문서</span>
-                        <span class="artifact-count" th:text="${othersCount}">1</span>
-                    </div>
-                    <i class="fas fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="nav-section-content" id="others-list">
-                    <!-- 기타 산출물들 -->
-                </div>
-            </div>
+<!--            <div class="nav-section">-->
+<!--                <div class="nav-section-header" data-toggle="others">-->
+<!--                    <div class="nav-section-title">-->
+<!--                        <i class="fas fa-folder"></i>-->
+<!--                        <span>기타 문서</span>-->
+<!--                        <span class="artifact-count" th:text="${othersCount}">1</span>-->
+<!--                    </div>-->
+<!--                    <i class="fas fa-chevron-down toggle-icon"></i>-->
+<!--                </div>-->
+<!--                <div class="nav-section-content" id="others-list">-->
+<!--                    &lt;!&ndash; 기타 산출물들 &ndash;&gt;-->
+<!--                </div>-->
+<!--            </div>-->
         </nav>
     </aside>
 

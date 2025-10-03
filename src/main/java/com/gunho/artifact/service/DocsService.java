@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.DocsDto;
 import com.gunho.artifact.entity.ApiDocsDocument;
+import com.gunho.artifact.entity.ApiDocsFlow;
 import com.gunho.artifact.entity.User;
 import com.gunho.artifact.exception.ArtifactException;
 import com.gunho.artifact.repository.ApiDocsDocumentRepository;
@@ -29,6 +30,7 @@ public class DocsService {
     private final ProjectRepository projectRepository;
     private final ApiDocsDocumentRepository apiDocsDocumentRepository;
     private final ObjectMapper objectMapper;
+    private final QuotaService quotaService;
 
     @Transactional
     public ApiResponse<?> saveDocs(DocsDto.Request request, User user) {
@@ -92,5 +94,18 @@ public class DocsService {
             log.warn("엔드포인트 파싱 실패", e);
             return Collections.emptyList();
         }
+    }
+
+    @Transactional
+    public ApiResponse<?> deleteDocs(Long idx, User user) {
+        ApiDocsDocument docs = apiDocsDocumentRepository.findByIdxAndUserIdx(idx, user.getIdx())
+                .orElseThrow(() -> {
+                    log.warn("다른 유저 삭제 요청발생함 userId : {} , flowIdx : {} ", user.getId(), idx);
+                    return new ArtifactException("해당 문서 삭제 권한이 없습니다.");
+                });
+
+        apiDocsDocumentRepository.delete(docs);
+        quotaService.deleteByArtifact(user.getIdx());
+        return ApiResponse.success("해당 문서 삭제에 성공했습니다.");
     }
 }

@@ -17,6 +17,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProjectService {
 
+    private final QuotaService quotaService;
     private final ProjectRepository projectRepository;
 
     /**
@@ -26,6 +27,7 @@ public class ProjectService {
      * @return
      */
     public ApiResponse<?> create(ProjectDto.Request request, User user) {
+        quotaService.consumeByProject(user.getIdx());
         Project project = Project.toEntity(request, user);
         Project savedProject = projectRepository.save(project);
         if (Utils.isEmpty(savedProject)) {
@@ -51,6 +53,7 @@ public class ProjectService {
 
             log.info("USER : {} | 프로젝트 삭제 : {} ", user.getId(), idx);
             projectRepository.deleteById(idx);
+            quotaService.deleteByProject(user.getIdx());
         } catch (Exception e) {
             log.error("프로젝트 삭제에 실패했습니다." + e.getMessage());
             return ApiResponse.failure("프로젝트 삭제에 실패했습니다");

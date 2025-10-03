@@ -59,6 +59,11 @@ public class ArtifactController {
         return docsService.saveDocs(request, userDetails.getUser());
     }
 
+    @DeleteMapping("/docs/{idx}")
+    public @ResponseBody ApiResponse<?> docsDelete(@PathVariable Long idx, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        return docsService.deleteDocs(idx, userDetails.getUser());
+    }
+
     @GetMapping("/flows")
     public String flowsAdd(Model model) {
         return "project/artifact/flows/index";
@@ -74,5 +79,10 @@ public class ArtifactController {
     @PostMapping("/flows")
     public @ResponseBody ApiResponse<?> flowsCreate(@Valid @RequestBody FlowChartDto.Request request, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
         return flowService.saveFlow(request, userDetails.getUser());
+    }
+
+    @DeleteMapping("/flows/{idx}")
+    public @ResponseBody ApiResponse<?> flowsDelete(@PathVariable Long idx, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
+        return flowService.deleteFlow(idx, userDetails.getUser());
     }
 }

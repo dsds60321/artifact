@@ -23,6 +23,7 @@ public class FlowService {
     private final ProjectRepository projectRepository;
     private final ApiDocsFlowRepository apiDocsFlowRepository;
     private final ObjectMapper objectMapper;
+    private final QuotaService quotaService;
 
     @Transactional
     public ApiResponse<?> saveFlow(FlowChartDto.Request request, User user) {
@@ -59,4 +60,17 @@ public class FlowService {
         model.addAttribute("flowData", flow.getFlowData());
     }
 
+    @Transactional
+    public ApiResponse<?> deleteFlow(Long idx, User user) {
+        ApiDocsFlow flow = apiDocsFlowRepository.findByIdxAndUserIdx(idx, user.getIdx())
+                .orElseThrow(() -> {
+                    log.warn("다른 유저 삭제 요청발생함 userId : {} , flowIdx : {} ", user.getId(), idx);
+                    return new ArtifactException("해당 플로우에 삭제 권한이 없습니다.");
+                });
+
+
+        apiDocsFlowRepository.delete(flow);
+        quotaService.deleteByArtifact(user.getIdx());
+        return ApiResponse.success("해당 플로우 삭제에 성공했습니다.");
+    }
 }

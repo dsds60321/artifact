@@ -30,16 +30,12 @@ class Detail {
 
         FormUtils.onSubmit('frm', async (formData) => {
             LoadingManager.show();
-            try {
-                // API 호출 로직
-                const { data } = await httpClient.post(`/project/artifact/new`, formData);
-                data.success ? NotificationManager.showSuccess(data.message) : NotificationManager.showError(data.message);
-            } catch (e) {
-                NotificationManager.showError('오류가 발생했습니다.')
-            } finally {
-                LoadingManager.hide();
+            // API 호출 로직
+            const { data } = await httpClient.post(`/project/artifact/new`, formData);
+            data.success ? NotificationManager.showSuccess(data.message) : NotificationManager.showError(data.message);
+            setTimeout(() => {
                 location.reload();
-            }
+            }, 500);
         });
     }
 
@@ -117,7 +113,8 @@ class Detail {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const artifactId = e.currentTarget.dataset.artifactId;
-                await this.deleteArtifact(artifactId);
+                const type = e.currentTarget.dataset.type;
+                await this.deleteArtifact(type, artifactId);
             });
         });
     }
@@ -305,15 +302,15 @@ class Detail {
         window.location.href = `/artifacts/${artifactId}/edit`;
     }
 
-    async deleteArtifact(artifactId) {
+    async deleteArtifact(type, artifactId) {
         const confirmed = await NotificationManager.showDeleteConfirm(
             '이 산출물을 삭제하시겠습니까?'
         );
 
         if (confirmed) {
             try {
-                await axios.delete(`/api/artifacts/${artifactId}`);
-                NotificationManager.showSuccess('산출물이 삭제되었습니다.');
+                const { data } = await axios.delete(`/project/artifact/${type}/${artifactId}`);
+                NotificationManager.showSuccess(data.message);
                 location.reload();
             } catch (error) {
                 NotificationManager.showError('산출물 삭제에 실패했습니다.');

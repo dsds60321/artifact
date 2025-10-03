@@ -1,5 +1,6 @@
 package com.gunho.artifact.entity;
 
+import com.gunho.artifact.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +32,9 @@ public class User {
 
     @Column(name = "password_hash")
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.GUEST;
 
     private String nickname;
 
@@ -78,6 +82,9 @@ public class User {
     // Artifact와의 연관관계 설정 (One-to-Many)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Project> projects = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserSubscription> subscriptions = new ArrayList<>();
 
 
     @Builder

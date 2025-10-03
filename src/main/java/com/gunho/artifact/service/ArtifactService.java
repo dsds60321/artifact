@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ArtifactService {
 
+    private final QuotaService quotaService;
     private final ProjectRepository projectRepository;
     private final ApiDocsFlowRepository apiDocsFlowRepository;
     private final ApiDocsDocumentRepository apiDocsDocumentRepository;
@@ -78,6 +79,8 @@ public class ArtifactService {
             return ApiResponse.failure("존재하지 않는 프로젝트입니다.");
         }
 
+        // 유저 사용량 추가
+        quotaService.consumeByArtifact(user.getIdx());
 
         // docs
         if (subType.equalsIgnoreCase("docs")) {
@@ -88,7 +91,6 @@ public class ArtifactService {
             ApiDocsFlow flow = ApiDocsFlow.toEntity(request, projectOpt.get(), user);
             ApiDocsFlow saved = apiDocsFlowRepository.save(flow);
         }
-
 
         return ApiResponse.success("산출물 등록에 성공했습니다.");
     }

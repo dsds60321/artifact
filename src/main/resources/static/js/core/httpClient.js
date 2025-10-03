@@ -111,11 +111,11 @@ class HttpClient {
 
                 case 403:
                     // 권한 없음
-                    NotificationManager.showError('접근 권한이 없습니다.');
+                    NotificationManager.showError(data.message || '접근 권한이 없습니다.');
                     break;
 
                 case 404:
-                    NotificationManager.showError('요청한 리소스를 찾을 수 없습니다.');
+                    NotificationManager.showError(data.message || '요청한 리소스를 찾을 수 없습니다.');
                     break;
 
                 case 422:
@@ -128,11 +128,11 @@ class HttpClient {
                     break;
 
                 case 429:
-                    NotificationManager.showError('너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
+                    NotificationManager.showError(data.message || '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.');
                     break;
 
                 case 500:
-                    NotificationManager.showError('서버 오류가 발생했습니다. 관리자에게 문의하세요.');
+                    NotificationManager.showError(data.message || '서버 오류가 발생했습니다. 관리자에게 문의하세요.');
                     break;
 
                 default:

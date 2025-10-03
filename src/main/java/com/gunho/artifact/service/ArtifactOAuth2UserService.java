@@ -19,6 +19,7 @@ import java.util.UUID;
 public class ArtifactOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final PlanService planService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -63,6 +64,7 @@ public class ArtifactOAuth2UserService extends DefaultOAuth2UserService {
                     return userRepository.save(newUser);
                 });
 
+        planService.initFreePlan(user);
         return new ArtifactUserDetails(user, oauth2User.getAttributes());
     }
 

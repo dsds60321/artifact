@@ -23,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ApiDocsGenerator {
 
+    private final QuotaService quotaService;
     private final ArtifactFileRepository artifactFileRepository;
     private final ApiDocsDocumentRepository apiDocsDocumentRepository;
 
@@ -30,6 +31,7 @@ public class ApiDocsGenerator {
     public ApiResponse<UrlArtifact> generateAsFiles(ApiDocsRequest req, User user) throws Exception {
         ApiDocsDocument document = apiDocsDocumentRepository.findByIdxAndUserIdx(req.getDocsIdx(), user.getIdx())
                 .orElseThrow(() -> new ArtifactException("문서를 찾을 수 없습니다."));
+        quotaService.consumeByDownload(user.getIdx());
 
         String openApiJson = buildOpenApiJson(req);
         String html = buildScalarHtmlInline(openApiJson);
@@ -37,7 +39,7 @@ public class ApiDocsGenerator {
         Path dir = Path.of("src", "main", "resources", "static",  "artifact", user.getId() ,"docs", req.getDocsIdx().toString());
         Files.createDirectories(dir);
 
-        Path htmlPath = dir.resolve("api-docs.html");
+        Path htmlPath = dir.resolve(req.getTitle() + ".html");
         Files.write(htmlPath, htmlBytes);
         long fileSize = Files.size(htmlPath);
 
