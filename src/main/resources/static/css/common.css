@@ -1635,3 +1635,43 @@ textarea.form-control {
         grid-template-columns: 1fr;
     }
 }
+
+.plan-request-modal {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.plan-request-card {
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.plan-request-summary {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: rgba(37, 99, 235, 0.05);
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.plan-request-summary .label {
+    display: inline-block;
+    min-width: 80px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.plan-request-form .plan-request-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.plan-request-hint {
+    font-size: 12px;
+}

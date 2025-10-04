@@ -3,6 +3,7 @@ package com.gunho.artifact.dto;
 import com.gunho.artifact.entity.BillingPlan;
 import com.gunho.artifact.entity.User;
 import com.gunho.artifact.entity.UserSubscription;
+import com.gunho.artifact.enums.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +40,7 @@ public class UserProfileDto {
             String bio,
             User.Gender gender,
             User.Status status,
+            UserRole role,
             Boolean emailVerified,
             Boolean phoneVerified,
             User.AuthType authType,
@@ -56,6 +58,7 @@ public class UserProfileDto {
                     user.getBio(),
                     user.getGender(),
                     user.getStatus(),
+                    user.getRole(),
                     user.getEmailVerified(),
                     user.getPhoneVerified(),
                     user.getAuthType(),

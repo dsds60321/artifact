@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.List;
-import java.util.Map;
-
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -34,6 +31,7 @@ public class UserController {
         model.addAttribute("USER_INFO", profileView.user());
         model.addAttribute("SUBSCRIPTION", profileView.subscription());
         model.addAttribute("PLANS", profileView.plans());
+        model.addAttribute("ADMIN_EMAIL", "admin@example.com");
         return "user/profile";
     }
 

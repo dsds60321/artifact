@@ -124,7 +124,11 @@
                     <p>등록된 구독 플랜이 없습니다. 아래에서 원하는 플랜을 선택하세요.</p>
                 </div>
 
-                <form id="planForm" class="plan-form" th:if="${PLANS != null and !PLANS.isEmpty()}">
+                <form id="planForm" class="plan-form" th:if="${PLANS != null and !PLANS.isEmpty()}"
+                      th:attr="data-user-role=${USER_INFO?.role},
+                               data-user-email=${USER_INFO?.email},
+                               data-admin-email=${ADMIN_EMAIL}">
+                    <input type="hidden" id="origin-planId" th:value="${SUBSCRIPTION?.planId}">
                     <div class="plan-options">
                         <label class="plan-option"
                                th:each="plan : ${PLANS}"
@@ -172,6 +176,8 @@
     </div>
 </div>
 
+<!-- 공통 모달 -->
+<th:block th:replace="~{layout/fragments :: common-modal}"></th:block>
 <!-- 필수 JS -->
 <th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
 <script th:src="@{/js/pages/user/profile.js}"></script>

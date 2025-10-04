@@ -4,6 +4,10 @@ class UserProfilePage {
         this.planForm = document.getElementById('planForm');
         this.profileSubmitButton = document.getElementById('profileSubmit');
         this.planSubmitButton = document.getElementById('planSubmit');
+        this.userRole = (this.planForm?.dataset.userRole || '').toUpperCase();
+        this.userEmail = this.planForm?.dataset.userEmail || '';
+        this.adminEmail = this.planForm?.dataset.adminEmail || '';
+
         this.init();
     }
 
@@ -126,8 +130,21 @@ class UserProfilePage {
         }
 
         const selected = this.planForm.querySelector('input[name="planId"]:checked');
+        const curPlanId = this.planForm.querySelector('#origin-planId').value;
         if (!selected) {
             NotificationManager.showWarning('변경할 플랜을 선택해주세요.');
+            return;
+        }
+
+        if (selected.value === curPlanId) {
+            NotificationManager.showWarning('해당 플랜은 현재 사용중 입니다.')
+            return;
+        }
+
+        const planInfo = this.extractPlanInfo(selected);
+
+        if (this.userRole !== 'ADMIN') {
+            this.openPlanRequestModal(planInfo);
             return;
         }
 
@@ -147,6 +164,119 @@ class UserProfilePage {
         } finally {
             LoadingManager.hide();
         }
+    }
+
+    extractPlanInfo(radio) {
+        if (!radio) {
+            return { id: null, name: '', price: '' };
+        }
+
+        const option = radio.closest('.plan-option');
+        return {
+            id: Number(radio.value),
+            name: option?.querySelector('.plan-option__name')?.textContent?.trim() || '',
+            price: option?.querySelector('.plan-option__price')?.textContent?.trim() || ''
+        };
+    }
+
+    openPlanRequestModal(planInfo) {
+        const adminEmail = this.adminEmail || 'admin@example.com';
+        const defaultEmail = this.userEmail || '';
+
+        const modalContent = `
+            <div class="plan-request-modal">
+                <div class="card plan-request-card">
+                    <div class="card-header">
+                        <h3>관리자 승인 필요</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            선택하신 플랜은 관리자 승인 후에 적용됩니다. 아래 정보를 확인하고 관리자에게 메일을 발송해주세요.
+                        </p>
+                        <div class="plan-request-summary">
+                            <div><span class="label">요청 플랜</span><span>${planInfo.name || '미정'}</span></div>
+                            ${planInfo.price ? `<div><span class="label">예상 요금</span><span>${planInfo.price}</span></div>` : ''}
+                        </div>
+                        <form id="planRequestForm" class="plan-request-form">
+                            <div class="form-group">
+                                <label for="planRequestEmail" class="form-label">연락받을 이메일</label>
+                                <input type="email" id="planRequestEmail" name="email" class="form-control"
+                                       placeholder="name@example.com" value="${defaultEmail}">
+                            </div>
+                            <div class="form-group">
+                                <label for="planRequestMessage" class="form-label">요청 내용</label>
+                                <textarea id="planRequestMessage" class="form-control" rows="4"
+                                          placeholder="변경을 요청하는 사유를 작성해주세요."></textarea>
+                            </div>
+                            <div class="plan-request-actions">
+                                <button type="button" class="btn btn-secondary" id="planRequestCancel">취소</button>
+                                <button type="submit" class="btn btn-primary">메일 작성하기</button>
+                            </div>
+                        </form>
+                        <p class="plan-request-hint text-muted mt-3">
+                            관리자 이메일: <strong>${adminEmail}</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        ModalManager.openModal({
+            content: modalContent,
+            callBack: () => {
+                const modal = document.getElementById('common-modal');
+                const form = modal.querySelector('#planRequestForm');
+                const cancelButton = modal.querySelector('#planRequestCancel');
+
+                if (cancelButton) {
+                    cancelButton.addEventListener('click', () => ModalManager.closeModal());
+                }
+
+                if (form) {
+                    form.addEventListener('submit', (event) => {
+                        event.preventDefault();
+                        const emailInput = form.querySelector('#planRequestEmail');
+                        const messageInput = form.querySelector('#planRequestMessage');
+
+                        const email = emailInput?.value.trim() || '';
+                        if (!email) {
+                            NotificationManager.showWarning('연락받을 이메일을 입력해주세요.');
+                            emailInput?.focus();
+                            return;
+                        }
+
+                        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailPattern.test(email)) {
+                            NotificationManager.showWarning('올바른 이메일 형식을 입력해주세요.');
+                            emailInput?.focus();
+                            return;
+                        }
+
+                        const userMessage = messageInput?.value.trim() || '';
+                        const mailBody = this.buildMailBody(email, userMessage, planInfo);
+                        const subject = encodeURIComponent(`[플랜 변경 요청] ${planInfo.name || '신규 플랜'}`);
+                        const mailtoLink = `mailto:${adminEmail}?subject=${subject}&body=${mailBody}`;
+
+                        window.location.href = mailtoLink;
+                        NotificationManager.showInfo('기본 메일 클라이언트가 열리지 않는 경우, 관리자에게 직접 메일을 보내주세요.');
+                        ModalManager.closeModal();
+                    });
+                }
+            }
+        });
+    }
+
+    buildMailBody(email, message, planInfo) {
+        const lines = [
+            `요청자 이메일: ${email}`,
+            `요청 플랜: ${planInfo.name || '미정'}`,
+            planInfo.price ? `예상 요금: ${planInfo.price}` : null,
+            '',
+            '변경 요청 메시지:',
+            message || '(내용 미작성)'
+        ].filter(Boolean);
+
+        return encodeURIComponent(lines.join('\n'));
     }
 }
 
