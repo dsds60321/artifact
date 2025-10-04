@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head th:replace="~{layout/fragments :: common-meta}">
+    <title>계정 설정</title>
+</head>
+<body>
+
+<th:block th:replace="~{layout/fragments :: common-header('프로젝트 관리', '프로필')}"></th:block>
+
+<div class="container profile-page">
+    <div class="profile-page__header">
+        <div>
+            <h2>사용자 정보</h2>
+            <p class="text-muted">계정 기본 정보와 구독 플랜을 관리합니다.</p>
+        </div>
+        <div class="profile-page__actions">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">뒤로가기</button>
+        </div>
+    </div>
+
+    <div class="profile-page__grid">
+        <section class="card profile-card">
+            <div class="card-header">
+                <h3>계정 기본 정보</h3>
+            </div>
+            <div class="card-body">
+                <form id="profileForm" class="profile-form">
+                    <div class="form-group">
+                        <label class="form-label" for="userId">아이디</label>
+                        <input type="text" id="userId" name="userId" class="form-control" th:value="${USER_INFO?.userId}" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">이메일</label>
+                        <input type="email" id="email" name="email" class="form-control" th:value="${USER_INFO?.email}" placeholder="name@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="nickname">닉네임</label>
+                        <input type="text" id="nickname" name="nickname" class="form-control" th:value="${USER_INFO?.nickname}" placeholder="닉네임을 입력해주세요">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="phone">전화번호</label>
+                        <input type="text" id="phone" name="phone" class="form-control" th:value="${USER_INFO?.phone}" placeholder="010-1234-5678">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="bio">소개</label>
+                        <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="간단한 소개를 입력해주세요" th:text="${USER_INFO?.bio}"></textarea>
+                    </div>
+
+                    <div class="profile-form__meta">
+                        <div class="meta-item">
+                            <span class="meta-label">인증 방식</span>
+                            <span class="meta-value" th:text="${USER_INFO?.authType}">LOCAL</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">이메일 인증</span>
+                            <span class="meta-value" th:text="${USER_INFO?.emailVerified} ? '완료' : '미완료'">완료</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">가입일</span>
+                            <span class="meta-value" th:text="${USER_INFO?.createdAt != null ? #temporals.format(USER_INFO.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">2024-01-01</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">마지막 로그인</span>
+                            <span class="meta-value" th:text="${USER_INFO?.lastLoginAt != null ? #temporals.format(USER_INFO.lastLoginAt, 'yyyy-MM-dd HH:mm') : '-'}">-</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-form__actions">
+                        <button type="button" class="btn btn-primary" id="profileSubmit">정보 저장</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="card subscription-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>구독 플랜</h3>
+                <span class="subscription-status" id="subscriptionStatus"
+                      th:text="${SUBSCRIPTION != null ? SUBSCRIPTION.status : '미등록'}">ACTIVE</span>
+            </div>
+            <div class="card-body">
+                <div class="subscription-current" th:if="${SUBSCRIPTION != null}">
+                    <div class="subscription-current__title">
+                        <h4 id="subscriptionTitle" th:text="${SUBSCRIPTION.planName ?: '미지정 플랜'}">무료 플랜</h4>
+                        <span class="badge" id="subscriptionCycle" th:text="${SUBSCRIPTION.billingCycle}">MONTHLY</span>
+                    </div>
+                    <div class="subscription-current__meta">
+                        <div>
+                            <span class="meta-label">다음 갱신일</span>
+                            <span class="meta-value" id="subscriptionNextBilling"
+                                  th:text="${SUBSCRIPTION.nextBillingAt != null ? #temporals.format(SUBSCRIPTION.nextBillingAt, 'yyyy-MM-dd') : '-'}">2024-01-31</span>
+                        </div>
+                        <div>
+                            <span class="meta-label">현재 기간</span>
+                            <span class="meta-value" id="subscriptionPeriod"
+                                  th:text="${SUBSCRIPTION.currentPeriodStart != null ? #temporals.format(SUBSCRIPTION.currentPeriodStart, 'yyyy-MM-dd') : '-'} + ' ~ ' + (${SUBSCRIPTION.currentPeriodEnd != null ? #temporals.format(SUBSCRIPTION.currentPeriodEnd, 'yyyy-MM-dd') : '-'})">2024-01-01 ~ 2024-01-31</span>
+                        </div>
+                    </div>
+
+                    <ul class="subscription-current__usage">
+                        <li>
+                            <span>프로젝트</span>
+                            <span id="subscriptionUsageProject"
+                                  th:text="${SUBSCRIPTION.projectUsage} + ' / ' + (${SUBSCRIPTION.projectLimit} ?: '무제한')">1 / 무제한</span>
+                        </li>
+                        <li>
+                            <span>산출물</span>
+                            <span id="subscriptionUsageArtifact"
+                                  th:text="${SUBSCRIPTION.artifactUsage} + ' / ' + (${SUBSCRIPTION.artifactLimit} ?: '무제한')">0 / 10</span>
+                        </li>
+                        <li>
+                            <span>다운로드</span>
+                            <span id="subscriptionUsageDownload"
+                                  th:text="${SUBSCRIPTION.downloadUsage} + ' / ' + (${SUBSCRIPTION.downloadLimit} ?: '무제한')">0 / 100</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="subscription-empty" th:if="${SUBSCRIPTION == null}">
+                    <p>등록된 구독 플랜이 없습니다. 아래에서 원하는 플랜을 선택하세요.</p>
+                </div>
+
+                <form id="planForm" class="plan-form" th:if="${PLANS != null and !PLANS.isEmpty()}">
+                    <div class="plan-options">
+                        <label class="plan-option"
+                               th:each="plan : ${PLANS}"
+                               th:attr="data-plan-id=${plan.planId}">
+                            <input type="radio" name="planId" th:value="${plan.planId}"
+                                   th:checked="${SUBSCRIPTION != null and SUBSCRIPTION.planId == plan.planId}">
+                            <div class="plan-option__body">
+                                <div class="plan-option__header">
+                                    <div>
+                                        <span class="plan-option__name" th:text="${plan.name}">무료 플랜</span>
+                                        <span class="plan-option__cycle" th:text="${plan.billingCycle}">MONTHLY</span>
+                                    </div>
+                                    <div class="plan-option__price" th:text="${plan.price == 0} ? '무료' : ${plan.price} + '₩'">
+                                        가격
+                                    </div>
+                                </div>
+                                <ul class="plan-option__limits">
+                                    <li>
+                                        <span>프로젝트</span>
+                                        <span th:text="${plan.projectLimit != null ? plan.projectLimit + '개' : '무제한'}">무제한</span>
+                                    </li>
+                                    <li>
+                                        <span>산출물</span>
+                                        <span th:text="${plan.artifactLimit != null ? plan.artifactLimit + '개' : '무제한'}">10개</span>
+                                    </li>
+                                    <li>
+                                        <span>다운로드</span>
+                                        <span th:text="${plan.downloadLimit != null ? plan.downloadLimit + '회' : '무제한'}">무제한</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="plan-form__actions">
+                        <button type="button" class="btn btn-primary" id="planSubmit">플랜 변경</button>
+                    </div>
+                </form>
+
+                <div class="plan-empty" th:if="${PLANS == null or PLANS.isEmpty()}">
+                    <p>활성화된 플랜이 없습니다. 관리자에게 문의하세요.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- 필수 JS -->
+<th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
+<script th:src="@{/js/pages/user/profile.js}"></script>
+</body>
+</html>

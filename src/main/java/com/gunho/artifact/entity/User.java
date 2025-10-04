@@ -108,6 +108,13 @@ public class User {
         this.emailVerified = isVerified;
     }
 
+    public void updateProfile(String email, String nickname, String phone, String bio) {
+        this.email = email;
+        this.nickname = nickname;
+        this.phone = (phone != null && !phone.isBlank()) ? phone : null;
+        this.bio = (bio != null && !bio.isBlank()) ? bio : null;
+    }
+
     public enum Gender {
         MALE, FEMALE, OTHER
     }

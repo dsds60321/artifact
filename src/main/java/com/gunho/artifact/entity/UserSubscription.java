@@ -106,6 +106,18 @@ public class UserSubscription {
         this.currentPeriodEnd = end;
     }
 
+    public void changePlan(BillingPlan billingPlan, LocalDateTime periodStart, LocalDateTime periodEnd) {
+        this.billingPlan = billingPlan;
+        this.currentPeriodStart = periodStart;
+        this.currentPeriodEnd = periodEnd;
+        this.nextBillingAt = periodEnd;
+        this.projectUsage = 0;
+        this.artifactUsage = 0;
+        this.downloadUsage = 0;
+        this.status = SubscriptionStatus.ACTIVE;
+        this.canceledAt = null;
+    }
+
     public enum SubscriptionStatus {
         ACTIVE,
         PAUSED,

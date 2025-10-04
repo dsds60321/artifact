@@ -29,15 +29,40 @@
 </th:block>
 
 <!-- 공통 헤더 레이아웃 -->
-<div th:fragment="common-header(title, breadcrumb)">
+<div th:fragment="common-header(title, breadcrumbs)">
     <div class="header">
-        <div class="container">
-            <h1><i class="fas fa-project-diagram"></i>
-                <span th:text="${title ?: 'API 명세서 생성기'}">API 명세서 생성기</span>
-            </h1>
-            <div class="breadcrumb" th:if="${breadcrumb}">
-                <th:block th:utext="${breadcrumb}">프로젝트 관리</th:block>
+        <div class="container header__inner">
+            <div class="header__info">
+                <h1><i class="fas fa-project-diagram"></i>
+                    <span th:text="${title ?: 'API 명세서 생성기'}">API 명세서 생성기</span>
+                </h1>
+                <div class="breadcrumb" th:if="${breadcrumbs}">
+                    <span class="breadcrumb__text" th:text="${breadcrumbs}">경로</span>
+                </div>
             </div>
+
+            <div th:replace="~{layout/fragments :: common-user}"></div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="common-user" th:with="resolvedUserId=${#authentication?.principal?.user?.nickname ?: #authentication?.name}">
+    <div class="header__user">
+        <div class="user-menu" th:if="${resolvedUserId}">
+            <details class="user-menu__details">
+                <summary class="user-menu__summary">
+                    <i class="fas fa-user-circle user-menu__avatar" aria-hidden="true"></i>
+                    <span class="user-menu__id" th:text="${resolvedUserId}">USER</span>
+                    <i class="fas fa-chevron-down user-menu__chevron" aria-hidden="true"></i>
+                </summary>
+                <nav class="user-menu__dropdown" aria-label="사용자 메뉴">
+                    <a class="user-menu__link" th:href="@{/user/profile}">수정하기</a>
+                    <a class="user-menu__link user-menu__link--logout" th:href="@{/logout}">로그아웃</a>
+                </nav>
+            </details>
+        </div>
+        <div class="user-menu user-menu--guest" th:unless="${resolvedUserId}">
+            <a class="user-menu__link" th:href="@{/login}">로그인</a>
         </div>
     </div>
 </div>
