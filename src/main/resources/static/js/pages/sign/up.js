@@ -58,8 +58,7 @@ class SignUp {
             agreements: {
                 all: document.getElementById('agreeAll'),
                 terms: document.getElementById('agreeTerms'),
-                privacy: document.getElementById('agreePrivacy'),
-                marketing: document.getElementById('agreeMarketing')
+                privacy: document.getElementById('agreePrivacy')
             },
             email: {
                 codeGroup: document.getElementById('emailCodeGroup'),
@@ -228,7 +227,7 @@ class SignUp {
 
     toggleAllAgreements() {
         const allChecked = this.elements.agreements.all?.checked ?? false;
-        ['terms', 'privacy', 'marketing'].forEach((key) => {
+        ['terms', 'privacy'].forEach((key) => {
             if (this.elements.agreements[key]) {
                 this.elements.agreements[key].checked = allChecked;
             }
@@ -236,14 +235,12 @@ class SignUp {
     }
 
     updateAllAgreement() {
-        const { terms, privacy, marketing, all } = this.elements.agreements;
+        const { terms, privacy, all } = this.elements.agreements;
         if (!all) {
             return;
         }
-        const isAllChecked = [terms, privacy, marketing]
-            .filter(Boolean)
-            .every((checkbox) => checkbox.checked);
-        all.checked = isAllChecked;
+        const checkboxes = [terms, privacy].filter(Boolean);
+        all.checked = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
     }
 
     showTerms(type) {
@@ -361,7 +358,7 @@ class SignUp {
 
     handleStep3Submit(event) {
         event.preventDefault();
-        const { terms, privacy, marketing } = this.elements.agreements;
+        const { terms, privacy } = this.elements.agreements;
 
         if (!terms?.checked || !privacy?.checked) {
             alert('필수 약관에 동의해 주세요.');
@@ -370,7 +367,6 @@ class SignUp {
 
         this.state.userData.agreeTerms = terms?.checked ?? false;
         this.state.userData.agreePrivacy = privacy?.checked ?? false;
-        this.state.userData.agreeMarketing = marketing?.checked ?? false;
         this.registerUser();
     }
 
@@ -641,7 +637,6 @@ class SignUp {
         setValue('passwordConfirm', this.state.userData.passwordConfirm);
         setValue('agreeTerms', this.state.userData.agreeTerms ? 'true' : 'false');
         setValue('agreePrivacy', this.state.userData.agreePrivacy ? 'true' : 'false');
-        setValue('agreeMarketing', this.state.userData.agreeMarketing ? 'true' : 'false');
 
         form.submit();
     }

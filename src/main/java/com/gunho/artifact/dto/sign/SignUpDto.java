@@ -44,6 +44,5 @@ public class SignUpDto {
 
         private boolean agreeTerms;
         private boolean agreePrivacy;
-        private boolean agreeMarketing;
     }
 }
