@@ -26,4 +26,10 @@ public final class CodeEnums {
         PLAN_UPDATE_REQUEST,
         SIGN_VERIFY
     }
+
+    @Getter
+    @AllArgsConstructor
+    public enum GuideType {
+        TUTORIAL
+    }
 }

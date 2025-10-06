@@ -20,6 +20,57 @@
         padding: 24px;
     }
 
+    .usage-guide-zoom {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        z-index: 1200;
+        padding: 24px;
+    }
+
+    .usage-guide-zoom.is-open {
+        display: flex;
+    }
+
+    .usage-guide-zoom__content {
+        position: relative;
+        max-width: min(1080px, 100%);
+        max-height: min(720px, 100%);
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .usage-guide-zoom__image {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 12px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .usage-guide-zoom__close {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        height: 40px;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+        color: #2c3548;
+        font-size: 18px;
+    }
+
     .usage-guide-modal.is-open {
         display: flex;
     }
@@ -73,6 +124,10 @@
         max-width: 100%;
         max-height: 320px;
         object-fit: contain;
+    }
+
+    .usage-guide-media img.is-zoomable {
+        cursor: zoom-in;
     }
 
     .usage-guide-media img[hidden] {
@@ -164,8 +219,8 @@
 
 <div id="usageGuideModal"
      class="usage-guide-modal"
-     th:classappend="${PROJECT_USAGE_GUIDE != null and #lists.size(PROJECT_USAGE_GUIDE) > 1} ? ' has-multiple' : ''"
-     th:if="${PROJECT_USAGE_GUIDE != null and !PROJECT_USAGE_GUIDE.isEmpty()}">
+     th:classappend="${PROJECT_USAGE_GUIDE != null and #lists.size(PROJECT_USAGE_GUIDE.guides()) > 1} ? ' has-multiple' : ''"
+     th:if="${PROJECT_USAGE_GUIDE != null and !#lists.isEmpty(PROJECT_USAGE_GUIDE.guides())}">
     <div class="usage-guide-dialog">
         <button type="button" class="usage-guide-close" data-guide-close aria-label="사용법 안내 닫기">
             <i class="fas fa-times"></i>
@@ -181,7 +236,7 @@
         </div>
         <div class="usage-guide-footer">
             <div class="usage-guide-indicator">
-                <span data-guide-current>1</span>/<span data-guide-total th:text="${PROJECT_USAGE_GUIDE.size()}">1</span>
+                <span data-guide-current>1</span>/<span data-guide-total th:text="${#lists.size(PROJECT_USAGE_GUIDE.guides())}">1</span>
             </div>
             <div class="usage-guide-actions">
                 <button type="button" class="btn btn-outline-secondary usage-guide-prev" data-guide-prev>이전</button>
@@ -189,6 +244,19 @@
                 <button type="button" class="btn btn-link text-muted" data-guide-skip>다음에 보기</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div id="usageGuideZoom"
+     class="usage-guide-zoom"
+     role="dialog"
+     aria-modal="true"
+     aria-hidden="true">
+    <div class="usage-guide-zoom__content">
+        <button type="button" class="usage-guide-zoom__close" data-guide-zoom-close aria-label="확대 이미지 닫기">
+            <i class="fas fa-times"></i>
+        </button>
+        <img class="usage-guide-zoom__image" data-guide-zoom-image src="" alt="사용법 안내 확대 이미지">
     </div>
 </div>
 
@@ -278,8 +346,8 @@
 <th:block th:replace="~{layout/fragments :: common-modal}"></th:block>
 <!-- 필수 JS -->
 <th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
-<script th:inline="javascript" th:if="${PROJECT_USAGE_GUIDE != null and !PROJECT_USAGE_GUIDE.isEmpty()}">
-    window.PROJECT_USAGE_GUIDE = /*[[${PROJECT_USAGE_GUIDE}]]*/ [];
+<script th:inline="javascript" th:if="${PROJECT_USAGE_GUIDE != null and !PROJECT_USAGE_GUIDE.guides().isEmpty()}">
+    window.PROJECT_USAGE_GUIDE = /*[[${PROJECT_USAGE_GUIDE.guides()}]]*/ [];
 </script>
 <script th:src="@{/js/pages/project/index.js}"></script>
 </body>

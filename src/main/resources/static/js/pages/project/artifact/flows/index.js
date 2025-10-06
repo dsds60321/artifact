@@ -706,8 +706,49 @@ class ApiFlowManager {
      * 구현해야 할 메서드들 (기본 구조만 제공)
      */
     loadSampleData() {
-        console.log('샘플 데이터 로드');
-        // 샘플 데이터 구현
+        if (!confirm('현재 플로우를 초기화하고 샘플 데이터를 불러올까요?')) {
+            return;
+        }
+
+        const sampleData = {
+            title: '샘플 주문 처리 플로우',
+            layout: 'LR',
+            theme: 'default',
+            nodes: [
+                { id: 'CLIENT', label: '클라이언트', shape: 'external', class: '' },
+                { id: 'GATEWAY', label: 'API 게이트웨이', shape: 'service', class: 'primary' },
+                { id: 'ORDER', label: '주문 서비스', shape: 'process', class: '' },
+                { id: 'PAYMENT', label: '결제 서비스', shape: 'process', class: 'accent' },
+                { id: 'DB', label: '주문 DB', shape: 'db', class: '' }
+            ],
+            edges: [
+                { from: 'CLIENT', to: 'GATEWAY', label: 'REST 호출', style: { type: 'normal' } },
+                { from: 'GATEWAY', to: 'ORDER', label: '주문 생성', style: { type: 'normal' } },
+                { from: 'ORDER', to: 'PAYMENT', label: '결제 요청', style: { type: 'normal' } },
+                { from: 'PAYMENT', to: 'ORDER', label: '결제 결과', style: { type: 'dotted' } },
+                { from: 'ORDER', to: 'DB', label: '데이터 저장', style: { type: 'thick' } }
+            ]
+        };
+
+        this.nodes = sampleData.nodes.map(node => ({ ...node }));
+        this.edges = sampleData.edges.map(edge => ({ ...edge, style: { ...edge.style } }));
+        this.nodeCounter = this.nodes.length;
+        this.edgeCounter = this.edges.length;
+
+        const titleInput = document.getElementById('title');
+        if (titleInput) {
+            titleInput.value = sampleData.title;
+        }
+
+        const layoutSelect = document.getElementById('layout');
+        if (layoutSelect) {
+            layoutSelect.value = sampleData.layout;
+        }
+
+        this.selectTheme(sampleData.theme);
+        this.renderNodesList();
+        this.renderEdgesList();
+        this.updateJsonPreview();
     }
 
     clearAll() {
