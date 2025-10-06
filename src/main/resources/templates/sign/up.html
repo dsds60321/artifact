@@ -144,6 +144,57 @@
             font-size: 14px;
         }
 
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            margin-bottom: 16px;
+            border: 1px solid transparent;
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            border-color: #fecaca;
+            color: #b91c1c;
+        }
+
+        .email-input-group,
+        .email-code-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .email-input-group .form-control-auth,
+        .email-code-group .form-control-auth {
+            flex: 1;
+        }
+
+        .email-code-group {
+            display: none;
+        }
+
+        .btn-send-code {
+            width: auto;
+            min-width: 140px;
+            padding: 10px 16px;
+            margin-bottom: 0;
+        }
+
+        .verification-status {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .verification-status.success {
+            color: var(--success-color);
+        }
+
+        .verification-status.error {
+            color: var(--danger-color);
+        }
+
         .password-strength {
             margin-top: 12px;
         }
@@ -318,6 +369,7 @@
         </div>
 
         <div class="register-body">
+            <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
             <!-- Google OAuth2 회원가입 -->
             <div class="oauth-signup">
                 <a href="/oauth2/authorization/google" class="btn btn-google btn-auth">
@@ -345,9 +397,26 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">아이디</label>
+                        <input type="text" class="form-control form-control-auth" id="userId" placeholder="영문과 숫자를 조합해 입력하세요" autocomplete="username" required>
+                        <div class="help-text">4~20자의 영문, 숫자, 밑줄(_)만 사용할 수 있습니다</div>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">이메일</label>
-                        <input type="email" class="form-control form-control-auth" id="email" placeholder="example@email.com" required>
-                        <div class="help-text">로그인 ID로 사용됩니다</div>
+                        <div class="email-input-group">
+                            <input type="email" class="form-control form-control-auth" id="email" placeholder="example@email.com" required>
+                            <button type="button" class="btn btn-secondary btn-auth btn-send-code" id="sendVerificationButton">
+                                인증코드 발송
+                            </button>
+                        </div>
+                        <div class="email-code-group" id="emailCodeGroup">
+                            <input type="text" class="form-control form-control-auth" id="emailVerificationCode" placeholder="인증코드 6자리를 입력하세요" maxlength="6" inputmode="numeric">
+                            <button type="button" class="btn btn-secondary btn-auth btn-send-code" id="verifyCodeButton">
+                                코드 확인
+                            </button>
+                        </div>
+                        <div class="verification-status" id="emailVerificationMessage"></div>
                     </div>
 
                     <div class="form-group">
@@ -368,7 +437,7 @@
                         <label class="form-label">비밀번호</label>
                         <div class="input-group">
                             <input type="password" class="form-control form-control-auth" id="password" placeholder="안전한 비밀번호를 입력하세요" required>
-                            <div class="input-group-append" onclick="togglePassword('password')">
+                            <div class="input-group-append toggle-password" data-target="password" role="button" tabindex="0">
                                 <i class="fas fa-eye" id="passwordToggle"></i>
                             </div>
                         </div>
@@ -400,14 +469,14 @@
                         <label class="form-label">비밀번호 확인</label>
                         <div class="input-group">
                             <input type="password" class="form-control form-control-auth" id="passwordConfirm" placeholder="비밀번호를 다시 입력하세요" required>
-                            <div class="input-group-append" onclick="togglePassword('passwordConfirm')">
+                            <div class="input-group-append toggle-password" data-target="passwordConfirm" role="button" tabindex="0">
                                 <i class="fas fa-eye" id="passwordConfirmToggle"></i>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary flex-1" onclick="previousStep()">
+                        <button type="button" class="btn btn-secondary flex-1 js-previous-step">
                             <i class="fas fa-arrow-left"></i> 이전
                         </button>
                         <button type="submit" class="btn btn-primary flex-1">
@@ -424,34 +493,34 @@
                         <div class="section-title">약관 동의</div>
 
                         <div class="checkbox-group">
-                            <input type="checkbox" id="agreeAll" onchange="toggleAllAgreements()">
+                            <input type="checkbox" id="agreeAll">
                             <label for="agreeAll"><strong>모두 동의합니다</strong></label>
                         </div>
 
                         <hr class="my-3">
 
                         <div class="checkbox-group">
-                            <input type="checkbox" id="agreeTerms" required onchange="updateAllAgreement()">
+                            <input type="checkbox" id="agreeTerms" required>
                             <label for="agreeTerms">[필수] 이용약관에 동의합니다
-                                <a href="#" onclick="showTerms('terms')">보기</a>
+                            <a href="#" class="terms-link" data-terms="terms">보기</a>
                             </label>
                         </div>
 
                         <div class="checkbox-group">
-                            <input type="checkbox" id="agreePrivacy" required onchange="updateAllAgreement()">
+                            <input type="checkbox" id="agreePrivacy" required>
                             <label for="agreePrivacy">[필수] 개인정보처리방침에 동의합니다
-                                <a href="#" onclick="showTerms('privacy')">보기</a>
+                            <a href="#" class="terms-link" data-terms="privacy">보기</a>
                             </label>
                         </div>
 
                         <div class="checkbox-group">
-                            <input type="checkbox" id="agreeMarketing" onchange="updateAllAgreement()">
+                            <input type="checkbox" id="agreeMarketing">
                             <label for="agreeMarketing">[선택] 마케팅 정보 수신에 동의합니다</label>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary flex-1" onclick="previousStep()">
+                        <button type="button" class="btn btn-secondary flex-1 js-previous-step">
                             <i class="fas fa-arrow-left"></i> 이전
                         </button>
                         <button type="submit" class="btn btn-primary flex-1">
@@ -468,6 +537,19 @@
     </div>
 </div>
 
+<form id="signUpSubmitForm" method="post" th:action="@{/sign/up}" style="display: none;">
+    <input type="hidden" name="userId">
+    <input type="hidden" name="firstName">
+    <input type="hidden" name="lastName">
+    <input type="hidden" name="email">
+    <input type="hidden" name="phone">
+    <input type="hidden" name="password">
+    <input type="hidden" name="passwordConfirm">
+    <input type="hidden" name="agreeTerms">
+    <input type="hidden" name="agreePrivacy">
+    <input type="hidden" name="agreeMarketing">
+</form>
+
 <!-- 약관 모달 -->
 <div id="termsModal" class="modal" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
@@ -480,231 +562,13 @@
                     <!-- 약관 내용이 여기에 표시됩니다 -->
                 </div>
                 <div class="d-flex justify-content-end mt-4">
-                    <button type="button" class="btn btn-primary" onclick="hideTerms()">확인</button>
+                    <button type="button" class="btn btn-primary" id="termsConfirmButton">확인</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    let currentStep = 1;
-    let userData = {};
-
-    function nextStep() {
-        if (currentStep < 3) {
-            document.getElementById(`registerStep${currentStep}`).classList.remove('active');
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-
-            currentStep++;
-
-            document.getElementById(`registerStep${currentStep}`).classList.add('active');
-            document.getElementById(`step${currentStep}`).classList.add('active');
-        }
-    }
-
-    function previousStep() {
-        if (currentStep > 1) {
-            document.getElementById(`registerStep${currentStep}`).classList.remove('active');
-            document.getElementById(`step${currentStep}`).classList.remove('active');
-
-            currentStep--;
-
-            document.getElementById(`registerStep${currentStep}`).classList.add('active');
-            document.getElementById(`step${currentStep}`).classList.add('active');
-        }
-    }
-
-    function togglePassword(inputId) {
-        const input = document.getElementById(inputId);
-        const toggle = document.getElementById(inputId + 'Toggle');
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            toggle.classList.remove('fa-eye');
-            toggle.classList.add('fa-eye-slash');
-        } else {
-            input.type = 'password';
-            toggle.classList.remove('fa-eye-slash');
-            toggle.classList.add('fa-eye');
-        }
-    }
-
-    function checkPasswordStrength(password) {
-        let score = 0;
-        const requirements = {
-            length: password.length >= 8,
-            upper: /[A-Z]/.test(password),
-            lower: /[a-z]/.test(password),
-            number: /\d/.test(password),
-            special: /[^A-Za-z0-9]/.test(password)
-        };
-
-        Object.keys(requirements).forEach(req => {
-            const element = document.getElementById(req + 'Req');
-            if (requirements[req]) {
-                element.classList.add('met');
-                element.querySelector('i').classList.remove('fa-circle');
-                element.querySelector('i').classList.add('fa-check-circle');
-                score++;
-            } else {
-                element.classList.remove('met');
-                element.querySelector('i').classList.remove('fa-check-circle');
-                element.querySelector('i').classList.add('fa-circle');
-            }
-        });
-
-        const strengthFill = document.getElementById('passwordStrengthFill');
-        if (score < 3) {
-            strengthFill.className = 'password-strength-fill strength-weak';
-        } else if (score < 5) {
-            strengthFill.className = 'password-strength-fill strength-medium';
-        } else {
-            strengthFill.className = 'password-strength-fill strength-strong';
-        }
-
-        return score >= 4;
-    }
-
-    function toggleAllAgreements() {
-        const agreeAll = document.getElementById('agreeAll').checked;
-        document.getElementById('agreeTerms').checked = agreeAll;
-        document.getElementById('agreePrivacy').checked = agreeAll;
-        document.getElementById('agreeMarketing').checked = agreeAll;
-    }
-
-    function updateAllAgreement() {
-        const terms = document.getElementById('agreeTerms').checked;
-        const privacy = document.getElementById('agreePrivacy').checked;
-        const marketing = document.getElementById('agreeMarketing').checked;
-
-        document.getElementById('agreeAll').checked = terms && privacy && marketing;
-    }
-
-    function showTerms(type) {
-        const modal = document.getElementById('termsModal');
-        const title = document.getElementById('termsTitle');
-        const content = document.getElementById('termsContent');
-
-        if (type === 'terms') {
-            title.textContent = '이용약관';
-            content.innerHTML = `
-                <h4>제1조 (목적)</h4>
-                <p>이 약관은 API 명세서 생성기 서비스의 이용조건 및 절차에 관한 사항을 규정함을 목적으로 합니다.</p>
-
-                <h4>제2조 (용어의 정의)</h4>
-                <p>이 약관에서 사용하는 용어의 정의는 다음과 같습니다.</p>
-                <ul>
-                    <li>서비스: API 명세서 생성 및 관리 서비스</li>
-                    <li>회원: 서비스에 가입하여 이용하는 자</li>
-                    <li>콘텐츠: 회원이 서비스를 통해 생성한 API 명세서 등</li>
-                </ul>
-
-                <h4>제3조 (서비스의 제공)</h4>
-                <p>회사는 다음과 같은 서비스를 제공합니다.</p>
-                <ul>
-                    <li>API 명세서 작성 및 편집</li>
-                    <li>프로젝트 관리</li>
-                    <li>문서 내보내기 및 공유</li>
-                </ul>
-            `;
-        } else if (type === 'privacy') {
-            title.textContent = '개인정보처리방침';
-            content.innerHTML = `
-                <h4>1. 개인정보 수집 항목</h4>
-                <p>다음과 같은 개인정보를 수집합니다:</p>
-                <ul>
-                    <li>필수항목: 이름, 이메일, 비밀번호</li>
-                    <li>선택항목: 전화번호</li>
-                </ul>
-
-                <h4>2. 개인정보 수집 목적</h4>
-                <ul>
-                    <li>회원 식별 및 인증</li>
-                    <li>서비스 제공 및 관리</li>
-                    <li>고객 문의 응답</li>
-                </ul>
-
-                <h4>3. 개인정보 보유기간</h4>
-                <p>회원 탈퇴 시까지 또는 법정 보유기간에 따라 보관합니다.</p>
-            `;
-        }
-
-        modal.style.display = 'flex';
-    }
-
-    function hideTerms() {
-        document.getElementById('termsModal').style.display = 'none';
-    }
-
-    // 폼 이벤트 리스너들
-    document.getElementById('registerForm1').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const lastName = document.getElementById('lastName').value;
-        const firstName = document.getElementById('firstName').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-
-        if (!lastName || !firstName || !email) {
-            alert('필수 항목을 모두 입력해 주세요.');
-            return;
-        }
-
-        if (email === 'duplicate@example.com') {
-            alert('이미 사용 중인 이메일입니다.');
-            return;
-        }
-
-        userData = { lastName, firstName, email, phone };
-        nextStep();
-    });
-
-    document.getElementById('registerForm2').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const password = document.getElementById('password').value;
-        const passwordConfirm = document.getElementById('passwordConfirm').value;
-
-        if (!checkPasswordStrength(password)) {
-            alert('비밀번호가 보안 요구사항을 만족하지 않습니다.');
-            return;
-        }
-
-        if (password !== passwordConfirm) {
-            alert('비밀번호가 일치하지 않습니다.');
-            return;
-        }
-
-        userData.password = password;
-        nextStep();
-    });
-
-    document.getElementById('registerForm3').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const agreeTerms = document.getElementById('agreeTerms').checked;
-        const agreePrivacy = document.getElementById('agreePrivacy').checked;
-
-        if (!agreeTerms || !agreePrivacy) {
-            alert('필수 약관에 동의해 주세요.');
-            return;
-        }
-
-        userData.agreeMarketing = document.getElementById('agreeMarketing').checked;
-
-        registerUser();
-    });
-
-    function registerUser() {
-        console.log('회원가입 데이터:', userData);
-        alert('회원가입이 완료되었습니다. 로그인해 주세요.');
-        window.location.href = '/sign/in';
-    }
-
-    document.getElementById('password').addEventListener('input', function() {
-        checkPasswordStrength(this.value);
-    });
-</script>
+<script type="module" th:src="@{/js/pages/sign/up.js}"></script>
 </body>
 </html>

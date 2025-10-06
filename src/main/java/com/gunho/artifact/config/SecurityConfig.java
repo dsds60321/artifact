@@ -53,11 +53,11 @@ public class SecurityConfig {
                         }))
                 .formLogin(form -> form
                         .loginPage("/sign/in")
-                        .loginProcessingUrl("sign/in")
+                        .loginProcessingUrl("/sign/in")
                         .usernameParameter("id")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/project", true)
-                        .failureUrl("/login?error=true")
+                        .failureUrl("/sign/in?error=true")
                         .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -66,7 +66,7 @@ public class SecurityConfig {
                                 .userService(artifactOAuth2UserService)
                         )
                         .defaultSuccessUrl("/project", true)
-                        .failureUrl("/login?error=true")
+                        .failureUrl("/sign/in?error=true")
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")

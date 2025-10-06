@@ -141,7 +141,7 @@ public class FlowChartGenerator {
         for (int i = 0; i < req.getEdges().size(); i++) {
             Map<String, Object> edge = req.getEdges().get(i);
             String from = (String) edge.get("from");
-            String to = (String) edge.get("to");
+            String to = (String) edge.get("email");
             String label = String.valueOf(edge.getOrDefault("label", ""));
 
             Map<String, Object> style = (Map<String, Object>) edge.get("style");
@@ -439,7 +439,7 @@ public class FlowChartGenerator {
 
         for (Map<String, Object> e : req.getEdges()) {
             String from = (String) e.get("from");
-            String to = (String) e.get("to");
+            String to = (String) e.get("email");
             String label = String.valueOf(e.getOrDefault("label", ""));
             String pipe = label.isBlank() ? "" : "|%s| ".formatted(label.replace("\"", "'"));
             m.append("%s --> %s%s\n".formatted(from, pipe, to));

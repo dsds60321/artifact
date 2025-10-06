@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[API Spec Generator] 플랜 업그레이드 요청 알림</title>
+</head>
+<body style="margin:0; padding:20px; font-family:Arial,Helvetica,sans-serif; background-color:#e2e8f0; color:#1f2937;">
+
+<div style="max-width:520px; margin:0 auto; background-color:#ffffff; padding:20px 24px; border:1px solid #e2e8f0; border-radius:14px;">
+
+    <!-- 헤더 -->
+    <div style="text-align:center; padding:20px 0; border-bottom:1px solid #e2e8f0;">
+        <h1 style="margin:0; color:#000000; font-size:22px; font-weight:600;">
+            플랜 업그레이드 요청
+        </h1>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div style="padding:28px 0;">
+
+        <h2 style="color:#1f2937; font-size:18px; font-weight:600; margin:0 0 18px 0;">
+            요청자: {{requestor}}
+        </h2>
+
+        <p style="color:#475569; font-size:14px; line-height:1.6; margin:0 0 24px 0;">
+            안녕하세요, {{requestorName}}님이 아래와 같이 플랜 업그레이드를 요청했습니다. 세부 내용을 확인한 뒤 필요한 조치를 진행해 주세요.
+        </p>
+
+        <!-- 요청 요약 -->
+        <div style="background-color:#f8fafc; padding:18px; border:1px solid #e2e8f0; margin:24px 0;">
+            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <tbody>
+                <tr>
+                    <th align="left" style="padding:8px 0; color:#475569; font-weight:600;">요청 플랜</th>
+                    <td style="padding:8px 0; color:#1f2937;">{{plan}}</td>
+                </tr>
+                <tr>
+                    <th align="left" style="padding:8px 0; color:#475569; font-weight:600;">월 요금</th>
+                    <td style="padding:8px 0; color:#1f2937;">{{price}}</td>
+                </tr>
+                <tr>
+                    <th align="left" style="padding:8px 0; color:#475569; font-weight:600;">연락 이메일</th>
+                    <td style="padding:8px 0; color:#1f2937;">{{from}}</td>
+                </tr>
+                <tr>
+                    <th align="left" style="padding:8px 0; color:#475569; font-weight:600;">요청 일시</th>
+                    <td style="padding:8px 0; color:#1f2937;">{{createdAt}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 요청 메시지 -->
+        <div style="background-color:#f8fafc; padding:18px; border:1px solid #e2e8f0; margin:24px 0; text-align:left;">
+            <p style="margin:0 0 10px 0; color:#475569; font-size:13px;">
+                요청 메시지
+            </p>
+            <div style="font-size:14px; color:#1f2937; line-height:1.7; white-space:pre-line;">
+                {{content}}
+            </div>
+        </div>
+
+        <!-- 안내 -->
+        <p style="color:#94a3b8; font-size:12px; line-height:1.6; margin:24px 0;">
+            • 요청은 관리자 콘솔에서 처리할 수 있습니다.<br>
+            • 추가 정보가 필요하면 요청자가 남긴 이메일로 연락해 주세요.
+        </p>
+
+        <div style="text-align:center; margin:20px 0 0;">
+            <a href="%s" style="display:inline-block; padding:12px 20px; background-color:#2563eb; color:#ffffff; font-size:14px; font-weight:600; text-decoration:none; border-radius:8px;">
+                관리자 콘솔에서 확인하기
+            </a>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div style="text-align:center; padding:20px 0; border-top:1px solid #e2e8f0;">
+        <p style="color:#94a3b8; font-size:11px; margin:0; line-height:1.5;">
+            본 메일은 발신 전용입니다.<br>
+            © 2025 API Spec Generator. All rights reserved.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>

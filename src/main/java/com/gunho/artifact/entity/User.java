@@ -79,7 +79,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Artifact와의 연관관계 설정 (One-to-Many)
+    // Artifact와의 연관관계 설정 (One-email-Many)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Project> projects = new ArrayList<>();
 
@@ -113,6 +113,11 @@ public class User {
         this.nickname = nickname;
         this.phone = (phone != null && !phone.isBlank()) ? phone : null;
         this.bio = (bio != null && !bio.isBlank()) ? bio : null;
+    }
+
+    public void markLoginSuccess() {
+        this.lastLoginAt = LocalDateTime.now();
+        this.tryCnt = 0;
     }
 
     public enum Gender {

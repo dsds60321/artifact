@@ -208,22 +208,26 @@
             font-size: 14px;
         }
 
-        .alert-danger {
-            color: #b91c1c;
-            background-color: #fef2f2;
+        .alert-error {
+            background-color: #fee2e2;
             border-color: #fecaca;
+            color: #b91c1c;
         }
 
-        .alert-info {
-            color: #1e40af;
-            background-color: #eff6ff;
-            border-color: #bfdbfe;
+        .alert-success {
+            background-color: #dcfce7;
+            border-color: #bbf7d0;
+            color: #15803d;
         }
 
         .help-text {
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 6px;
+        }
+
+        .oauth-signup {
+            margin-bottom: 24px;
         }
     </style>
 </head>
@@ -236,35 +240,39 @@
         </div>
 
         <div class="login-body">
-            <!-- Google OAuth2 로그인 버튼 -->
-            <a href="/oauth2/authorization/google" class="btn btn-google btn-auth">
-                <i class="fab fa-google"></i>
-                구글로 로그인
-            </a>
+            <div class="alert alert-success"
+                 th:if="${signUpSuccess}">
+                회원가입이 완료되었습니다. 로그인해 주세요.
+            </div>
+            <div class="alert alert-error"
+                 th:if="${errorMessage}"
+                 th:text="${errorMessage}">
+            </div>
+
+            <div class="oauth-signup">
+                <a href="/oauth2/authorization/google" class="btn btn-google btn-auth">
+                    <i class="fab fa-google"></i>
+                    구글로 로그인
+                </a>
+            </div>
 
             <div class="divider">
                 <span>또는</span>
             </div>
 
-            <form id="loginForm">
+            <form id="loginForm" method="post" th:action="@{/sign/in}">
                 <div class="form-group">
-                    <label class="form-label">이메일</label>
-                    <input type="email" class="form-control form-control-auth" id="email" placeholder="example@email.com" required>
+                    <label class="form-label">아이디</label>
+                    <input type="text" class="form-control form-control-auth" id="loginId" name="id" placeholder="아이디를 입력하세요" autocomplete="username" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">비밀번호</label>
-                    <input type="password" class="form-control form-control-auth" id="password" placeholder="비밀번호를 입력하세요" required>
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="remember">
-                    <label for="remember">로그인 상태 유지</label>
+                    <input type="password" class="form-control form-control-auth" id="password" name="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-auth">
                     <span id="loginButtonText">로그인</span>
-                    <span id="loginSpinner" class="loading" style="display: none;"></span>
                 </button>
 
                 <div class="forgot-password-link">
@@ -313,44 +321,6 @@
         document.getElementById('forgotPasswordForm').reset();
     }
 
-    function setButtonLoading(loading) {
-        const button = document.querySelector('#loginForm button[type="submit"]');
-        const text = document.getElementById('loginButtonText');
-        const spinner = document.getElementById('loginSpinner');
-
-        if (loading) {
-            button.disabled = true;
-            text.style.display = 'none';
-            spinner.style.display = 'inline-block';
-        } else {
-            button.disabled = false;
-            text.style.display = 'inline';
-            spinner.style.display = 'none';
-        }
-    }
-
-    // 일반 로그인 처리
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        if (!email || !password) {
-            alert('이메일과 비밀번호를 입력해 주세요.');
-            return;
-        }
-
-        setButtonLoading(true);
-
-        // 실제로는 서버 API 호출
-        setTimeout(() => {
-            // 로그인 성공 시 메인 페이지로 이동
-            window.location.href = '/';
-        }, 1000);
-    });
-
-    // 비밀번호 찾기 처리
     document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
         e.preventDefault();
 

@@ -26,7 +26,7 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idx;
 
-    // User와의 연관관계 설정 (Many-to-One)
+    // User와의 연관관계 설정 (Many-email-One)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_idx", referencedColumnName = "idx")
     private User user;

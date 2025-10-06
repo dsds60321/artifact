@@ -233,7 +233,7 @@ class UserProfilePage {
                 }
 
                 if (form) {
-                    form.addEventListener('submit', (event) => {
+                    form.addEventListener('submit', async (event) => {
                         event.preventDefault();
                         const emailInput = form.querySelector('#planRequestEmail');
                         const messageInput = form.querySelector('#planRequestMessage');
@@ -253,30 +253,45 @@ class UserProfilePage {
                         }
 
                         const userMessage = messageInput?.value.trim() || '';
-                        const mailBody = this.buildMailBody(email, userMessage, planInfo);
-                        const subject = encodeURIComponent(`[플랜 변경 요청] ${planInfo.name || '신규 플랜'}`);
-                        const mailtoLink = `mailto:${adminEmail}?subject=${subject}&body=${mailBody}`;
+                        const payload = this.buildPlanRequestPayload({
+                            email,
+                            message: userMessage,
+                            planInfo
+                        });
 
-                        window.location.href = mailtoLink;
-                        NotificationManager.showInfo('기본 메일 클라이언트가 열리지 않는 경우, 관리자에게 직접 메일을 보내주세요.');
-                        ModalManager.closeModal();
+                        await this.requestPlanApproval(payload);
                     });
                 }
             }
         });
     }
 
-    buildMailBody(email, message, planInfo) {
-        const lines = [
-            `요청자 이메일: ${email}`,
-            `요청 플랜: ${planInfo.name || '미정'}`,
-            planInfo.price ? `예상 요금: ${planInfo.price}` : null,
-            '',
-            '변경 요청 메시지:',
-            message || '(내용 미작성)'
-        ].filter(Boolean);
+    buildPlanRequestPayload({ email, message, planInfo }) {
+        return {
+            from: email,
+            content: message || '',
+            plan: planInfo?.name || '',
+            price: planInfo?.price || '',
+            message: planInfo?.id ? `선택한 플랜 ID: ${planInfo.id}` : ''
+        };
+    }
 
-        return encodeURIComponent(lines.join('\n'));
+    async requestPlanApproval(payload) {
+        try {
+            LoadingManager.show();
+            const { data } = await httpClient.post('/email/plan', payload);
+            if (data.success) {
+                NotificationManager.showSuccess(data.message || '플랜 업그레이드 요청 메일을 발송했습니다.');
+                ModalManager.closeModal();
+            } else {
+                NotificationManager.showError(data.message || '메일 발송에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('[Profile] plan request email error', error);
+            NotificationManager.showError('메일 발송 중 오류가 발생했습니다.');
+        } finally {
+            LoadingManager.hide();
+        }
     }
 }
 

@@ -20,4 +20,10 @@ public final class CodeEnums {
         private final String name;
     }
 
+    @Getter
+    @AllArgsConstructor
+    public enum EmailType {
+        PLAN_UPDATE_REQUEST,
+        SIGN_VERIFY
+    }
 }

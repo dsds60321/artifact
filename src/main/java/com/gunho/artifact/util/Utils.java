@@ -1,7 +1,9 @@
 package com.gunho.artifact.util;
 
 import java.lang.reflect.Array;
+import java.security.SecureRandom;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,6 +34,38 @@ public class Utils {
 
     public static <T> T ifNullDefaultValue(Object obj, T defaultValue) {
         return Utils.isEmpty(obj) ? defaultValue : (T) obj ;
+    }
+
+    public static String generateRandomCode(int length) {
+        int min = (int) Math.pow(10, length - 1);
+        int max = (int) Math.pow(10, length) - 1;
+        int code = new SecureRandom().nextInt(max - min + 1) + min;
+
+        return String.valueOf(code);
+    }
+
+    public static class MsgUtil {
+
+        /**
+         * {} 형태 replace
+         */
+        public static String getMessage(String originMsg, List<String> replace) {
+            if (originMsg == null || replace == null) {
+                return originMsg;
+            }
+
+            String result = originMsg;
+            int replaceIndex = 0;
+
+            while (result.contains("{}") && replaceIndex < replace.size()) {
+                String replacement = replace.get(replaceIndex) != null ? replace.get(replaceIndex) : "";
+                result = result.replaceFirst("\\{\\}", replacement);
+                replaceIndex++;
+            }
+
+            return result;
+        }
+
     }
 
 }
