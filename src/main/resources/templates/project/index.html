@@ -7,6 +7,191 @@
 
 <th:block th:replace="~{layout/fragments :: common-header('API 명세서 생성기', '프로젝트 관리')}"></th:block>
 
+<style>
+    .usage-guide-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(14, 23, 38, 0.6);
+        backdrop-filter: blur(3px);
+        z-index: 1050;
+        padding: 24px;
+    }
+
+    .usage-guide-modal.is-open {
+        display: flex;
+    }
+
+    .usage-guide-dialog {
+        position: relative;
+        max-width: 840px;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 24px 48px rgba(18, 25, 38, 0.25);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .usage-guide-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .usage-guide-close:hover {
+        color: #343a40;
+    }
+
+    .usage-guide-body {
+        display: grid;
+        grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+        gap: 32px;
+        padding: 48px 48px 32px;
+    }
+
+    .usage-guide-media {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f7fb;
+        border-radius: 12px;
+        min-height: 240px;
+        overflow: hidden;
+    }
+
+    .usage-guide-media img {
+        max-width: 100%;
+        max-height: 320px;
+        object-fit: contain;
+    }
+
+    .usage-guide-media img[hidden] {
+        display: none;
+    }
+
+    .usage-guide-content h3 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: #182033;
+    }
+
+    .usage-guide-content p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #49515f;
+        margin-bottom: 0;
+        white-space: pre-line;
+    }
+
+    .usage-guide-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 48px 32px;
+        border-top: 1px solid #f0f2f7;
+        gap: 16px;
+    }
+
+    .usage-guide-indicator {
+        font-weight: 600;
+        color: #49515f;
+    }
+
+    .usage-guide-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .usage-guide-actions .btn-link {
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .usage-guide-prev {
+        display: none;
+    }
+
+    .usage-guide-modal.has-multiple .usage-guide-prev {
+        display: inline-flex;
+    }
+
+    @media (max-width: 992px) {
+        .usage-guide-body {
+            grid-template-columns: 1fr;
+            padding: 36px 28px 24px;
+        }
+
+        .usage-guide-footer {
+            padding: 12px 28px 24px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .usage-guide-modal {
+            padding: 12px;
+        }
+
+        .usage-guide-dialog {
+            border-radius: 14px;
+        }
+
+        .usage-guide-content h3 {
+            font-size: 20px;
+        }
+
+        .usage-guide-content p {
+            font-size: 15px;
+        }
+
+        .usage-guide-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+</style>
+
+<div id="usageGuideModal"
+     class="usage-guide-modal"
+     th:classappend="${PROJECT_USAGE_GUIDE != null and #lists.size(PROJECT_USAGE_GUIDE) > 1} ? ' has-multiple' : ''"
+     th:if="${PROJECT_USAGE_GUIDE != null and !PROJECT_USAGE_GUIDE.isEmpty()}">
+    <div class="usage-guide-dialog">
+        <button type="button" class="usage-guide-close" data-guide-close aria-label="사용법 안내 닫기">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="usage-guide-body">
+            <div class="usage-guide-media">
+                <img data-guide-image src="" alt="사용법 안내 이미지">
+            </div>
+            <div class="usage-guide-content">
+                <h3 data-guide-title>프로젝트 사용법 안내</h3>
+                <p data-guide-description>프로젝트 관련 안내 문구를 입력해주세요.</p>
+            </div>
+        </div>
+        <div class="usage-guide-footer">
+            <div class="usage-guide-indicator">
+                <span data-guide-current>1</span>/<span data-guide-total th:text="${PROJECT_USAGE_GUIDE.size()}">1</span>
+            </div>
+            <div class="usage-guide-actions">
+                <button type="button" class="btn btn-outline-secondary usage-guide-prev" data-guide-prev>이전</button>
+                <button type="button" class="btn btn-primary usage-guide-next" data-guide-next>다음</button>
+                <button type="button" class="btn btn-link text-muted" data-guide-skip>다음에 보기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>프로젝트 목록</h2>
@@ -93,6 +278,9 @@
 <th:block th:replace="~{layout/fragments :: common-modal}"></th:block>
 <!-- 필수 JS -->
 <th:block th:replace="~{layout/fragments :: essential-js}"></th:block>
+<script th:inline="javascript" th:if="${PROJECT_USAGE_GUIDE != null and !PROJECT_USAGE_GUIDE.isEmpty()}">
+    window.PROJECT_USAGE_GUIDE = /*[[${PROJECT_USAGE_GUIDE}]]*/ [];
+</script>
 <script th:src="@{/js/pages/project/index.js}"></script>
 </body>
 </html>

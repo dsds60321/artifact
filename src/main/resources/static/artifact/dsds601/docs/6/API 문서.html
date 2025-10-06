@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API 문서</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+  </style>
+</head>
+<body>
+  <!-- OpenAPI 스펙을 인라인으로 제공 (이 요소 하나만 id="api-reference") -->
+  <script id="api-reference" type="application/json">
+  {"openapi":"3.0.3","info":{"version":"1.0","title":"API 문서"},"paths":{"/api/orders":{"post":{"tags":["Order"],"requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"userId":{"type":"string"},"amount":{"type":"integer","description":"금액"}},"required":["userId","amount"]}}}},"responses":{"200":{"description":"OK","content":{"application/json":{"schema":{"type":"object","properties":{"success":{"type":"boolean","description":"성공 실패"},"message":{"type":"string","description":"응답 메시지"}},"required":["success","message"]}}}}}}}}}
+  </script>
+
+  <!-- Scalar API Reference 스크립트 -->
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>

@@ -1,10 +1,13 @@
 class Index {
     constructor() {
+        this.usageGuide = null;
+        this.handleGuideKeydown = null;
         this.init();
     }
 
     init() {
         this.bindEvents();
+        this.setupUsageGuide();
     }
 
     // 프로젝트 등록
@@ -81,6 +84,153 @@ class Index {
                 }
             });
         });
+    }
+
+    setupUsageGuide() {
+        const steps = Array.isArray(window.PROJECT_USAGE_GUIDE) ? window.PROJECT_USAGE_GUIDE : [];
+        if (!steps.length) return;
+
+        const sortedSteps = steps
+            .slice()
+            .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+
+        const modal = document.getElementById('usageGuideModal');
+        if (!modal) return;
+
+        this.usageGuide = {
+            modal,
+            steps: sortedSteps,
+            currentStep: 0,
+            imageEl: modal.querySelector('[data-guide-image]'),
+            titleEl: modal.querySelector('[data-guide-title]'),
+            descriptionEl: modal.querySelector('[data-guide-description]'),
+            currentEl: modal.querySelector('[data-guide-current]'),
+            totalEl: modal.querySelector('[data-guide-total]'),
+            prevBtn: modal.querySelector('[data-guide-prev]'),
+            nextBtn: modal.querySelector('[data-guide-next]'),
+            skipBtn: modal.querySelector('[data-guide-skip]'),
+            closeBtn: modal.querySelector('[data-guide-close]')
+        };
+
+        if (this.usageGuide.totalEl) {
+            this.usageGuide.totalEl.textContent = steps.length;
+        }
+
+        this.registerGuideEvents();
+        this.renderGuideStep(0);
+        this.openUsageGuide();
+    }
+
+    registerGuideEvents() {
+        if (!this.usageGuide) return;
+
+        const { prevBtn, nextBtn, skipBtn, closeBtn } = this.usageGuide;
+
+        prevBtn?.addEventListener('click', () => this.goToGuideStep(this.usageGuide.currentStep - 1));
+        nextBtn?.addEventListener('click', () => this.goToGuideStep(this.usageGuide.currentStep + 1));
+        skipBtn?.addEventListener('click', () => this.closeUsageGuide());
+        closeBtn?.addEventListener('click', () => this.closeUsageGuide());
+
+        this.usageGuide.modal.addEventListener('click', (event) => {
+            if (event.target === this.usageGuide.modal) {
+                this.closeUsageGuide();
+            }
+        });
+
+        this.handleGuideKeydown = (event) => {
+            if (!this.usageGuide || !this.usageGuide.modal.classList.contains('is-open')) return;
+
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                this.goToGuideStep(this.usageGuide.currentStep + 1);
+            }
+
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                this.goToGuideStep(this.usageGuide.currentStep - 1);
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                this.closeUsageGuide();
+            }
+        };
+
+        document.addEventListener('keydown', this.handleGuideKeydown);
+    }
+
+    renderGuideStep(index) {
+        if (!this.usageGuide) return;
+
+        const { steps, imageEl, titleEl, descriptionEl, currentEl, prevBtn, nextBtn } = this.usageGuide;
+        const lastIndex = steps.length - 1;
+        const clampedIndex = Math.max(0, Math.min(index, lastIndex));
+        const step = steps[clampedIndex];
+
+        this.usageGuide.currentStep = clampedIndex;
+
+        if (imageEl) {
+            if (step.imageUrl) {
+                imageEl.src = step.imageUrl;
+                imageEl.removeAttribute('hidden');
+                imageEl.alt = step.title ? `${step.title} 안내 이미지` : '사용법 안내 이미지';
+            } else {
+                imageEl.removeAttribute('src');
+                imageEl.alt = '등록된 이미지가 없습니다.';
+                imageEl.setAttribute('hidden', 'true');
+            }
+        }
+
+        if (titleEl) {
+            titleEl.textContent = step.title || '제목을 입력해주세요';
+        }
+
+        if (descriptionEl) {
+            descriptionEl.textContent = step.description || '설명 문구를 입력해주세요.';
+        }
+
+        if (currentEl) {
+            currentEl.textContent = clampedIndex + 1;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled = clampedIndex === 0;
+        }
+
+        if (nextBtn) {
+            nextBtn.textContent = clampedIndex === lastIndex ? '완료' : '다음';
+        }
+    }
+
+    goToGuideStep(index) {
+        if (!this.usageGuide) return;
+
+        if (index >= this.usageGuide.steps.length) {
+            this.closeUsageGuide();
+            return;
+        }
+
+        if (index < 0) {
+            this.renderGuideStep(0);
+            return;
+        }
+
+        this.renderGuideStep(index);
+    }
+
+    openUsageGuide() {
+        if (!this.usageGuide) return;
+        this.usageGuide.modal.classList.add('is-open');
+    }
+
+    closeUsageGuide() {
+        if (!this.usageGuide) return;
+        this.usageGuide.modal.classList.remove('is-open');
+
+        if (this.handleGuideKeydown) {
+            document.removeEventListener('keydown', this.handleGuideKeydown);
+            this.handleGuideKeydown = null;
+        }
     }
 }
 
