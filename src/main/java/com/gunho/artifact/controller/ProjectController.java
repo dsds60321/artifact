@@ -2,9 +2,11 @@ package com.gunho.artifact.controller;
 
 import com.gunho.artifact.dto.ApiResponse;
 import com.gunho.artifact.dto.ProjectDto;
+import com.gunho.artifact.enums.CodeEnums;
 import com.gunho.artifact.security.ArtifactUserDetails;
 import com.gunho.artifact.service.ArtifactService;
 import com.gunho.artifact.service.DashboardService;
+import com.gunho.artifact.service.GuideService;
 import com.gunho.artifact.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +15,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/project")
 public class ProjectController {
 
+    private final GuideService guideService;
     private final DashboardService dashboardService;
     private final ProjectService projectService;
     private final ArtifactService artifactService;
@@ -25,6 +30,7 @@ public class ProjectController {
     @GetMapping
     public String index(Model model, @AuthenticationPrincipal ArtifactUserDetails userDetails) {
         dashboardService.getUserDatas(model ,userDetails.getUser());
+        model.addAttribute("PROJECT_USAGE_GUIDE", guideService.getGuideListByType(CodeEnums.GuideType.TUTORIAL));
         return "project/index";
     }
 

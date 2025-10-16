@@ -141,7 +141,7 @@ public class FlowChartGenerator {
         for (int i = 0; i < req.getEdges().size(); i++) {
             Map<String, Object> edge = req.getEdges().get(i);
             String from = (String) edge.get("from");
-            String to = (String) edge.get("email");
+            String to = (String) edge.get("to");
             String label = String.valueOf(edge.getOrDefault("label", ""));
 
             Map<String, Object> style = (Map<String, Object>) edge.get("style");
@@ -417,40 +417,6 @@ public class FlowChartGenerator {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
-    }
-
-    private String toMermaid(FlowChartRequest req) {
-        StringBuilder m = new StringBuilder();
-        m.append("flowchart ").append(req.getLayout()).append("\n");
-        m.append("%% ").append(req.getTitle()).append("\n");
-
-        for (Map<String, Object> n : req.getNodes()) {
-            String id = (String) n.get("id");
-            String label = String.valueOf(n.getOrDefault("label", id)).replace("\"", "'");
-            String shape = String.valueOf(n.getOrDefault("shape", "process"));
-            String box = switch (shape) {
-                case "db" -> "([%s])";
-                case "external" -> "[\"%s\"]";
-                case "service" -> "[%s]";
-                default -> "[%s]";
-            };
-            m.append(String.format("%s" + box + "\n", id, label));
-        }
-
-        for (Map<String, Object> e : req.getEdges()) {
-            String from = (String) e.get("from");
-            String to = (String) e.get("email");
-            String label = String.valueOf(e.getOrDefault("label", ""));
-            String pipe = label.isBlank() ? "" : "|%s| ".formatted(label.replace("\"", "'"));
-            m.append("%s --> %s%s\n".formatted(from, pipe, to));
-        }
-        return m.toString();
-    }
-
-    private static String sha256Hex(byte[] data) throws Exception {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] d = md.digest(data);
-        return HexFormat.of().formatHex(d);
     }
 
 
