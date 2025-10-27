@@ -1,11 +1,29 @@
-let apiDocsManager;
+if (window.__artifactDocsScriptLoaded) {
+    console.debug('Artifact docs script already loaded, skip redefinition.');
+} else {
+    window.__artifactDocsScriptLoaded = true;
 
-class ApiDocsManager {
+    (function () {
+        let apiDocsManager;
+        let requestBuilderManager;
+
+        class ApiDocsManager {
     constructor() {
         this.endpoints = [];
         this.sequence = Date.now();
         this.projectIdx = this.readNumericInput('projectIdx');
         this.docsIdx = this.readNumericInput('docsIdx');
+        this.editorMode = 'form';
+        this.formSection = document.getElementById('formEditorSection');
+        this.jsonSection = document.getElementById('jsonEditorSection');
+        this.rawSpecTextarea = document.getElementById('rawSpecInput');
+        this.jsonContentTypeSelect = document.getElementById('jsonContentType');
+        this.jsonContentTypeWrapper = document.getElementById('jsonContentTypeWrapper');
+        this.jsonEditorError = document.getElementById('jsonEditorError');
+        this.modeButtons = {
+            form: document.getElementById('modeFormBtn'),
+            json: document.getElementById('modeJsonBtn')
+        };
 
         this.bindEvents();
         this.loadInitialData();
@@ -37,6 +55,21 @@ class ApiDocsManager {
         if (addEndpointBtn) {
             addEndpointBtn.addEventListener('click', () => this.addEndpoint());
         }
+
+        if (this.modeButtons.form) {
+            this.modeButtons.form.addEventListener('click', () => this.setEditorMode('form'));
+        }
+        if (this.modeButtons.json) {
+            this.modeButtons.json.addEventListener('click', () => this.setEditorMode('json'));
+        }
+
+        if (this.rawSpecTextarea) {
+            this.rawSpecTextarea.addEventListener('input', () => this.handleJsonEditorInput());
+        }
+
+        if (this.jsonContentTypeSelect) {
+            this.jsonContentTypeSelect.addEventListener('change', () => this.handleContentTypeChange());
+        }
     }
 
     readNumericInput(name) {
@@ -67,6 +100,153 @@ class ApiDocsManager {
 
         this.checkDemoMode();
         this.renderEndpoints();
+        this.populateJsonEditorFromState();
+        this.updateModeUi();
+    }
+
+    /* -------------------------------------------------------------
+     * 모드 전환 & JSON 에디터
+     * ----------------------------------------------------------- */
+    setEditorMode(mode) {
+        if (!mode || mode === this.editorMode) return;
+        if (!['form', 'json'].includes(mode)) return;
+        if (mode === 'form') {
+            const synced = this.syncJsonEditorToState({ notifyOnError: true, refreshPreview: false });
+            if (!synced) return;
+        }
+        this.editorMode = mode;
+        this.updateModeUi();
+        if (mode === 'json') {
+            this.populateJsonEditorFromState();
+        } else {
+            this.renderEndpoints();
+        }
+        this.renderJsonPreview();
+    }
+
+    updateModeUi() {
+        if (this.formSection) {
+            this.formSection.style.display = this.editorMode === 'form' ? '' : 'none';
+        }
+        if (this.jsonSection) {
+            this.jsonSection.style.display = this.editorMode === 'json' ? '' : 'none';
+        }
+        if (this.modeButtons?.form) {
+            this.modeButtons.form.classList.toggle('active', this.editorMode === 'form');
+        }
+        if (this.modeButtons?.json) {
+            this.modeButtons.json.classList.toggle('active', this.editorMode === 'json');
+        }
+        if (this.jsonContentTypeWrapper) {
+            this.jsonContentTypeWrapper.style.display = this.editorMode === 'json' ? 'flex' : 'none';
+        }
+        if (this.editorMode !== 'json') {
+            this.clearJsonEditorError();
+        }
+    }
+
+    populateJsonEditorFromState() {
+        if (!this.rawSpecTextarea) return;
+        try {
+            const spec = this.buildSpec();
+            this.rawSpecTextarea.value = JSON.stringify(spec, null, 2);
+            this.clearJsonEditorError();
+        } catch (error) {
+            console.warn('JSON 에디터 초기화 실패', error);
+        }
+    }
+
+    handleJsonEditorInput() {
+        if (this.editorMode !== 'json') return;
+        this.renderJsonPreview();
+    }
+
+    handleContentTypeChange() {
+        if (!this.jsonContentTypeSelect) return;
+        const value = this.jsonContentTypeSelect.value;
+        if (value !== 'application/json') {
+            const message = '현재는 application/json Content-Type만 지원합니다.';
+            this.showJsonEditorError(message);
+            if (this.jsonContentTypeSelect) {
+                this.jsonContentTypeSelect.value = 'application/json';
+            }
+        } else if (this.editorMode === 'json') {
+            this.clearJsonEditorError();
+            this.renderJsonPreview();
+        }
+    }
+
+    syncJsonEditorToState({ notifyOnError = true, refreshPreview = false } = {}) {
+        if (!this.rawSpecTextarea) return true;
+        const raw = this.rawSpecTextarea.value ?? '';
+        const trimmed = raw.trim();
+        if (!trimmed) {
+            const message = 'JSON 본문을 입력해 주세요.';
+            this.showJsonEditorError(message);
+            if (notifyOnError) {
+                this.notifyError(message);
+            }
+            return false;
+        }
+        if (this.jsonContentTypeSelect && this.jsonContentTypeSelect.value !== 'application/json') {
+            const message = '현재는 application/json Content-Type만 지원합니다.';
+            this.showJsonEditorError(message);
+            if (notifyOnError) {
+                this.notifyError(message);
+            }
+            return false;
+        }
+        try {
+            const spec = JSON.parse(trimmed);
+            if (!spec || typeof spec !== 'object' || Array.isArray(spec)) {
+                throw new Error('Spec should be an object');
+            }
+            const endpoints = Array.isArray(spec.endpoints) ? spec.endpoints : [];
+            const titleValue = typeof spec.title === 'string' ? spec.title : '';
+            const versionValue = typeof spec.version === 'string' ? spec.version : '';
+            this.endpoints = endpoints.map((endpoint) => this.normalizeEndpoint(endpoint));
+            const titleInput = document.getElementById('title');
+            const versionInput = document.getElementById('version');
+            if (titleInput) titleInput.value = titleValue;
+            if (versionInput) versionInput.value = versionValue;
+            if (this.rawSpecTextarea) {
+                const normalizedSpec = this.buildSpec();
+                this.rawSpecTextarea.value = JSON.stringify(normalizedSpec, null, 2);
+            }
+            this.clearJsonEditorError();
+            if (refreshPreview) {
+                this.renderJsonPreview();
+            }
+            return true;
+        } catch (error) {
+            console.warn('JSON 파싱 실패', error);
+            let message = 'JSON 형식이 올바르지 않습니다.';
+            if (error?.message === 'Spec should be an object') {
+                message = '최상위 JSON 구조는 객체 형태여야 합니다.';
+            }
+            this.showJsonEditorError(message);
+            if (notifyOnError) {
+                this.notifyError(message);
+            }
+            return false;
+        }
+    }
+
+    ensureEditorStateForSubmit() {
+        if (this.editorMode !== 'json') return true;
+        return this.syncJsonEditorToState({ notifyOnError: true, refreshPreview: true });
+    }
+
+    showJsonEditorError(message) {
+        if (!this.jsonEditorError) return;
+        this.jsonEditorError.textContent = message;
+        this.jsonEditorError.style.display = 'block';
+    }
+
+    clearJsonEditorError() {
+        if (!this.jsonEditorError) return;
+        this.jsonEditorError.textContent = '';
+        this.jsonEditorError.style.display = 'none';
     }
 
     readInitialSpec() {
@@ -318,6 +498,335 @@ class ApiDocsManager {
         }
     }
 
+    generateSchemaFromExample(example) {
+        const schema = this.buildSchemaFromValue(example);
+        this.normalizeSchemaNode(schema);
+        return schema;
+    }
+
+    buildSchemaFromValue(value) {
+        if (value === null) {
+            return { type: 'null' };
+        }
+        if (Array.isArray(value)) {
+            if (value.length === 0) {
+                return { type: 'array', items: { type: 'string' } };
+            }
+            return { type: 'array', items: this.buildSchemaFromValue(value[0]) };
+        }
+        if (typeof value === 'object') {
+            const properties = {};
+            const required = [];
+            Object.entries(value).forEach(([key, val]) => {
+                properties[key] = this.buildSchemaFromValue(val);
+                required.push(key);
+            });
+            return { type: 'object', properties, required };
+        }
+        if (typeof value === 'number') {
+            return Number.isInteger(value) ? { type: 'integer' } : { type: 'number' };
+        }
+        if (typeof value === 'boolean') {
+            return { type: 'boolean' };
+        }
+        return { type: 'string' };
+    }
+
+    buildExampleFromSchema(schema) {
+        const type = this.getSchemaType(schema);
+        if (type === 'object') {
+            const result = {};
+            const properties = schema?.properties && typeof schema.properties === 'object' ? schema.properties : {};
+            Object.entries(properties).forEach(([key, childSchema]) => {
+                result[key] = this.buildExampleFromSchema(childSchema);
+            });
+            return result;
+        }
+        if (type === 'array') {
+            return [];
+        }
+        if (type === 'integer' || type === 'number') {
+            return 0;
+        }
+        if (type === 'boolean') {
+            return false;
+        }
+        if (type === 'null') {
+            return null;
+        }
+        return '';
+    }
+
+    buildExampleValueForType(type) {
+        switch (type) {
+            case 'object':
+                return {};
+            case 'array':
+                return [];
+            case 'integer':
+            case 'number':
+                return 0;
+            case 'boolean':
+                return false;
+            case 'null':
+                return null;
+            default:
+                return '';
+        }
+    }
+
+    getSchemaType(schema) {
+        if (!schema || typeof schema !== 'object') return 'string';
+        if (Array.isArray(schema.type) && schema.type.length > 0) {
+            return schema.type[0];
+        }
+        if (typeof schema.type === 'string') {
+            return schema.type;
+        }
+        if (schema.properties) return 'object';
+        if (schema.items) return 'array';
+        return 'string';
+    }
+
+    getExampleValueAtPath(example, pathArray = []) {
+        if (!pathArray || pathArray.length === 0) {
+            return example;
+        }
+        let current = example;
+        for (const segment of pathArray) {
+            if (current === undefined || current === null) {
+                return undefined;
+            }
+            if (Array.isArray(current)) {
+                const index = typeof segment === 'number' ? segment : 0;
+                current = current[index];
+                continue;
+            }
+            if (typeof current === 'object') {
+                current = current[segment];
+                continue;
+            }
+            return undefined;
+        }
+        return current;
+    }
+
+    ensureRequestBodyExampleRoot(requestBody) {
+        if (requestBody.example && typeof requestBody.example === 'object') {
+            return requestBody.example;
+        }
+        if (requestBody.__rawExample && requestBody.__rawExample.trim()) {
+            try {
+                requestBody.example = JSON.parse(requestBody.__rawExample);
+                return requestBody.example;
+            } catch (error) {
+                console.warn('요청 본문 예시 파싱 실패', error);
+            }
+        }
+        const fallback = this.buildExampleFromSchema(requestBody.schema || { type: 'object' });
+        requestBody.example = fallback;
+        requestBody.__rawExample = this.stringifyExample(fallback);
+        return requestBody.example;
+    }
+
+    setNestedValue(target, pathArray, value) {
+        if (!Array.isArray(pathArray) || pathArray.length === 0) {
+            return;
+        }
+        const [head, ...rest] = pathArray;
+        if (rest.length === 0) {
+            if (Array.isArray(target)) {
+                const index = typeof head === 'number' ? head : Number(head);
+                if (!Number.isNaN(index)) {
+                    target[index] = value;
+                }
+            } else if (target && typeof target === 'object') {
+                target[head] = value;
+            }
+            return;
+        }
+
+        const nextKey = rest[0];
+        if (Array.isArray(target)) {
+            const index = typeof head === 'number' ? head : Number(head);
+            if (Number.isNaN(index)) return;
+            if (!target[index] || typeof target[index] !== 'object') {
+                target[index] = typeof nextKey === 'number' ? [] : {};
+            }
+            this.setNestedValue(target[index], rest, value);
+            return;
+        }
+
+        if (!target || typeof target !== 'object') {
+            return;
+        }
+        if (!target[head] || typeof target[head] !== 'object') {
+            target[head] = typeof nextKey === 'number' ? [] : {};
+        }
+        this.setNestedValue(target[head], rest, value);
+    }
+
+    deleteNestedValue(target, pathArray) {
+        if (!Array.isArray(pathArray) || pathArray.length === 0) {
+            return;
+        }
+        const [head, ...rest] = pathArray;
+        if (rest.length === 0) {
+            if (Array.isArray(target)) {
+                const index = typeof head === 'number' ? head : Number(head);
+                if (!Number.isNaN(index)) {
+                    target.splice(index, 1);
+                }
+            } else if (target && typeof target === 'object') {
+                delete target[head];
+            }
+            return;
+        }
+        const next = Array.isArray(target)
+            ? target[typeof head === 'number' ? head : Number(head)]
+            : target?.[head];
+        if (next === undefined) return;
+        this.deleteNestedValue(next, rest);
+        if (Array.isArray(next) && next.length === 0) {
+            if (Array.isArray(target)) {
+                const index = typeof head === 'number' ? head : Number(head);
+                if (!Number.isNaN(index)) {
+                    target[index] = [];
+                }
+            } else if (target && typeof target === 'object') {
+                target[head] = [];
+            }
+        } else if (next && typeof next === 'object' && Object.keys(next).length === 0) {
+            if (Array.isArray(target)) {
+                const index = typeof head === 'number' ? head : Number(head);
+                if (!Number.isNaN(index)) {
+                    target[index] = {};
+                }
+            } else if (target && typeof target === 'object') {
+                delete target[head];
+            }
+        }
+    }
+
+    schemaPathToExamplePath(schemaPath) {
+        if (!schemaPath) return [];
+        const parts = this.pathToArray(schemaPath);
+        const examplePath = [];
+        for (let i = 0; i < parts.length; i += 1) {
+            const part = parts[i];
+            if (part === 'properties') {
+                const propertyName = parts[i + 1];
+                if (propertyName) {
+                    examplePath.push(propertyName);
+                    i += 1;
+                }
+                continue;
+            }
+            if (part === 'items') {
+                examplePath.push(0);
+                continue;
+            }
+        }
+        return examplePath;
+    }
+
+    updateRequestExampleType(requestBody, schemaPath, newType) {
+        if (!requestBody) return;
+        const examplePath = this.schemaPathToExamplePath(schemaPath);
+        const exampleRoot = this.ensureRequestBodyExampleRoot(requestBody);
+        const nextValue = this.buildExampleValueForType(newType);
+        if (examplePath.length === 0) {
+            requestBody.example = nextValue;
+        } else {
+            this.setNestedValue(exampleRoot, examplePath, nextValue);
+        }
+        requestBody.__rawExample = this.stringifyExample(requestBody.example);
+    }
+
+    collectRequestBodyFields(schema, example, path = 'root', displayPath = '', level = 0, examplePath = []) {
+        const rows = [];
+        if (!schema || typeof schema !== 'object') {
+            return rows;
+        }
+        const type = this.getSchemaType(schema);
+        if (type === 'object') {
+            const requiredList = Array.isArray(schema.required) ? schema.required : [];
+            const properties = schema.properties && typeof schema.properties === 'object' ? schema.properties : {};
+            Object.entries(properties).forEach(([key, childSchema]) => {
+                const childPath = this.concatPath(path, `properties.${key}`);
+                const nextDisplay = displayPath ? `${displayPath}.${key}` : key;
+                const childType = this.getSchemaType(childSchema);
+                const childExamplePath = examplePath.concat(key);
+                const childExampleValue = this.getExampleValueAtPath(example, childExamplePath);
+                rows.push({
+                    path: childPath,
+                    parentPath: path,
+                    key,
+                    displayPath: nextDisplay,
+                    type: childType,
+                    required: requiredList.includes(key),
+                    canToggleRequired: true,
+                    level,
+                    isArray: false,
+                    isContainer: childType === 'object' || childType === 'array',
+                    examplePath: childExamplePath,
+                    value: childExampleValue
+                });
+                rows.push(...this.collectRequestBodyFields(childSchema, example, childPath, nextDisplay, level + 1, childExamplePath));
+            });
+        } else if (type === 'array') {
+            const itemsPath = this.concatPath(path, 'items');
+            const nextDisplay = `${displayPath || 'items'}[]`;
+            const itemSchema = schema.items && typeof schema.items === 'object' ? schema.items : { type: 'string' };
+            const itemType = this.getSchemaType(itemSchema);
+            const childExamplePath = examplePath.concat(0);
+            const childExampleValue = this.getExampleValueAtPath(example, childExamplePath);
+            rows.push({
+                path: itemsPath,
+                parentPath: path,
+                key: nextDisplay,
+                displayPath: nextDisplay,
+                type: itemType,
+                required: false,
+                canToggleRequired: false,
+                level,
+                isArray: true,
+                isContainer: itemType === 'object' || itemType === 'array',
+                examplePath: childExamplePath,
+                value: childExampleValue
+            });
+            rows.push(...this.collectRequestBodyFields(itemSchema, example, itemsPath, nextDisplay, level + 1, childExamplePath));
+        }
+        return rows;
+    }
+
+    renderRequestFieldValueInput(endpointId, field, encodedExamplePath) {
+        const onChange = `window.apiDocsManager.updateRequestBodyExampleValue(${endpointId}, '${encodedExamplePath}', '${field.type}', this.value)`;
+        if (field.type === 'boolean') {
+            const current = field.value === true ? 'true' : field.value === false ? 'false' : '';
+            return `
+                <select class="form-select form-select-sm" onchange="${onChange}">
+                    <option value="">선택</option>
+                    <option value="true" ${current === 'true' ? 'selected' : ''}>true</option>
+                    <option value="false" ${current === 'false' ? 'selected' : ''}>false</option>
+                </select>
+            `;
+        }
+        if (field.type === 'integer' || field.type === 'number') {
+            const value = field.value === null || field.value === undefined ? '' : String(field.value);
+            const step = field.type === 'integer' ? '1' : 'any';
+            return `<input type="number" class="form-control form-control-sm" value="${this.escapeHtml(value)}" step="${step}" onchange="${onChange}">`;
+        }
+        if (field.type === 'object' || field.type === 'array') {
+            return '<span class="text-muted">JSON 모드에서 편집</span>';
+        }
+        if (field.type === 'null') {
+            return '<span class="text-muted">null</span>';
+        }
+        const value = field.value === null || field.value === undefined ? '' : String(field.value);
+        return `<input type="text" class="form-control form-control-sm" value="${this.escapeHtml(value)}" onchange="${onChange}">`;
+    }
+
     createDefaultRequestBody() {
         const schema = { type: 'object', properties: {}, required: [], __collapsed: false };
         this.normalizeSchemaNode(schema);
@@ -328,6 +837,7 @@ class ApiDocsManager {
             contentType: 'application/json',
             schema,
             example: undefined,
+            __rawExample: '',
             __collapsed: false
         };
     }
@@ -390,12 +900,16 @@ class ApiDocsManager {
             result.schema = schema;
             if (contentData?.example !== undefined) {
                 result.example = this.clone(contentData.example);
+                result.__rawExample = this.stringifyExample(result.example);
             } else if (contentData?.examples) {
                 const firstExample = Object.values(contentData.examples)[0];
                 if (firstExample && typeof firstExample === 'object' && firstExample.value !== undefined) {
                     result.example = this.clone(firstExample.value);
+                    result.__rawExample = this.stringifyExample(result.example);
                 }
             }
+        } else {
+            result.__rawExample = '';
         }
 
         return result;
@@ -839,15 +1353,202 @@ class ApiDocsManager {
         const text = rawValue.trim();
         if (!text) {
             delete requestBody.example;
+            requestBody.__rawExample = '';
+            requestBody.schema = { type: 'object', properties: {}, required: [] };
+            this.normalizeSchemaNode(requestBody.schema);
+            this.renderEndpoints();
             this.renderJsonPreview();
             return;
         }
         try {
-            requestBody.example = JSON.parse(text);
+            const parsed = JSON.parse(text);
+            requestBody.example = parsed;
+            requestBody.__rawExample = text;
+            requestBody.schema = this.generateSchemaFromExample(parsed);
+            this.normalizeSchemaNode(requestBody.schema);
+            this.renderEndpoints();
             this.renderJsonPreview();
         } catch (error) {
             this.notifyError('JSON 형식이 올바르지 않습니다.');
         }
+    }
+
+    addRequestBodyProperty(endpointId, encodedSchemaPath, encodedExamplePath) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        const schemaContext = this.getSchemaContext(this.makeRequestBodySchemaContext(endpoint.id));
+        if (!schemaContext) return;
+        const schemaPath = this.decodePath(encodedSchemaPath);
+        const examplePath = this.decodeExamplePath(encodedExamplePath);
+        const target = schemaPath === 'root'
+            ? { schema: requestBody.schema }
+            : this.getSchemaAtPath(schemaContext.schemaRoot, schemaPath);
+        if (!target || !target.schema || this.getSchemaType(target.schema) !== 'object') {
+            this.notifyError('객체 타입에서만 필드를 추가할 수 있습니다.');
+            return;
+        }
+        if (!target.schema.properties) target.schema.properties = {};
+        let base = 'field';
+        let suffix = 1;
+        while (Object.prototype.hasOwnProperty.call(target.schema.properties, `${base}${suffix}`)) {
+            suffix += 1;
+        }
+        const newKey = `${base}${suffix}`;
+        target.schema.properties[newKey] = { type: 'string' };
+        if (!Array.isArray(target.schema.required)) {
+            target.schema.required = [];
+        }
+        const exampleRoot = this.ensureRequestBodyExampleRoot(requestBody);
+        this.setNestedValue(exampleRoot, examplePath.concat(newKey), '');
+        requestBody.__rawExample = this.stringifyExample(requestBody.example);
+        this.renderEndpoints();
+        this.renderJsonPreview();
+    }
+
+    removeRequestBodyProperty(endpointId, encodedParentPath, encodedProperty, encodedExampleParentPath) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        const schemaContext = this.getSchemaContext(this.makeRequestBodySchemaContext(endpoint.id));
+        if (!schemaContext) return;
+        const parentPath = this.decodePath(encodedParentPath);
+        const propertyName = decodeURIComponent(encodedProperty);
+        const exampleParentPath = this.decodeExamplePath(encodedExampleParentPath);
+
+        const parentSchemaTarget = parentPath === 'root'
+            ? { schema: requestBody.schema }
+            : this.getSchemaAtPath(schemaContext.schemaRoot, parentPath);
+        if (!parentSchemaTarget || !parentSchemaTarget.schema || this.getSchemaType(parentSchemaTarget.schema) !== 'object') {
+            return;
+        }
+        if (parentSchemaTarget.schema.properties) {
+            delete parentSchemaTarget.schema.properties[propertyName];
+        }
+        if (Array.isArray(parentSchemaTarget.schema.required)) {
+            const idx = parentSchemaTarget.schema.required.indexOf(propertyName);
+            if (idx !== -1) {
+                parentSchemaTarget.schema.required.splice(idx, 1);
+            }
+        }
+
+        const exampleRoot = this.ensureRequestBodyExampleRoot(requestBody);
+        this.deleteNestedValue(exampleRoot, exampleParentPath.concat(propertyName));
+        requestBody.__rawExample = this.stringifyExample(requestBody.example);
+        this.renderEndpoints();
+        this.renderJsonPreview();
+    }
+
+    renameRequestBodyProperty(endpointId, encodedParentPath, encodedOldKey, encodedExampleParentPath, rawNewName) {
+        const newName = rawNewName.trim();
+        const oldKey = decodeURIComponent(encodedOldKey);
+        if (!newName || newName === oldKey) {
+            return;
+        }
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        const schemaContext = this.getSchemaContext(this.makeRequestBodySchemaContext(endpoint.id));
+        if (!schemaContext) return;
+        const parentPath = this.decodePath(encodedParentPath);
+        const exampleParentPath = this.decodeExamplePath(encodedExampleParentPath);
+
+        const parentSchemaTarget = parentPath === 'root'
+            ? { schema: requestBody.schema }
+            : this.getSchemaAtPath(schemaContext.schemaRoot, parentPath);
+        if (!parentSchemaTarget || !parentSchemaTarget.schema || this.getSchemaType(parentSchemaTarget.schema) !== 'object') {
+            return;
+        }
+        if (!parentSchemaTarget.schema.properties) {
+            parentSchemaTarget.schema.properties = {};
+        }
+        if (Object.prototype.hasOwnProperty.call(parentSchemaTarget.schema.properties, newName)) {
+            this.notifyError('이미 존재하는 필드 이름입니다.');
+            this.renderEndpoints();
+            return;
+        }
+        const fieldSchema = parentSchemaTarget.schema.properties[oldKey];
+        parentSchemaTarget.schema.properties[newName] = fieldSchema;
+        delete parentSchemaTarget.schema.properties[oldKey];
+        if (Array.isArray(parentSchemaTarget.schema.required)) {
+            const idx = parentSchemaTarget.schema.required.indexOf(oldKey);
+            if (idx !== -1) {
+                parentSchemaTarget.schema.required[idx] = newName;
+            }
+        }
+
+        const exampleRoot = this.ensureRequestBodyExampleRoot(requestBody);
+        const oldValue = this.getExampleValueAtPath(exampleRoot, exampleParentPath.concat(oldKey));
+        this.deleteNestedValue(exampleRoot, exampleParentPath.concat(oldKey));
+        const replacement = oldValue !== undefined ? oldValue : this.buildExampleValueForType(this.getSchemaType(fieldSchema));
+        this.setNestedValue(exampleRoot, exampleParentPath.concat(newName), replacement);
+
+        requestBody.__rawExample = this.stringifyExample(requestBody.example);
+        this.renderEndpoints();
+        this.renderJsonPreview();
+    }
+
+    updateRequestBodyExampleValue(endpointId, encodedExamplePath, schemaType, rawValue) {
+        const endpoint = this.findEndpoint(endpointId);
+        if (!endpoint) return;
+        const requestBody = this.ensureRequestBody(endpoint);
+        const examplePath = this.decodeExamplePath(encodedExamplePath);
+        const exampleRoot = this.ensureRequestBodyExampleRoot(requestBody);
+        let value;
+        const trimmed = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+        try {
+            switch (schemaType) {
+                case 'integer': {
+                    if (trimmed === '') {
+                        value = null;
+                        break;
+                    }
+                    const parsed = Number.parseInt(trimmed, 10);
+                    if (Number.isNaN(parsed)) {
+                        throw new Error('정수를 입력해 주세요.');
+                    }
+                    value = parsed;
+                    break;
+                }
+                case 'number': {
+                    if (trimmed === '') {
+                        value = null;
+                        break;
+                    }
+                    const parsed = Number(trimmed);
+                    if (Number.isNaN(parsed)) {
+                        throw new Error('숫자를 입력해 주세요.');
+                    }
+                    value = parsed;
+                    break;
+                }
+                case 'boolean': {
+                    if (trimmed === 'true') {
+                        value = true;
+                    } else if (trimmed === 'false') {
+                        value = false;
+                    } else if (trimmed === '') {
+                        value = null;
+                    } else {
+                        throw new Error('true 또는 false를 선택해 주세요.');
+                    }
+                    break;
+                }
+                case 'null':
+                    value = null;
+                    break;
+                default:
+                    value = rawValue;
+            }
+        } catch (error) {
+            this.notifyError(error.message || '값을 적용할 수 없습니다.');
+            return;
+        }
+
+        this.setNestedValue(exampleRoot, examplePath, value);
+        requestBody.__rawExample = this.stringifyExample(requestBody.example);
+        this.renderEndpoints();
+        this.renderJsonPreview();
     }
 
     /* -------------------------------------------------------------
@@ -872,6 +1573,31 @@ class ApiDocsManager {
         const target = this.getSchemaAtPath(schemaCtx.schemaRoot, path);
         if (!target) return;
         this.prepareSchemaForType(target.schema, newType);
+        if (schemaCtx.kind === 'request') {
+            this.updateRequestExampleType(schemaCtx.requestBody, path, newType);
+        }
+        this.renderEndpoints();
+    }
+
+    toggleSchemaRequired(contextKey, encodedParentPath, encodedProperty, checked) {
+        const parentPath = this.decodePath(encodedParentPath);
+        const propertyName = decodeURIComponent(encodedProperty);
+        const schemaCtx = this.getSchemaContext(contextKey);
+        if (!schemaCtx) return;
+        const parentTarget = this.getSchemaAtPath(schemaCtx.schemaRoot, parentPath);
+        if (!parentTarget || !parentTarget.schema || typeof parentTarget.schema !== 'object') return;
+        if (!Array.isArray(parentTarget.schema.required)) {
+            parentTarget.schema.required = [];
+        }
+        const required = parentTarget.schema.required;
+        const index = required.indexOf(propertyName);
+        if (checked) {
+            if (index === -1) {
+                required.push(propertyName);
+            }
+        } else if (index !== -1) {
+            required.splice(index, 1);
+        }
         this.renderEndpoints();
     }
 
@@ -1269,6 +1995,9 @@ class ApiDocsManager {
     renderEndpoints() {
         const container = document.getElementById('endpointsList');
         if (!container) return;
+        if (this.editorMode === 'json') {
+            return;
+        }
 
         if (this.endpoints.length === 0) {
             container.innerHTML = `
@@ -1459,43 +2188,137 @@ class ApiDocsManager {
     renderRequestBodySection(endpoint) {
         const requestBody = this.ensureRequestBody(endpoint);
         const schemaContext = this.makeRequestBodySchemaContext(endpoint.id);
-        const exampleText = this.escapeHtml(this.formatJsonExample(requestBody.example));
-        const content = requestBody.enabled ? `
+        const encodedContext = this.escapeAttribute(schemaContext);
+        const exampleObject = this.ensureRequestBodyExampleRoot(requestBody);
+        const rawText = requestBody.__rawExample && requestBody.__rawExample.trim().length
+            ? requestBody.__rawExample
+            : this.stringifyExample(exampleObject);
+        const exampleText = this.escapeHtml(rawText || '');
+        const fields = this.collectRequestBodyFields(requestBody.schema, exampleObject);
+        const typeOptions = ['string', 'integer', 'number', 'boolean', 'object', 'array', 'null'];
+        const rootExamplePathEncoded = this.encodeExamplePath([]);
+        const fieldsHeader = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label mb-0">필드 옵션</label>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-secondary" onclick="window.apiDocsManager.addRequestBodyProperty(${endpoint.id}, 'root', '${rootExamplePathEncoded}')">
+                        <i class="fas fa-plus"></i> 필드 추가
+                    </button>
+                </div>
+            </div>
+        `;
+        const fieldsTable = fields.length
+            ? `
+                ${fieldsHeader}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">필드</th>
+                                <th style="width: 20%;">타입</th>
+                                <th style="width: 15%;">필수 여부</th>
+                                <th>예시 값</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${fields.map((field) => {
+                                const encodedSchemaPath = this.escapeAttribute(field.path);
+                                const encodedParentPath = this.escapeAttribute(field.parentPath);
+                                const encodedProperty = this.escapeAttribute(field.key);
+                                const encodedExamplePath = this.encodeExamplePath(field.examplePath);
+                                const encodedExampleParentPath = this.encodeExamplePath(field.examplePath.slice(0, -1));
+                                const indentStyle = `style="padding-left:${field.level * 18}px"`;
+                                const options = typeOptions.map((type) => `<option value='${type}' ${field.type === type ? 'selected' : ''}>${type}</option>`).join('');
+                                const requiredControl = field.canToggleRequired
+                                    ? `<input type="checkbox" ${field.required ? 'checked' : ''}
+                                        onchange="window.apiDocsManager.toggleSchemaRequired('${encodedContext}', '${encodedParentPath}', '${encodedProperty}', this.checked)">`
+                                    : '<span class="text-muted">-</span>';
+                                const fieldNameControl = field.isArray
+                                    ? `<span class="font-monospace text-muted">${this.escapeHtml(field.displayPath)}</span>`
+                                    : `<input type="text" class="form-control form-control-sm font-monospace" value="${this.escapeHtml(field.key)}" title="${this.escapeHtml(field.displayPath)}"
+                                           onchange="window.apiDocsManager.renameRequestBodyProperty(${endpoint.id}, '${encodedParentPath}', '${encodedProperty}', '${encodedExampleParentPath}', this.value)">`;
+                                const actionButtons = [];
+                                if (field.isContainer && field.type === 'object') {
+                                    actionButtons.push(`<button type="button" class="btn btn-outline-secondary btn-sm" title="자식 필드 추가"
+                                        onclick="window.apiDocsManager.addRequestBodyProperty(${endpoint.id}, '${encodedSchemaPath}', '${encodedExamplePath}')"><i class="fas fa-plus"></i></button>`);
+                                }
+                                if (!field.isArray) {
+                                    actionButtons.push(`<button type="button" class="btn btn-outline-danger btn-sm" title="필드 삭제"
+                                        onclick="window.apiDocsManager.removeRequestBodyProperty(${endpoint.id}, '${encodedParentPath}', '${encodedProperty}', '${encodedExampleParentPath}')"><i class="fas fa-times"></i></button>`);
+                                }
+                                const actionsHtml = actionButtons.length
+                                    ? `<div class="btn-group btn-group-sm ms-2">${actionButtons.join('')}</div>`
+                                    : '';
+                                return `
+                                    <tr>
+                                        <td ${indentStyle}>
+                                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                                <div class="flex-grow-1">${fieldNameControl}</div>
+                                                ${actionsHtml}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm" onchange="window.apiDocsManager.handleSchemaTypeChange('${encodedContext}', '${encodedSchemaPath}', this.value)">
+                                                ${options}
+                                            </select>
+                                        </td>
+                                        <td>${requiredControl}</td>
+                                        <td>${this.renderRequestFieldValueInput(endpoint.id, field, encodedExamplePath)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `
+            : `
+                ${fieldsHeader}
+                <div class="empty-state small">JSON 본문을 입력하거나 필드 추가 버튼으로 필드를 생성해 주세요.</div>
+            `;
+
+        const bodyContent = requestBody.enabled ? `
             <div class="card request-body-card">
                 <div class="card-body">
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-6 col-lg-4">
                             <label class="form-label">설명</label>
                             <input type="text" class="form-control" value="${this.escapeHtml(requestBody.description)}" placeholder="요청 본문 설명"
                                    onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'description', this.value)">
                         </div>
-                        <div>
-                            <label class="form-label">콘텐츠 타입</label>
+                        <div class="col-md-4 col-lg-3">
+                            <label class="form-label">Content-Type</label>
                             <input type="text" class="form-control" value="${this.escapeHtml(requestBody.contentType)}" placeholder="application/json"
                                    onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'contentType', this.value)">
                         </div>
-                        <div class="d-flex align-items-center justify-content-between" style="gap:8px;">
-                            <div>
-                                <label class="form-label mb-0">필수 여부</label>
-                                <div class="text-muted small">요청 시 반드시 포함</div>
+                        <div class="col-md-2 col-lg-2 d-flex flex-column justify-content-end">
+                            <label class="form-label">필수 여부</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" ${requestBody.required ? 'checked' : ''}
+                                       onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'required', this.checked)">
+                                <label class="form-check-label text-muted">요청 시 필수</label>
                             </div>
-                            <input type="checkbox" ${requestBody.required ? 'checked' : ''}
-                                   onchange="window.apiDocsManager.updateRequestBodyField(${endpoint.id}, 'required', this.checked)">
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="form-label">스키마</label>
-                        ${this.renderSchemaEditor(schemaContext, requestBody.schema, 'root')}
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label">예시 (JSON)</label>
-                        <textarea class="form-control font-monospace" rows="6" placeholder='{"name":"홍길동"}'
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Body type">
+                                <button type="button" class="btn btn-dark" disabled>JSON</button>
+                                <button type="button" class="btn btn-outline-secondary" disabled>Form</button>
+                                <button type="button" class="btn btn-outline-secondary" disabled>Binary</button>
+                            </div>
+                            <small class="text-muted">Postman의 RAW(JSON) 입력 방식과 동일하게 동작합니다.</small>
+                        </div>
+                        <textarea class="form-control font-monospace" rows="8" spellcheck="false" placeholder='{"name":"홍길동"}'
                                   onchange="window.apiDocsManager.updateRequestBodyExample(${endpoint.id}, this.value)">${exampleText}</textarea>
-                        <small class="text-muted">JSON 형식으로 입력해 주세요. 비워두면 예시가 제외됩니다.</small>
+                        <small class="text-muted">유효한 JSON을 입력하면 필드 옵션이 자동 갱신됩니다.</small>
+                    </div>
+                    <div class="mt-4">
+                        ${fieldsTable}
                     </div>
                 </div>
             </div>
-        ` : `<div class="empty-state small">POST/PUT 요청 본문이 필요하다면 스위치를 켜주세요.</div>`;
+        ` : '<div class="empty-state small">요청 본문을 사용하려면 스위치를 활성화해 주세요.</div>';
+
         return `
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1506,7 +2329,7 @@ class ApiDocsManager {
                         <label class="form-check-label">사용</label>
                     </div>
                 </div>
-                ${content}
+                ${bodyContent}
             </div>
         `;
     }
@@ -2030,11 +2853,40 @@ class ApiDocsManager {
         return encodeURIComponent(String(value ?? ''));
     }
 
+    encodeExamplePath(pathArray = []) {
+        try {
+            return encodeURIComponent(JSON.stringify(pathArray));
+        } catch (error) {
+            console.warn('예시 경로 인코딩 실패', error);
+            return encodeURIComponent('[]');
+        }
+    }
+
+    decodeExamplePath(encoded) {
+        if (!encoded) return [];
+        try {
+            return JSON.parse(decodeURIComponent(encoded));
+        } catch (error) {
+            console.warn('예시 경로 디코딩 실패', error);
+            return [];
+        }
+    }
+
     formatJsonExample(value) {
         if (value === undefined) return '';
         try {
             return JSON.stringify(value, null, 2);
         } catch (error) {
+            return '';
+        }
+    }
+
+    stringifyExample(value) {
+        if (value === undefined) return '';
+        try {
+            return JSON.stringify(value, null, 2);
+        } catch (error) {
+            console.warn('예시 문자열화 실패', error);
             return '';
         }
     }
@@ -2119,7 +2971,12 @@ class ApiDocsManager {
 
     buildPayload() {
         const spec = this.buildSpec();
-        const payload = { ...spec };
+        const endpoints = Array.isArray(spec.endpoints)
+            ? spec.endpoints
+            : spec.endpoints && typeof spec.endpoints === 'object'
+                ? Object.values(spec.endpoints)
+                : [];
+        const payload = { ...spec, endpoints };
         if (this.projectIdx !== null) payload.projectIdx = this.projectIdx;
         if (this.docsIdx !== null) payload.docsIdx = this.docsIdx;
         return payload;
@@ -2153,9 +3010,28 @@ class ApiDocsManager {
     renderJsonPreview() {
         const preview = document.getElementById('apiJsonPreview');
         if (!preview) return;
+        if (this.editorMode === 'json') {
+            const raw = this.rawSpecTextarea?.value?.trim();
+            if (!raw) {
+                preview.textContent = JSON.stringify({ title: '', version: '', endpoints: [] }, null, 2);
+                this.clearJsonEditorError();
+                return;
+            }
+            try {
+                const spec = JSON.parse(raw);
+                preview.textContent = JSON.stringify(spec, null, 2);
+                this.clearJsonEditorError();
+            } catch (error) {
+                preview.textContent = '// JSON 형식이 올바르지 않습니다.';
+                this.showJsonEditorError('JSON 형식이 올바르지 않습니다.');
+            }
+            return;
+        }
+
         try {
             const spec = this.buildSpec();
             preview.textContent = JSON.stringify(spec, null, 2);
+            this.clearJsonEditorError();
         } catch (error) {
             preview.textContent = '// JSON 미리보기를 생성할 수 없습니다.';
             console.error('JSON 미리보기 생성 실패', error);
@@ -2180,6 +3056,9 @@ class ApiDocsManager {
 
     async downloadFile() {
         // 미리보기 구현
+        if (!this.ensureEditorStateForSubmit()) {
+            return;
+        }
         if (!this.validForm()) {
             return;
         }
@@ -2199,6 +3078,9 @@ class ApiDocsManager {
     }
 
     saveApiDocs() {
+        if (!this.ensureEditorStateForSubmit()) {
+            return;
+        }
         const titleInput = document.getElementById('title');
         const versionInput = document.getElementById('version');
         const title = titleInput?.value?.trim();
@@ -2308,8 +3190,290 @@ class ApiDocsManager {
 
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    apiDocsManager = new ApiDocsManager();
-});
+class RequestBuilderManager {
+    constructor() {
+        this.root = document.querySelector('.request-builder-card');
+        if (!this.root) {
+            this.initialized = false;
+            return;
+        }
+        this.initialized = true;
+        this.tabButtons = Array.from(this.root.querySelectorAll('.request-tab-btn'));
+        this.panels = Array.from(this.root.querySelectorAll('.request-tab-panel'));
+        this.bodyTypeRadios = Array.from(this.root.querySelectorAll('input[name="requestBodyType"]'));
+        this.bodyOptions = Array.from(this.root.querySelectorAll('.request-body-option'));
+        this.bodyRawTypeRadios = Array.from(this.root.querySelectorAll('input[name="requestBodyRawType"]'));
+        this.rawTextarea = this.root.querySelector('#requestBodyRawInput');
+        this.beautifyBtn = this.root.querySelector('#jsonBeautifyBtn');
+        this.beautifyError = this.root.querySelector('#jsonBeautifyError');
+        this.dynamicTables = {
+            requestTargets: {
+                type: 'requestTarget',
+                tbody: this.root.querySelector('[data-role="requestTargetTableBody"]')
+            },
+            params: {
+                type: 'keyValue',
+                tbody: this.root.querySelector('[data-role="paramsTableBody"]')
+            },
+            headers: {
+                type: 'keyValue',
+                tbody: this.root.querySelector('[data-role="headersTableBody"]')
+            },
+            bodyFormData: {
+                type: 'keyValue',
+                tbody: this.root.querySelector('[data-role="bodyFormDataTableBody"]')
+            },
+            bodyUrlEncoded: {
+                type: 'keyValue',
+                tbody: this.root.querySelector('[data-role="bodyUrlEncodedTableBody"]')
+            }
+        };
+        this.keyPlaceholders = {
+            params: 'Key',
+            headers: 'Header',
+            bodyFormData: 'Key',
+            bodyUrlEncoded: 'Key'
+        };
+        this.valuePlaceholders = {
+            params: 'Value',
+            headers: 'Value',
+            bodyFormData: 'Value',
+            bodyUrlEncoded: 'Value'
+        };
+        this.initialize();
+    }
 
-window.ApiDocsManager = ApiDocsManager;
+    initialize() {
+        this.setupTabs();
+        this.setupBodyTypeSwitch();
+        this.setupRawTypeSwitch();
+        this.setupBeautifyControl();
+        this.initializeTables();
+    }
+
+    setupTabs() {
+        if (this.tabButtons.length === 0) return;
+        this.tabButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const { tab } = button.dataset;
+                if (tab) {
+                    this.activateTab(tab);
+                }
+            });
+        });
+        const initial = this.tabButtons.find((button) => button.classList.contains('active'))?.dataset.tab || 'params';
+        this.activateTab(initial);
+    }
+
+    activateTab(name) {
+        this.tabButtons.forEach((button) => {
+            button.classList.toggle('active', button.dataset.tab === name);
+        });
+        this.panels.forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === name);
+        });
+    }
+
+    setupBodyTypeSwitch() {
+        if (this.bodyTypeRadios.length === 0) return;
+        this.bodyTypeRadios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    this.showBodyOption(radio.value);
+                }
+            });
+        });
+        const initial = this.bodyTypeRadios.find((radio) => radio.checked)?.value || 'none';
+        this.showBodyOption(initial);
+    }
+
+    showBodyOption(option) {
+        this.bodyOptions.forEach((section) => {
+            const match = section.dataset.bodyOption === option;
+            section.style.display = match ? '' : 'none';
+        });
+        if (option === 'raw') {
+            this.toggleRawControls();
+        } else {
+            this.showBeautifyError('');
+        }
+    }
+
+    setupRawTypeSwitch() {
+        if (this.bodyRawTypeRadios.length === 0) return;
+        this.bodyRawTypeRadios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    this.toggleRawControls();
+                }
+            });
+        });
+        this.toggleRawControls();
+    }
+
+    toggleRawControls() {
+        if (!this.bodyRawTypeRadios.length) return;
+        const active = this.bodyRawTypeRadios.find((radio) => radio.checked)?.value || 'json';
+        if (this.beautifyBtn) {
+            this.beautifyBtn.style.display = active === 'json' ? '' : 'none';
+        }
+        if (active !== 'json') {
+            this.showBeautifyError('');
+        }
+    }
+
+    setupBeautifyControl() {
+        if (!this.beautifyBtn || !this.rawTextarea) return;
+        this.beautifyBtn.addEventListener('click', () => {
+            this.handleBeautify();
+        });
+    }
+
+    handleBeautify() {
+        if (!this.rawTextarea) return;
+        const rawValue = this.rawTextarea.value.trim();
+        if (!rawValue) {
+            this.showBeautifyError('JSON 본문을 입력하세요.');
+            return;
+        }
+        try {
+            const parsed = JSON.parse(rawValue);
+            this.rawTextarea.value = JSON.stringify(parsed, null, 2);
+            this.showBeautifyError('');
+        } catch (error) {
+            this.showBeautifyError('유효한 JSON 형식이 아닙니다.');
+        }
+    }
+
+    showBeautifyError(message) {
+        if (!this.beautifyError) return;
+        if (!message) {
+            this.beautifyError.style.display = 'none';
+            this.beautifyError.textContent = '';
+            return;
+        }
+        this.beautifyError.style.display = 'block';
+        this.beautifyError.textContent = message;
+    }
+
+    initializeTables() {
+        Object.values(this.dynamicTables).forEach((config) => {
+            if (config?.tbody) {
+                this.configureDynamicTable(config);
+            }
+        });
+    }
+
+    configureDynamicTable(config) {
+        const { type, tbody } = config;
+        const createRow = () => {
+            const row = document.createElement('tr');
+            row.classList.add('request-table-row');
+            row.innerHTML = this.buildRowHtml(type);
+            tbody.appendChild(row);
+            return row;
+        };
+
+        const ensureInitialRow = () => {
+            if (tbody.querySelectorAll('tr').length === 0) {
+                createRow();
+            }
+        };
+
+        if (type === 'keyValue') {
+            tbody.addEventListener('input', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement)) return;
+                if (target.dataset.role !== 'key') return;
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                if (rows.length === 0) return;
+                const lastRow = rows[rows.length - 1];
+                if (target.closest('tr') === lastRow && target.value.trim() !== '') {
+                    createRow();
+                }
+            });
+        }
+
+        if (type === 'requestTarget') {
+            tbody.addEventListener('input', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement)) return;
+                if (target.dataset.role !== 'url') return;
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                if (rows.length === 0) return;
+                const lastRow = rows[rows.length - 1];
+                if (target.closest('tr') === lastRow && target.value.trim() !== '') {
+                    createRow();
+                }
+            });
+        }
+
+        tbody.addEventListener('click', (event) => {
+            const button = event.target instanceof HTMLElement ? event.target.closest('.request-row-remove') : null;
+            if (!button) return;
+            event.preventDefault();
+            const row = button.closest('tr');
+            if (!row) return;
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            if (rows.length <= 1) {
+                row.querySelectorAll('input').forEach((input) => {
+                    input.value = '';
+                });
+                const methodSelect = row.querySelector('select[data-role="method"]');
+                if (methodSelect) {
+                    methodSelect.selectedIndex = 0;
+                }
+                return;
+            }
+            row.remove();
+        });
+
+        ensureInitialRow();
+    }
+
+    buildRowHtml(type) {
+        const keyPlaceholder = this.keyPlaceholders[type] || 'Key';
+        const valuePlaceholder = this.valuePlaceholders[type] || 'Value';
+        if (type === 'requestTarget') {
+            return [
+                '<td class="request-table-method">',
+                '    <select class="form-select request-method-select" data-role="method" aria-label="HTTP Method">',
+                '        <option value="GET">GET</option>',
+                '        <option value="POST">POST</option>',
+                '        <option value="PUT">PUT</option>',
+                '        <option value="PATCH">PATCH</option>',
+                '        <option value="DELETE">DELETE</option>',
+                '        <option value="HEAD">HEAD</option>',
+                '        <option value="OPTIONS">OPTIONS</option>',
+                '    </select>',
+                '</td>',
+                '<td class="request-table-url">',
+                '    <input type="text" class="form-control request-url-input" placeholder="https://api.example.com/v1/resource" data-role="url" aria-label="Request URL">',
+                '</td>',
+                '<td class="request-table-actions"><button type="button" class="btn btn-link text-danger request-row-remove" aria-label="행 삭제"><i class="fas fa-times"></i></button></td>'
+            ].join('');
+        }
+        return [
+            `<td class="request-table-key"><input type="text" class="form-control request-input" placeholder="${keyPlaceholder}" data-role="key"></td>`,
+            `<td class="request-table-value"><input type="text" class="form-control request-input" placeholder="${valuePlaceholder}" data-role="value"></td>`,
+            '<td class="request-table-actions"><button type="button" class="btn btn-link text-danger request-row-remove" aria-label="행 삭제"><i class="fas fa-times"></i></button></td>'
+        ].join('');
+    }
+}
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.apiDocsManager) {
+                apiDocsManager = new ApiDocsManager();
+                window.apiDocsManager = apiDocsManager;
+            }
+            if (!window.requestBuilderManager) {
+                requestBuilderManager = new RequestBuilderManager();
+                window.requestBuilderManager = requestBuilderManager;
+            }
+        });
+
+        window.ApiDocsManager = ApiDocsManager;
+        window.RequestBuilderManager = RequestBuilderManager;
+
+    })();
+}

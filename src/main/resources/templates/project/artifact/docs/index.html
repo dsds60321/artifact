@@ -74,6 +74,12 @@
         overflow: auto;
     }
 
+    .json-editor-textarea {
+        width: 100%;
+        min-height: 320px;
+        resize: vertical;
+    }
+
     .collapsible {
         cursor: pointer;
     }
@@ -141,11 +147,363 @@
     .font-monospace {
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     }
+
+    .editor-mode-btn.active {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+    }
+
+    .editor-mode-btn:not(.active) {
+        background: transparent;
+        color: var(--primary-color);
+    }
+
+    .request-body-card .btn-group .btn {
+        min-width: 72px;
+    }
+
+    .request-body-card .form-check-label {
+        font-size: 12px;
+    }
+
+    .request-body-card table td:first-child {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .request-builder-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        background: var(--white);
+    }
+
+    .request-method-select {
+        width: 132px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .request-url-input {
+        width: 100%;
+        font-size: 13px;
+    }
+
+    .request-tab-list {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 16px;
+    }
+
+    .request-tab-btn {
+        border: none;
+        background: transparent;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+        border-bottom: 2px solid transparent;
+        transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .request-tab-btn:hover {
+        color: var(--primary-color);
+    }
+
+    .request-tab-btn.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    .request-tab-panel {
+        display: none;
+    }
+
+    .request-tab-panel.active {
+        display: block;
+    }
+
+    .request-table-wrapper {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--white);
+    }
+
+    .request-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .request-table thead th {
+        background: var(--background-gray);
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #475569;
+        border-bottom: 1px solid var(--border-color);
+        padding: 10px 12px;
+    }
+
+    .request-table tbody td {
+        background: var(--white);
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .request-table tbody tr:nth-child(2n+1) td {
+        background: var(--background-gray-light, #f8fafc);
+    }
+
+    .request-table input {
+        font-size: 13px;
+    }
+
+    .request-table-method {
+        width: 140px;
+    }
+
+    .request-table-method .form-select {
+        font-size: 13px;
+        text-transform: uppercase;
+    }
+
+    .request-table-url {
+        min-width: 320px;
+    }
+
+    .request-table-actions {
+        width: 40px;
+        text-align: center;
+    }
+
+    .request-row-remove {
+        color: #ef4444;
+        font-size: 14px;
+    }
+
+    .request-row-remove i {
+        pointer-events: none;
+    }
+
+    .request-helper-text {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 8px;
+    }
+
+    .request-body-type-group {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .request-body-type-group .form-check-label {
+        font-weight: 500;
+        text-transform: none;
+    }
+
+    .request-body-option {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--white);
+    }
+
+    .request-body-option + .request-body-option {
+        margin-top: 16px;
+    }
+
+    .request-body-option[data-body-option="none"] {
+        background: var(--background-gray);
+        border-style: dashed;
+        color: #475569;
+    }
+
+    .request-raw-toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .json-beautify-btn {
+        white-space: nowrap;
+    }
+
+    .request-raw-textarea {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        min-height: 220px;
+        resize: vertical;
+    }
+
+    .request-error-message {
+        font-size: 12px;
+        color: #ef4444;
+        margin-top: 8px;
+    }
 </style>
 <div class="container max-w-100">
     <form id="apiDocsForm" th:attr="data-project-idx=${projectIdx},data-docs-idx=${idx}">
         <input type="hidden" name="docsIdx" th:value="${idx}">
         <input type="hidden" name="projectIdx" th:value="${projectIdx}">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h2 class="mb-2 mb-sm-0"><i class="fas fa-sliders-h"></i> 입력 모드</h2>
+                <div class="btn-group" role="group" aria-label="Editor mode toggle">
+                    <button type="button" class="btn btn-sm btn-outline-primary editor-mode-btn active" id="modeFormBtn">폼 입력</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary editor-mode-btn" id="modeJsonBtn">JSON 입력</button>
+                </div>
+            </div>
+            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <p class="mb-0 text-muted" style="font-size: 12px;">폼 모드에서는 항목별로 입력할 수 있고, JSON 모드에서는 명세 전체를 한 번에 붙여넣을 수 있습니다.</p>
+                <div class="d-flex align-items-center gap-2" id="jsonContentTypeWrapper" style="display: none;">
+                    <label class="form-label mb-0" for="jsonContentType">Content-Type</label>
+                    <select class="form-select form-select-sm" id="jsonContentType">
+                        <option value="application/json" selected>application/json</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="formEditorSection">
+        <!-- 요청 빌더 -->
+        <div class="card mb-4 request-builder-card">
+            <div class="card-header">
+                <h2 class="mb-0"><i class="fas fa-paper-plane"></i> 요청 빌더</h2>
+            </div>
+            <div class="card-body">
+                <div class="request-table-wrapper">
+                    <table class="table request-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">Method</th>
+                            <th scope="col">URL</th>
+                            <th scope="col" class="request-table-actions"></th>
+                        </tr>
+                        </thead>
+                        <tbody data-role="requestTargetTableBody"></tbody>
+                    </table>
+                </div>
+                <p class="request-helper-text">HTTP Method와 URL을 입력하면 새 행이 자동으로 추가됩니다.</p>
+                <div class="request-tab-list" role="tablist">
+                    <button type="button" class="request-tab-btn active" data-tab="params">Params</button>
+                    <button type="button" class="request-tab-btn" data-tab="headers">Headers</button>
+                    <button type="button" class="request-tab-btn" data-tab="body">Body</button>
+                </div>
+                <div class="request-tab-panels">
+                    <div class="request-tab-panel active" data-panel="params">
+                        <div class="request-table-wrapper">
+                            <table class="table request-table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">Key</th>
+                                    <th scope="col">Value</th>
+                                    <th scope="col" class="request-table-actions"></th>
+                                </tr>
+                                </thead>
+                                <tbody data-role="paramsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <p class="request-helper-text">URL 쿼리 파라미터를 입력하세요.</p>
+                    </div>
+                    <div class="request-tab-panel" data-panel="headers">
+                        <div class="request-table-wrapper">
+                            <table class="table request-table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">Key</th>
+                                    <th scope="col">Value</th>
+                                    <th scope="col" class="request-table-actions"></th>
+                                </tr>
+                                </thead>
+                                <tbody data-role="headersTableBody"></tbody>
+                            </table>
+                        </div>
+                        <p class="request-helper-text">요청 헤더를 설정하세요.</p>
+                    </div>
+                    <div class="request-tab-panel" data-panel="body">
+                        <div class="request-body-type-group">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="requestBodyType" id="bodyTypeNone" value="none" checked>
+                                <label class="form-check-label" for="bodyTypeNone">none</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="requestBodyType" id="bodyTypeFormData" value="form-data">
+                                <label class="form-check-label" for="bodyTypeFormData">form-data</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="requestBodyType" id="bodyTypeUrlEncoded" value="x-www-form-urlencoded">
+                                <label class="form-check-label" for="bodyTypeUrlEncoded">x-www-form-urlencoded</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="requestBodyType" id="bodyTypeRaw" value="raw">
+                                <label class="form-check-label" for="bodyTypeRaw">raw</label>
+                            </div>
+                        </div>
+                        <div class="request-body-option" data-body-option="none">
+                            <p class="request-helper-text mb-0">이 요청에는 Body가 포함되지 않습니다.</p>
+                        </div>
+                        <div class="request-body-option" data-body-option="form-data" style="display: none;">
+                            <div class="request-table-wrapper">
+                                <table class="table request-table">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">Key</th>
+                                        <th scope="col">Value</th>
+                                        <th scope="col" class="request-table-actions"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody data-role="bodyFormDataTableBody"></tbody>
+                                </table>
+                            </div>
+                            <p class="request-helper-text">multipart/form-data 형식을 구성하세요.</p>
+                        </div>
+                        <div class="request-body-option" data-body-option="x-www-form-urlencoded" style="display: none;">
+                            <div class="request-table-wrapper">
+                                <table class="table request-table">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">Key</th>
+                                        <th scope="col">Value</th>
+                                        <th scope="col" class="request-table-actions"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody data-role="bodyUrlEncodedTableBody"></tbody>
+                                </table>
+                            </div>
+                            <p class="request-helper-text">application/x-www-form-urlencoded 데이터를 입력하세요.</p>
+                        </div>
+                        <div class="request-body-option" data-body-option="raw" style="display: none;">
+                            <div class="request-raw-toolbar">
+                                <div class="request-raw-type-group" role="group" aria-label="Raw body type">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="requestBodyRawType" id="bodyRawJson" value="json" checked>
+                                        <label class="form-check-label" for="bodyRawJson">JSON</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="requestBodyRawType" id="bodyRawText" value="text">
+                                        <label class="form-check-label" for="bodyRawText">Text</label>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary json-beautify-btn" id="jsonBeautifyBtn">
+                                    <i class="fas fa-magic"></i> Beautify
+                                </button>
+                            </div>
+                            <textarea id="requestBodyRawInput" class="form-control request-raw-textarea" spellcheck="false" placeholder='{"name": "홍길동"}'></textarea>
+                            <div id="jsonBeautifyError" class="request-error-message" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- 기본 정보 -->
         <div class="card mb-4">
             <div class="card-header">
@@ -186,6 +544,22 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <div id="jsonEditorSection" class="card mb-4" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-code"></i> JSON 입력</h2>
+                <span class="text-muted" style="font-size: 12px;">Postman의 RAW(JSON) 입력 방식처럼 전체 명세를 붙여넣어 편집할 수 있습니다.</span>
+            </div>
+            <div class="card-body">
+                <textarea id="rawSpecInput" class="json-editor json-editor-textarea" spellcheck="false" placeholder='{
+  "title": "주문 API",
+  "version": "1.0.0",
+  "endpoints": []
+}'></textarea>
+                <div id="jsonEditorError" class="text-danger mt-2" style="display: none; font-size: 12px;"></div>
+            </div>
+        </div>
 
         <!-- JSON 미리보기 -->
         <div class="card mt-4">
@@ -221,6 +595,7 @@
     </form>
 </div>
 <div style="display: none;" id="apiDocsInitialData" th:text="${apiDocsSpec}"></div>
+<script th:src="@{/js/pages/project/artifact/docs/index.js}"></script>
 <script>
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeContent);
@@ -229,8 +604,9 @@
     }
 
     function initializeContent() {
-        if (window.ApiDocsManager) {
+        if (window.ApiDocsManager && window.RequestBuilderManager) {
             window.apiDocsManager = new ApiDocsManager();
+            window.requestBuilderManager = new RequestBuilderManager();
         } else {
             // 대체 로직
             setTimeout(initializeContent, 50); // 재시도

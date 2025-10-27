@@ -1,0 +1,606 @@
+<style>
+    .endpoint-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+        background: var(--white);
+    }
+
+    .endpoint-header {
+        padding: 12px 16px;
+        background: var(--background-gray);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .endpoint-summary {
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .endpoint-body {
+        padding: 16px;
+    }
+
+    .method-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 3px;
+        margin-right: 8px;
+    }
+
+    .method-get { background: #10b981; color: white; }
+    .method-post { background: #3b82f6; color: white; }
+    .method-put { background: #f59e0b; color: white; }
+    .method-delete { background: #ef4444; color: white; }
+    .method-patch { background: #8b5cf6; color: white; }
+    .method-options { background: #0ea5e9; color: white; }
+    .method-head { background: #64748b; color: white; }
+    .method-default { background: #6b7280; color: white; }
+
+    .param-item, .response-item {
+        background: var(--background-gray);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+    .param-header, .response-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .param-type {
+        font-size: 11px;
+        padding: 2px 6px;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 3px;
+    }
+
+    .json-editor {
+        background: #1e293b;
+        color: #e2e8f0;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        min-height: 120px;
+        white-space: pre;
+        overflow: auto;
+    }
+
+    .json-editor-textarea {
+        width: 100%;
+        min-height: 320px;
+        resize: vertical;
+    }
+
+    .collapsible {
+        cursor: pointer;
+    }
+
+    .collapsible:hover {
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .json-preview {
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        max-height: 420px;
+        overflow: auto;
+        padding: 16px;
+        white-space: pre;
+    }
+
+    .btn-group {
+        display: inline-flex;
+        gap: 6px;
+    }
+
+    .param-content,
+    .response-content {
+        margin-top: 12px;
+    }
+
+    .param-table-wrapper {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .param-table th,
+    .param-table td {
+        vertical-align: middle;
+        background: var(--white);
+    }
+
+    .param-table tbody tr:nth-child(2n+1) td {
+        background: var(--background-gray-light, #f8fafc);
+    }
+
+    .param-detail-row td {
+        background: var(--background-gray);
+    }
+
+    .param-detail {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--white);
+    }
+
+    .request-body-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        background: var(--white);
+    }
+
+    .font-monospace {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .editor-mode-btn.active {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+    }
+
+    .editor-mode-btn:not(.active) {
+        background: transparent;
+        color: var(--primary-color);
+    }
+
+    .request-body-card .btn-group .btn {
+        min-width: 72px;
+    }
+
+    .request-body-card .form-check-label {
+        font-size: 12px;
+    }
+
+    .request-body-card table td:first-child {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .endpoint-summary-url {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    .endpoint-empty-label {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    .endpoint-hint {
+        color: var(--text-muted);
+        font-size: 11px;
+        padding-left: 10px;
+    }
+
+    .mode-toggle {
+        display: inline-flex;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--background-gray);
+    }
+
+    .mode-toggle button {
+        border: 0;
+        background: transparent;
+        padding: 6px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .mode-toggle button + button {
+        border-left: 1px solid var(--border-color);
+    }
+
+    .mode-toggle button.active {
+        background: var(--primary-color);
+        color: var(--white);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    .form-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .form-switch input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+    }
+
+    .request-body-card table th,
+    .request-body-card table td,
+    .request-body-card table input,
+    .request-body-card table select {
+        font-size: 12px;
+    }
+
+    .request-body-card table .form-control-sm,
+    .request-body-card table .form-control {
+        padding: 6px 10px;
+    }
+
+    .endpoint-body.collapsed {
+        display: none;
+    }
+
+    .body-mode-content.d-none {
+        display: none !important;
+    }
+
+    .raw-textarea.is-invalid {
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+    }
+
+    .raw-error {
+        color: var(--danger-color);
+        font-size: 12px;
+        margin-top: 6px;
+    }
+</style>
+<div class="container max-w-100">
+    <form id="apiDocsForm" th:attr="data-project-idx=${projectIdx},data-docs-idx=${idx}">
+        <input type="hidden" name="docsIdx" th:value="${idx}">
+        <input type="hidden" name="projectIdx" th:value="${projectIdx}">
+        <div id="formEditorSection">
+        <!-- 기본 정보 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2><i class="fas fa-info-circle"></i> 기본 정보</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">제목</label>
+                        <input type="text" class="form-control" id="title" placeholder="예: 주문 API" required
+                               th:value="${docs != null ? docs.title : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">버전</label>
+                        <input type="text" class="form-control" id="version" placeholder="예: 1.0.0" required
+                               th:value="${docs != null ? docs.version : ''}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 엔드포인트 목록 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-code"></i> API 엔드포인트</h2>
+                    <button type="button" class="btn btn-primary btn-sm" id="addEndpointBtn">
+                        <i class="fas fa-plus"></i> 엔드포인트 추가
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="endpointsList">
+                    <div class="empty-state">
+                        <i class="fas fa-code"></i>
+                        <p>엔드포인트를 추가해 주세요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <template id="endpointTemplate">
+            <div class="endpoint-card" data-endpoint>
+                <div class="endpoint-header">
+                    <div class="endpoint-summary">
+                        <span class="method-badge method-get" data-method-badge>GET</span>
+                        <span class="endpoint-summary-url" data-url-preview>요청 URL을 입력하세요.</span>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-toggle-endpoint>
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-remove-endpoint>
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">HTTP Method</label>
+                            <select class="form-control" data-name="endpoints[__index__].method" data-method-select data-field="method">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="OPTIONS">OPTIONS</option>
+                                <option value="HEAD">HEAD</option>
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label">요청 URL</label>
+                            <input type="text" class="form-control" placeholder="예: /orders/{orderId}" data-name="endpoints[__index__].url" data-url-input data-field="url">
+                        </div>
+                    </div>
+                    <div class="request-body-card p-3 mb-3" data-param-section>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold">Query Params</span>
+                                <span class="endpoint-empty-label" data-params-empty-label>파라미터가 없습니다.</span>
+                            </div>
+                            <span class="endpoint-hint">Key, Value를 입력하면 자동으로 행이 추가됩니다.</span>
+                        </div>
+                        <div class="table-responsive" data-param-table-wrapper>
+                            <table class="table table-sm align-middle mb-2">
+                                <thead>
+                                <tr>
+                                    <th style="width: 25%;">Key</th>
+                                    <th style="width: 25%;">Value</th>
+                                    <th style="width: 20%;">예시 값</th>
+                                    <th style="width: 20%;">기본값</th>
+                                    <th style="width: 6%;" class="text-center">필수</th>
+                                    <th style="width: 4%;" class="text-end">&nbsp;</th>
+                                </tr>
+                                </thead>
+                                <tbody data-param-fields data-param-form-body>
+                                <tr data-param-field data-initial-param-row>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" placeholder="예: status"
+                                               data-name="endpoints[__index__].params[0].key"
+                                               data-param-field="key">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" placeholder="예: active"
+                                               data-name="endpoints[__index__].params[0].value"
+                                               data-param-field="value">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" placeholder="예: ACTIVE"
+                                               data-name="endpoints[__index__].params[0].example"
+                                               data-param-field="example">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" placeholder="예: GUEST"
+                                               data-name="endpoints[__index__].params[0].default"
+                                               data-param-field="default">
+                                    </td>
+                                    <td class="text-center">
+                                        <label class="form-switch">
+                                            <input type="checkbox"
+                                                   data-name="endpoints[__index__].params[0].required"
+                                                   data-param-field="required">
+                                            <span>필수</span>
+                                        </label>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-remove-param-field>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Query String</label>
+                            <input type="text" class="form-control font-monospace" data-query-preview-input readonly placeholder="예: /orders?status=ACTIVE">
+                        </div>
+                        <div class="endpoint-hint" data-params-preview>예: ?status=ACTIVE</div>
+                    </div>
+                    <div class="request-body-card p-3" data-body-card>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold">Request Body</span>
+                                <span class="endpoint-empty-label" data-body-empty-label>정의된 필드가 없습니다.</span>
+                            </div>
+                            <div class="mode-toggle" role="group">
+                                <button type="button" class="editor-mode-btn active" data-body-mode-btn="form">Form</button>
+                                <button type="button" class="editor-mode-btn" data-body-mode-btn="raw">Raw</button>
+                            </div>
+                        </div>
+                        <input type="hidden" value="form" data-name="endpoints[__index__].body.mode" data-body-mode-input data-field="bodyMode">
+                        <div class="body-mode-content" data-body-mode="form">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-2">
+                                    <thead>
+                                    <tr>
+                                        <th style="width: 22%;">Key</th>
+                                        <th style="width: 16%;">타입</th>
+                                        <th style="width: 22%;">예시 값</th>
+                                        <th style="width: 22%;">기본값</th>
+                                        <th style="width: 10%;" class="text-center">필수</th>
+                                        <th style="width: 8%;" class="text-end">&nbsp;</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody data-form-fields>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <span class="endpoint-hint">값을 입력하면 행이 자동으로 추가됩니다.</span>
+                        </div>
+                        <div class="body-mode-content d-none" data-body-mode="raw">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">JSON 예시 (Example)</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-pretty-json>
+                                        <i class="fas fa-magic"></i> Pretty
+                                    </button>
+                                </div>
+                                <textarea class="form-control font-monospace raw-textarea" rows="6" placeholder='{
+  "user": {
+    "name": "홍길동",
+    "roles": ["USER", "ADMIN"]
+  }
+}' data-name="endpoints[__index__].body.raw" data-field="rawBody"></textarea>
+                                <div class="raw-error" data-raw-error></div>
+                                <small class="text-muted">깊은 객체 구조도 그대로 입력할 수 있습니다.</small>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">필수 필드 (쉼표 구분)</label>
+                                    <input type="text" class="form-control" placeholder="예: user, user.name" data-name="endpoints[__index__].body.rawRequired" data-field="rawRequired">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">기본값(JSON, 선택)</label>
+                                    <input type="text" class="form-control" placeholder='예: {"status":"ACTIVE"}' data-name="endpoints[__index__].body.rawDefault" data-field="rawDefault">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template id="endpointFormFieldTemplate">
+            <tr data-form-field>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: name" data-name="endpoints[__index__].body.form[__row__].key" data-body-field="key">
+                </td>
+                <td>
+                    <select class="form-control form-control-sm" data-name="endpoints[__index__].body.form[__row__].type" data-body-field="type">
+                        <option value="string" selected>string</option>
+                        <option value="integer">integer</option>
+                        <option value="number">number</option>
+                        <option value="boolean">boolean</option>
+                        <option value="array">array</option>
+                        <option value="object">object</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: 홍길동" data-name="endpoints[__index__].body.form[__row__].example" data-body-field="example">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: GUEST" data-name="endpoints[__index__].body.form[__row__].default" data-body-field="default">
+                </td>
+                <td class="text-center">
+                    <label class="form-switch">
+                        <input type="checkbox" data-name="endpoints[__index__].body.form[__row__].required" data-body-field="required">
+                        <span>필수</span>
+                    </label>
+                </td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-form-field>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        </template>
+
+        <template id="endpointParamFieldTemplate">
+            <tr data-param-field>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: status" data-name="endpoints[__index__].params[__row__].key" data-param-field="key">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: active" data-name="endpoints[__index__].params[__row__].value" data-param-field="value">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: ACTIVE" data-name="endpoints[__index__].params[__row__].example" data-param-field="example">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="예: GUEST" data-name="endpoints[__index__].params[__row__].default" data-param-field="default">
+                </td>
+                <td class="text-center">
+                    <label class="form-switch">
+                        <input type="checkbox" data-name="endpoints[__index__].params[__row__].required" data-param-field="required">
+                        <span>필수</span>
+                    </label>
+                </td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-param-field>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        </template>
+
+        <div id="jsonEditorSection" class="card mb-4" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-code"></i> JSON 입력</h2>
+                <span class="text-muted" style="font-size: 12px;">Postman의 RAW(JSON) 입력 방식처럼 전체 명세를 붙여넣어 편집할 수 있습니다.</span>
+            </div>
+            <div class="card-body">
+                <textarea id="rawSpecInput" class="json-editor json-editor-textarea" spellcheck="false" placeholder='{
+                      "title": "주문 API",
+                      "version": "1.0.0",
+                      "endpoints": []
+                    }'></textarea>
+                <div id="jsonEditorError" class="text-danger mt-2" style="display: none; font-size: 12px;"></div>
+            </div>
+        </div>
+
+        <!-- JSON 미리보기 -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-code-branch"></i> JSON 미리보기</h2>
+                <span class="text-muted" style="font-size: 12px;">유효한 JSON 형식으로 스키마/콘텐츠를 입력하세요.</span>
+            </div>
+            <div class="card-body">
+                <pre id="apiJsonPreview" class="json-preview">{
+              "title": "",
+              "version": "",
+              "endpoints": []
+            }</pre>
+            </div>
+        </div>
+
+        <!-- 저장 버튼 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-direction-row-reserve">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="downloadBtn">
+                            <i class="fas fa-download"></i> 다운로드
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <i class="fas fa-save"></i>
+                            <span th:text="${idx != null} ? '문서 수정' : '문서 저장'">문서 저장</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div style="display: none;" id="apiDocsInitialData" th:text="${apiDocsSpec}"></div>
+<script th:src="@{/js/pages/project/artifact/docs/index.js}"></script>
+<script>
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeContent);
+    } else {
+        initializeContent();
+    }
+
+    function initializeContent() {
+        if (window.ApiDocsManager2) {
+            window.apiDocsManager2 = new ApiDocsManager2();
+        } else {
+            // 대체 로직
+            setTimeout(initializeContent, 50); // 재시도
+        }
+    }
+</script>

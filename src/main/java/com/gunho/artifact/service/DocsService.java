@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +43,8 @@ public class DocsService {
             ApiDocsDocument docs = apiDocsDocumentRepository.findById(request.docsIdx())
                     .orElseThrow(() -> new ArtifactException("문서를 찾을 수 없습니다."));
 
-            String endPoints = objectMapper.writeValueAsString(request.endpoints());
+            List<Map<String, Object>> normalizedEndpoints = normalizeEndpointsForScalar(request.endpoints());
+            String endPoints = objectMapper.writeValueAsString(normalizedEndpoints);
 
             docs.updateEndPoints(request, endPoints, user.getId());
             return ApiResponse.success("문서가 성공적으로 수정되었습니다.");
@@ -84,7 +87,7 @@ public class DocsService {
     }
 
     private List<Map<String, Object>> readEndpoints(String endpointsJson) {
-        if (!StringUtils.hasText(endpointsJson)) {
+        if (!StringUtils.hasText(endpointsJson) || endpointsJson.equals("{}")) {
             return Collections.emptyList();
         }
         try {
@@ -94,6 +97,120 @@ public class DocsService {
             log.warn("엔드포인트 파싱 실패", e);
             return Collections.emptyList();
         }
+    }
+
+    private List<Map<String, Object>> normalizeEndpointsForScalar(List<Map<String, Object>> rawEndpoints) {
+        if (rawEndpoints == null) {
+            return Collections.emptyList();
+        }
+        List<Map<String, Object>> normalized = new ArrayList<>();
+        for (Map<String, Object> endpoint : rawEndpoints) {
+            Map<String, Object> cleaned = castToMap(stripMetaEntries(endpoint));
+            if (cleaned == null || cleaned.isEmpty()) {
+                continue;
+            }
+            Map<String, Object> normalizedEndpoint = new LinkedHashMap<>(cleaned);
+            normalizedEndpoint.putIfAbsent("method", "GET");
+            normalizedEndpoint.putIfAbsent("path", "");
+            Object responses = normalizedEndpoint.get("responses");
+            if (!(responses instanceof Map<?, ?>)) {
+                normalizedEndpoint.put("responses", Collections.emptyMap());
+            }
+            Object requestBody = normalizedEndpoint.get("requestBody");
+            if (requestBody != null) {
+                Map<String, Object> normalizedRequestBody = castToMap(requestBody);
+                if (normalizedRequestBody != null) {
+                    Object content = normalizedRequestBody.get("content");
+                    if (content instanceof Map<?, ?> contentMap) {
+                        Map<String, Object> cleanedContent = new LinkedHashMap<>();
+                        contentMap.forEach((key, value) -> {
+                            if (key == null) {
+                                return;
+                            }
+                            Map<String, Object> contentEntry = castToMap(value);
+                            if (contentEntry == null) {
+                                return;
+                            }
+                            cleanedContent.put(String.valueOf(key), contentEntry);
+                        });
+                        normalizedRequestBody.put("content", cleanedContent);
+                    }
+                    normalizedEndpoint.put("requestBody", normalizedRequestBody);
+                }
+            }
+            normalized.add(normalizedEndpoint);
+        }
+        return normalized;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castToMap(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> result = new LinkedHashMap<>();
+            map.forEach((key, val) -> {
+                if (key instanceof String keyStr) {
+                    result.put(keyStr, val);
+                }
+            });
+            return result;
+        }
+        try {
+            Map<String, Object> converted = objectMapper.convertValue(value, Map.class);
+            return converted == null ? null : new LinkedHashMap<>(converted);
+        } catch (IllegalArgumentException e) {
+            log.warn("Map 변환 실패", e);
+            return null;
+        }
+    }
+
+    private Object stripMetaEntries(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> result = new LinkedHashMap<>();
+            map.forEach((keyObj, val) -> {
+                if (!(keyObj instanceof String key)) {
+                    return;
+                }
+                if (key.startsWith("__")) {
+                    return;
+                }
+                Object cleaned = stripMetaEntries(val);
+                if (cleaned == null) {
+                    return;
+                }
+                if (cleaned instanceof List<?> list && list.isEmpty()) {
+                    return;
+                }
+                if (cleaned instanceof Map<?, ?> innerMap && innerMap.isEmpty()) {
+                    return;
+                }
+                result.put(key, cleaned);
+            });
+            return result.isEmpty() ? null : result;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> cleanedList = new ArrayList<>();
+            for (Object item : list) {
+                Object cleaned = stripMetaEntries(item);
+                if (cleaned == null) {
+                    continue;
+                }
+                if (cleaned instanceof List<?> innerList && innerList.isEmpty()) {
+                    continue;
+                }
+                if (cleaned instanceof Map<?, ?> innerMap && innerMap.isEmpty()) {
+                    continue;
+                }
+                cleanedList.add(cleaned);
+            }
+            return cleanedList.isEmpty() ? null : cleanedList;
+        }
+        if (value instanceof String str) {
+            return str.isBlank() ? null : str;
+        }
+        return value;
     }
 
     @Transactional
