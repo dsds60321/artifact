@@ -38,14 +38,14 @@ public class ArtifactController {
         return artifactService.create(request, userDetails.getUser());
     }
 
-    @GetMapping("/docs")
-    public String docsAdd(Model model, @RequestParam(value = "projectIdx", required = false) Long projectIdx) {
-        model.addAttribute("idx", null);
-        model.addAttribute("projectIdx", projectIdx);
-        model.addAttribute("docs", null);
-        model.addAttribute("apiDocsSpec", docsService.buildEmptySpecJson());
-        return "project/artifact/docs/index";
-    }
+//    @GetMapping("/docs")
+//    public String docsAdd(Model model, @RequestParam(value = "projectIdx", required = false) Long projectIdx) {
+//        model.addAttribute("idx", null);
+//        model.addAttribute("projectIdx", projectIdx);
+//        model.addAttribute("docs", null);
+//        model.addAttribute("apiDocsSpec", docsService.buildEmptySpecJson());
+//        return "project/artifact/docs/index";
+//    }
 
     @GetMapping("/docs/{idx}")
     public String docsEdit(Model model,@PathVariable Long idx, @AuthenticationPrincipal ArtifactUserDetails user) {

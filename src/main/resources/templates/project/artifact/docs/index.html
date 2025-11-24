@@ -1,85 +1,181 @@
 <style>
-    .endpoint-card {
+    .request-builder-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .request-card {
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
-        margin-bottom: 16px;
         background: var(--white);
     }
 
-    .endpoint-header {
+    .request-card-header {
         padding: 12px 16px;
-        background: var(--background-gray);
         border-bottom: 1px solid var(--border-color);
+        background: var(--background-gray);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
     }
 
-    .endpoint-summary {
+    .request-card-title {
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .request-card-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .request-basic-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .request-basic-row .form-select {
+        min-width: 120px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .request-basic-row .form-control {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .request-tab-list {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .request-tab-btn {
+        border: none;
+        background: transparent;
+        padding: 8px 12px;
+        font-size: 13px;
         font-weight: 500;
+        color: #475569;
+        border-bottom: 2px solid transparent;
+    }
+
+    .request-tab-btn.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+
+    .request-tab-panel {
+        display: none;
+        margin-top: 12px;
+    }
+
+    .request-tab-panel.active {
+        display: block;
+    }
+
+    .request-table-wrapper {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--white);
+    }
+
+    .request-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .request-table thead th {
+        background: var(--background-gray);
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #475569;
+        border-bottom: 1px solid var(--border-color);
+        padding: 10px 12px;
+    }
+
+    .request-table tbody td {
+        background: var(--white);
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .request-table tbody tr:nth-child(2n+1) td {
+        background: var(--background-gray-light, #f8fafc);
+    }
+
+    .request-table-actions {
+        width: 40px;
+        text-align: center;
+    }
+
+    .request-row-remove {
+        color: #ef4444;
         font-size: 14px;
     }
 
-    .endpoint-body {
-        padding: 16px;
+    .request-helpers {
+        font-size: 12px;
+        color: #64748b;
     }
 
-    .method-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        font-size: 11px;
-        font-weight: 600;
-        border-radius: 3px;
-        margin-right: 8px;
+    .request-body-type-group {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
     }
 
-    .method-get { background: #10b981; color: white; }
-    .method-post { background: #3b82f6; color: white; }
-    .method-put { background: #f59e0b; color: white; }
-    .method-delete { background: #ef4444; color: white; }
-    .method-patch { background: #8b5cf6; color: white; }
-
-    .param-item, .response-item {
-        background: var(--background-gray);
+    .request-body-option {
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
-        padding: 12px;
-        margin-bottom: 8px;
+        padding: 16px;
+        background: var(--white);
     }
 
-    .param-header, .response-header {
+    .request-body-option + .request-body-option {
+        margin-top: 16px;
+    }
+
+    .request-body-option[data-body-option="none"] {
+        background: var(--background-gray);
+        border-style: dashed;
+        color: #475569;
+    }
+
+    .request-raw-toolbar {
         display: flex;
-        justify-content: space-between;
+        gap: 12px;
         align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
         margin-bottom: 12px;
     }
 
-    .param-type {
-        font-size: 11px;
-        padding: 2px 6px;
-        background: var(--primary-color);
-        color: white;
-        border-radius: 3px;
-    }
-
-    .json-editor {
-        background: #1e293b;
-        color: #e2e8f0;
+    .request-raw-textarea {
+        min-height: 200px;
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .request-error-message {
         font-size: 12px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        min-height: 120px;
-        white-space: pre;
-        overflow: auto;
-    }
-
-    .collapsible {
-        cursor: pointer;
-    }
-
-    .collapsible:hover {
-        background: rgba(37, 99, 235, 0.05);
+        color: #ef4444;
+        margin-top: 8px;
     }
 
     .json-preview {
@@ -95,58 +191,19 @@
         white-space: pre;
     }
 
-    .btn-group {
-        display: inline-flex;
-        gap: 6px;
-    }
-
-    .param-content,
-    .response-content {
-        margin-top: 12px;
-    }
-
-    .param-table-wrapper {
-        border: 1px solid var(--border-color);
+    .empty-state {
+        border: 1px dashed var(--border-color);
         border-radius: var(--radius);
-        overflow: hidden;
-    }
-
-    .param-table th,
-    .param-table td {
-        vertical-align: middle;
-        background: var(--white);
-    }
-
-    .param-table tbody tr:nth-child(2n+1) td {
-        background: var(--background-gray-light, #f8fafc);
-    }
-
-    .param-detail-row td {
-        background: var(--background-gray);
-    }
-
-    .param-detail {
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 16px;
-        background: var(--white);
-    }
-
-    .request-body-card {
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        background: var(--white);
-    }
-
-    .font-monospace {
-        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        padding: 32px;
+        text-align: center;
+        color: #64748b;
     }
 </style>
 <div class="container max-w-100">
     <form id="apiDocsForm" th:attr="data-project-idx=${projectIdx},data-docs-idx=${idx}">
         <input type="hidden" name="docsIdx" th:value="${idx}">
         <input type="hidden" name="projectIdx" th:value="${projectIdx}">
-        <!-- 기본 정보 -->
+
         <div class="card mb-4">
             <div class="card-header">
                 <h2><i class="fas fa-info-circle"></i> 기본 정보</h2>
@@ -167,42 +224,37 @@
             </div>
         </div>
 
-        <!-- 엔드포인트 목록 -->
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2><i class="fas fa-code"></i> API 엔드포인트</h2>
-                    <button type="button" class="btn btn-primary btn-sm" id="addEndpointBtn">
-                        <i class="fas fa-plus"></i> 엔드포인트 추가
-                    </button>
-                </div>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="mb-0"><i class="fas fa-paper-plane"></i> 요청 빌더</h2>
+                <button type="button" class="btn btn-primary btn-sm" id="addRequestCardBtn">
+                    <i class="fas fa-plus"></i> 요청 추가
+                </button>
             </div>
             <div class="card-body">
-                <div id="endpointsList">
-                    <div class="empty-state">
-                        <i class="fas fa-code"></i>
-                        <p>엔드포인트를 추가해 주세요.</p>
+                <div id="requestBuilderList" class="request-builder-list">
+                    <div class="empty-state" id="requestBuilderEmpty">
+                        <i class="fas fa-paper-plane"></i>
+                        <p>요청을 추가해 주세요.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- JSON 미리보기 -->
-        <div class="card mt-4">
+        <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-code-branch"></i> JSON 미리보기</h2>
-                <span class="text-muted" style="font-size: 12px;">유효한 JSON 형식으로 스키마/콘텐츠를 입력하세요.</span>
+                <h2 class="mb-0"><i class="fas fa-code-branch"></i> JSON 미리보기</h2>
+                <span class="text-muted" style="font-size: 12px;">요청 빌더 입력을 바탕으로 OpenAPI 유사 스펙을 확인할 수 있습니다.</span>
             </div>
             <div class="card-body">
                 <pre id="apiJsonPreview" class="json-preview">{
-              "title": "",
-              "version": "",
-              "endpoints": []
-            }</pre>
+  "title": "",
+  "version": "",
+  "endpoints": []
+}</pre>
             </div>
         </div>
 
-        <!-- 저장 버튼 -->
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center flex-direction-row-reserve">
@@ -221,6 +273,7 @@
     </form>
 </div>
 <div style="display: none;" id="apiDocsInitialData" th:text="${apiDocsSpec}"></div>
+<script th:src="@{/js/pages/project/artifact/docs/index.js}"></script>
 <script>
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeContent);
@@ -229,11 +282,10 @@
     }
 
     function initializeContent() {
-        if (window.ApiDocsManager) {
-            window.apiDocsManager = new ApiDocsManager();
+        if (window.DocsRequestManager) {
+            window.docsRequestManager = new DocsRequestManager();
         } else {
-            // 대체 로직
-            setTimeout(initializeContent, 50); // 재시도
+            setTimeout(initializeContent, 50);
         }
     }
 </script>
